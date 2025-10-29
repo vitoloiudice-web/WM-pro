@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import BottomNav from './components/BottomNav';
-import Sidebar from './components/Sidebar';
-import DashboardView from './views/DashboardView';
-import WorkshopsView from './views/WorkshopsView';
-import ClientsView from './views/ClientsView';
-import FinanceView from './views/FinanceView';
-import LogisticsView from './views/LogisticsView';
-import ReportsView from './views/ReportsView';
-import type { View, Workshop, Parent, Child, Payment, OperationalCost, Quote, Invoice, Supplier, Location, Registration, DatabaseBackup, CompanyProfile } from './types';
+import BottomNav from './components/BottomNav.tsx';
+import Sidebar from './components/Sidebar.tsx';
+import DashboardView from './views/DashboardView.tsx';
+import WorkshopsView from './views/WorkshopsView.tsx';
+import ClientsView from './views/ClientsView.tsx';
+import FinanceView from './views/FinanceView.tsx';
+import LogisticsView from './views/LogisticsView.tsx';
+import ReportsView from './views/ReportsView.tsx';
+import type { View, Workshop, Parent, Child, Payment, OperationalCost, Quote, Invoice, Supplier, Location, Registration, DatabaseBackup, CompanyProfile } from './types.ts';
 import {
   MOCK_WORKSHOPS,
   MOCK_PARENTS,
@@ -20,9 +20,9 @@ import {
   MOCK_LOCATIONS,
   MOCK_REGISTRATIONS,
   MOCK_COMPANY_PROFILE
-} from './data';
-import Modal from './components/Modal';
-import Input from './components/Input';
+} from './data.ts';
+import Modal from './components/Modal.tsx';
+import Input from './components/Input.tsx';
 
 // --- Google Drive API Configuration ---
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;

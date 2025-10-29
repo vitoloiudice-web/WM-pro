@@ -1,4 +1,4 @@
-import type { Parent, Child, Supplier, Location, Workshop, Registration, Payment, OperationalCost, Quote, Invoice, CompanyProfile } from './types';
+import type { Parent, Child, Supplier, Location, Workshop, Registration, Payment, OperationalCost, Quote, Invoice, CompanyProfile } from './types.ts';
 
 export const MOCK_COMPANY_PROFILE: CompanyProfile = {
     companyName: 'Il Tuo Nome / Nome Attività',
