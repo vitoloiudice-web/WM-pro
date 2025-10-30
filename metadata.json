@@ -1,0 +1,5 @@
+{
+  "name": "WM Pro v.1.2",
+  "description": "An application to manage educational workshops for children, designed for a single operator. It handles client and supplier records, workshop locations, registrations, payments, costs, quotes, and invoice tracking.",
+  "requestFramePermissions": []
+}
