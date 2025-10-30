@@ -8,11 +8,6 @@
   <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Google API Callbacks -->
-  <script>
-    function gapiLoaded() { window.dispatchEvent(new Event('gapiLoaded')); }
-    function gisLoaded() { window.dispatchEvent(new Event('gisLoaded')); }
-  </script>
   <style>
     body {
       font-family: 'Inter', sans-serif;
@@ -26,7 +21,8 @@
     "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "vite": "https://aistudiocdn.com/vite@^7.1.12",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.0"
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.0",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.4.0/"
   }
 }
 </script>
@@ -36,8 +32,5 @@
   <div id="root"></div>
   <div id="modal-root"></div>
   <script type="module" src="/index.tsx"></script>
-  <!-- Google API Scripts -->
-  <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
-  <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 </body>
 </html>

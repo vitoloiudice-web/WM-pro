@@ -1,82 +1,3 @@
-// Fix: Wrapped Google API type declarations in `declare global` to make them globally accessible
-// from this module, resolving TypeScript errors about missing types.
-declare global {
-    namespace google {
-        namespace accounts {
-            namespace oauth2 {
-                interface TokenClient {
-                    requestAccessToken: (options?: { prompt?: string }) => void;
-                }
-                function initTokenClient(config: {
-                    client_id: string;
-                    scope: string;
-                    callback: (tokenResponse: { access_token: string }) => void;
-                    error_callback?: (error: any) => void;
-                }): TokenClient;
-                function revoke(token: string, done: () => void): void;
-            }
-        }
-        namespace picker {
-            const ViewId: {
-                DOCS: string;
-            };
-            const Feature: {
-                NAV_HIDDEN: string;
-            };
-            const Action: {
-                PICKED: string;
-                CANCEL: string;
-            };
-            const Response: {
-                ACTION: string;
-                DOCUMENTS: string;
-            };
-            const Document: {
-                ID: string;
-            };
-            class View {
-                constructor(viewId: string);
-                setMimeTypes(mimeTypes: string): void;
-            }
-            class PickerBuilder {
-                enableFeature(feature: string): PickerBuilder;
-                setAppId(appId: string): PickerBuilder;
-                setClientId(clientId: string): PickerBuilder;
-                addView(view: View): PickerBuilder;
-                setOAuthToken(token: string): PickerBuilder;
-                setDeveloperKey(key: string): PickerBuilder;
-                setCallback(callback: (data: ResponseObject) => void): PickerBuilder;
-                build(): {
-                    setVisible(visible: boolean): void;
-                };
-            }
-            interface ResponseObject {
-                [key: string]: any;
-            }
-        }
-    }
-
-    namespace gapi {
-        function load(features: string, callback: () => void): void;
-        namespace client {
-            function init(args: { apiKey: string, discoveryDocs: string[] }): Promise<void>;
-            function setToken(token: { access_token: string } | null): void;
-            function getToken(): { access_token: string } | null;
-            function request(args: {
-                path: string;
-                method: string;
-                params?: any;
-                body: FormData;
-            }): Promise<{ status: number, body: string }>;
-            const drive: {
-                files: {
-                    get(args: { fileId: string, alt: 'media' }): Promise<{ body: string | object }>;
-                };
-            };
-        }
-    }
-}
-
 export type View = 'dashboard' | 'workshops' | 'clients' | 'finance' | 'logistics' | 'reports';
 
 export type PaymentMethod = 'cash' | 'transfer' | 'card';
@@ -116,7 +37,7 @@ export interface Child {
   id: string;
   parentId: string;
   name:string;
-  birthDate: string; // YYYY-MM-DD
+  birthDate: string; // YYY-MM-DD
 }
 
 export interface Supplier {
@@ -213,18 +134,4 @@ export interface Invoice {
   issueDate: string; // YYYY-MM-DD
   sdiNumber: string; // Numero SDI
   method: PaymentMethod;
-}
-
-export interface DatabaseBackup {
-  companyProfile: CompanyProfile;
-  workshops: Workshop[];
-  parents: Parent[];
-  children: Child[];
-  registrations: Registration[];
-  payments: Payment[];
-  costs: OperationalCost[];
-  quotes: Quote[];
-  invoices: Invoice[];
-  suppliers: Supplier[];
-  locations: Location[];
 }
