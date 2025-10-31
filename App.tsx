@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCollection, useDocument } from './hooks/useFirestore.ts';
 import BottomNav from './components/BottomNav.tsx';
 import Sidebar from './components/Sidebar.tsx';
@@ -13,24 +13,44 @@ import { MOCK_COMPANY_PROFILE } from './data.ts';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [firestoreStatus, setFirestoreStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
 
   // --- Centralized state management with Firebase Hooks ---
-  const { data: companyProfile, updateData: setCompanyProfile } = useDocument<CompanyProfile>('companyProfile', 'main', MOCK_COMPANY_PROFILE);
-  const { data: workshops, addItem: addWorkshop, updateItem: updateWorkshop, removeItem: removeWorkshop } = useCollection<Workshop>('workshops');
-  const { data: parents, addItem: addParent, updateItem: updateParent, removeItem: removeParent } = useCollection<Parent>('parents');
-  const { data: children, addItem: addChild, updateItem: updateChild, removeItem: removeChild } = useCollection<Child>('children');
-  const { data: registrations, addItem: addRegistration, removeItem: removeRegistration } = useCollection<Registration>('registrations');
-  const { data: payments, addItem: addPayment, updateItem: updatePayment, removeItem: removePayment } = useCollection<Payment>('payments');
-  const { data: costs, addItem: addCost, updateItem: updateCost, removeItem: removeCost } = useCollection<OperationalCost>('costs');
-  const { data: quotes, addItem: addQuote, updateItem: updateQuote, removeItem: removeQuote } = useCollection<Quote>('quotes');
-  const { data: invoices, addItem: addInvoice, updateItem: updateInvoice, removeItem: removeInvoice } = useCollection<Invoice>('invoices');
-  const { data: suppliers, addItem: addSupplier, updateItem: updateSupplier, removeItem: removeSupplier } = useCollection<Supplier>('suppliers');
-  const { data: locations, addItem: addLocation, updateItem: updateLocation, removeItem: removeLocation } = useCollection<Location>('locations');
+  const { data: companyProfile, loading: cpLoading, error: cpError, updateData: setCompanyProfile } = useDocument<CompanyProfile>('companyProfile', 'main', MOCK_COMPANY_PROFILE);
+  const { data: workshops, loading: wsLoading, error: wsError, addItem: addWorkshop, updateItem: updateWorkshop, removeItem: removeWorkshop } = useCollection<Workshop>('workshops');
+  const { data: parents, loading: paLoading, error: paError, addItem: addParent, updateItem: updateParent, removeItem: removeParent } = useCollection<Parent>('parents');
+  const { data: children, loading: chLoading, error: chError, addItem: addChild, updateItem: updateChild, removeItem: removeChild } = useCollection<Child>('children');
+  const { data: registrations, loading: rgLoading, error: rgError, addItem: addRegistration, removeItem: removeRegistration } = useCollection<Registration>('registrations');
+  const { data: payments, loading: pyLoading, error: pyError, addItem: addPayment, updateItem: updatePayment, removeItem: removePayment } = useCollection<Payment>('payments');
+  const { data: costs, loading: coLoading, error: coError, addItem: addCost, updateItem: updateCost, removeItem: removeCost } = useCollection<OperationalCost>('costs');
+  const { data: quotes, loading: quLoading, error: quError, addItem: addQuote, updateItem: updateQuote, removeItem: removeQuote } = useCollection<Quote>('quotes');
+  const { data: invoices, loading: inLoading, error: inError, addItem: addInvoice, updateItem: updateInvoice, removeItem: removeInvoice } = useCollection<Invoice>('invoices');
+  const { data: suppliers, loading: suLoading, error: suError, addItem: addSupplier, updateItem: updateSupplier, removeItem: removeSupplier } = useCollection<Supplier>('suppliers');
+  const { data: locations, loading: loLoading, error: loError, addItem: addLocation, updateItem: updateLocation, removeItem: removeLocation } = useCollection<Location>('locations');
+
+  useEffect(() => {
+    const allLoadings = [cpLoading, wsLoading, paLoading, chLoading, rgLoading, pyLoading, coLoading, quLoading, inLoading, suLoading, loLoading];
+    const anyErrors = [cpError, wsError, paError, chError, rgError, pyError, coError, quError, inError, suError, loError].some(e => e);
+
+    if (anyErrors) {
+      setFirestoreStatus('error');
+    } else if (allLoadings.every(loading => !loading)) {
+      setFirestoreStatus('connected');
+    } else {
+      setFirestoreStatus('connecting');
+    }
+  }, [
+    cpLoading, cpError, wsLoading, wsError, paLoading, paError, chLoading, chError, 
+    rgLoading, rgError, pyLoading, pyError, coLoading, coError, quLoading, quError, 
+    inLoading, inError, suLoading, suError, loLoading, loError
+  ]);
+
 
   const renderView = () => {
     switch (currentView) {
       case 'dashboard':
         return <DashboardView 
+          firestoreStatus={firestoreStatus}
           companyProfile={companyProfile}
           setCompanyProfile={setCompanyProfile}
           workshops={workshops} 
@@ -97,6 +117,7 @@ const App: React.FC = () => {
         />;
       default:
         return <DashboardView 
+          firestoreStatus={firestoreStatus}
           companyProfile={companyProfile}
           setCompanyProfile={setCompanyProfile}
           workshops={workshops} 

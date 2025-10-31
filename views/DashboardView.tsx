@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Card, { CardContent, CardHeader } from '../components/Card.tsx';
-import { ArrowUpRightIcon, UsersIcon, CurrencyDollarIcon, CalendarDaysIcon, Cog6ToothIcon } from '../components/icons/HeroIcons.tsx';
+import { ArrowUpRightIcon, UsersIcon, CurrencyDollarIcon, CalendarDaysIcon, Cog6ToothIcon, CheckCircleIcon, ExclamationCircleIcon } from '../components/icons/HeroIcons.tsx';
 import Modal from '../components/Modal.tsx';
 import Input from '../components/Input.tsx';
 import Select from '../components/Select.tsx';
@@ -9,6 +9,7 @@ import type { Workshop, Parent, Payment, Registration, Location, CompanyProfile 
 type ModalType = 'none' | 'newClient' | 'newWorkshop' | 'newPayment' | 'newCost' | 'settings';
 
 interface DashboardViewProps {
+  firestoreStatus: 'connecting' | 'connected' | 'error';
   companyProfile: CompanyProfile;
   setCompanyProfile: (profile: CompanyProfile) => void;
   workshops: Workshop[];
@@ -19,6 +20,7 @@ interface DashboardViewProps {
 }
 
 const DashboardView: React.FC<DashboardViewProps> = ({ 
+    firestoreStatus,
     companyProfile, setCompanyProfile,
     workshops, parents, payments, registrations, locations
 }) => {
@@ -265,9 +267,52 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     );
   };
 
+  const StatusIndicator = () => {
+    switch (firestoreStatus) {
+        case 'connected':
+            return (
+                <div className="flex items-center space-x-2 text-green-600 animate-fade-in">
+                    <CheckCircleIcon className="h-5 w-5" />
+                    <span className="text-sm font-medium">Connesso a database Firestore</span>
+                </div>
+            );
+        case 'error':
+            return (
+                <div className="flex items-center space-x-2 text-red-600 animate-fade-in">
+                    <ExclamationCircleIcon className="h-5 w-5" />
+                    <span className="text-sm font-medium">Errore di connessione a Firestore</span>
+                </div>
+            );
+        case 'connecting':
+        default:
+            return (
+                <div className="flex items-center space-x-2 text-slate-500 animate-pulse">
+                     <svg className="animate-spin h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span className="text-sm font-medium">Connessione...</span>
+                </div>
+            );
+    }
+  };
+
+
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-slate-700">Panoramica</h2>
+       <style>{`
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.5s ease-in-out forwards;
+        }
+      `}</style>
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center space-y-2 sm:space-y-0">
+        <h2 className="text-xl font-semibold text-slate-700">Panoramica</h2>
+        <StatusIndicator />
+      </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard 
