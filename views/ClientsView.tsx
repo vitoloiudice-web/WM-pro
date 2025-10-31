@@ -443,7 +443,19 @@ const ClientsView: React.FC<ClientsViewProps> = ({
             value={parentFormData.clientType || 'persona fisica'}
             onChange={e => {
                 const newType = e.target.value as 'persona fisica' | 'persona giuridica';
-                setParentFormData({ clientType: newType });
+                setParentFormData(prev => {
+                    const commonData = { ...prev, clientType: newType };
+                    // When switching, clear the fields that are no longer relevant for better UX
+                    if (newType === 'persona fisica') {
+                        commonData.companyName = '';
+                        commonData.vatNumber = '';
+                    } else {
+                        commonData.name = '';
+                        commonData.surname = '';
+                        commonData.taxCode = '';
+                    }
+                    return commonData;
+                });
                 setParentErrors({});
             }}
             required
