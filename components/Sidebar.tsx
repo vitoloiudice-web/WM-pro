@@ -14,23 +14,21 @@ interface NavItemProps {
 }
 
 const NavItem = ({ item, isActive, onClick }: NavItemProps) => (
-  <li>
-    <button
-      onClick={onClick}
-      className={`group flex items-center w-full px-3 py-3 text-sm font-medium rounded-md transition-colors duration-150
-        ${
-          isActive
-            ? 'bg-indigo-600 text-white'
-            : 'text-slate-300 hover:bg-slate-700 hover:text-white'
-        }`}
-      aria-current={isActive ? 'page' : undefined}
-    >
-      <div className={`mr-3 h-6 w-6 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'}`}>
-        {item.icon}
-      </div>
-      <span>{item.label}</span>
-    </button>
-  </li>
+  <button
+    onClick={onClick}
+    className={`group flex items-center w-full px-3 py-3 text-sm font-medium rounded-md transition-colors duration-150
+      ${
+        isActive
+          ? 'bg-indigo-600 text-white'
+          : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+      }`}
+    aria-current={isActive ? 'page' : undefined}
+  >
+    <div className={`mr-3 h-6 w-6 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'}`}>
+      {item.icon}
+    </div>
+    <span>{item.label}</span>
+  </button>
 );
 
 const Sidebar = ({ currentView, setCurrentView }: SidebarProps) => {
@@ -43,12 +41,13 @@ const Sidebar = ({ currentView, setCurrentView }: SidebarProps) => {
         <nav className="mt-8 flex-1 px-2 space-y-1">
           <ul>
             {navItems.map((item) => (
-              <NavItem
-                key={item.view}
-                item={item}
-                isActive={currentView === item.view}
-                onClick={() => setCurrentView(item.view)}
-              />
+              <li key={item.view}>
+                <NavItem
+                  item={item}
+                  isActive={currentView === item.view}
+                  onClick={() => setCurrentView(item.view)}
+                />
+              </li>
             ))}
           </ul>
         </nav>

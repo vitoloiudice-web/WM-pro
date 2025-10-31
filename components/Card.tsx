@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface CardProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
   onClick?: () => void;
 }
@@ -17,20 +17,20 @@ const Card = ({ children, className, onClick }: CardProps) => {
   );
 };
 
-export const CardHeader = ({ children, actions }: { children: React.ReactNode, actions?: React.ReactNode }) => (
+export const CardHeader = ({ children, actions }: { children?: React.ReactNode, actions?: React.ReactNode }) => (
   <div className="p-4 sm:p-6 border-b border-slate-200 flex justify-between items-center">
     <h3 className="text-lg font-semibold text-slate-800">{children}</h3>
     {actions && <div className="flex items-center space-x-2">{actions}</div>}
   </div>
 );
 
-export const CardContent = ({ children, className }: { children: React.ReactNode; className?: string }) => (
+export const CardContent = ({ children, className }: { children?: React.ReactNode; className?: string }) => (
   <div className={`p-4 sm:p-6 ${className}`}>
     {children}
   </div>
 );
 
-export const CardFooter = ({ children }: { children: React.ReactNode }) => (
+export const CardFooter = ({ children }: { children?: React.ReactNode }) => (
   <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-200">
     {children}
   </div>

@@ -6,7 +6,7 @@ interface ConfirmModalProps {
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 const ConfirmModal = ({ isOpen, onClose, onConfirm, title, children }: ConfirmModalProps) => {

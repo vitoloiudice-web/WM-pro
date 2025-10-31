@@ -10,9 +10,10 @@ import {
     UserCircleIcon,
     PencilIcon,
     TrashIcon,
-    PlusIcon
+    PlusIcon,
+    ClockIcon
 } from '../components/icons/HeroIcons.tsx';
-import type { Workshop, Location, Registration, Child, Parent } from '../types.ts';
+import type { Workshop, Location, Registration, Child, Parent, WorkshopType } from '../types.ts';
 import Modal from '../components/Modal.tsx';
 import ConfirmModal from '../components/ConfirmModal.tsx';
 import Input from '../components/Input.tsx';
@@ -24,9 +25,28 @@ type ModalState =
     | { mode: 'new'; date: string }
     | null;
 
+const workshopTypeOptions: { value: WorkshopType; label: string }[] = [
+    { value: 'OpenDay', label: 'OpenDay' },
+    { value: 'Evento', label: 'Evento' },
+    { value: '1 Mese', label: '1 Mese (tot. 4 Lab)' },
+    { value: '2 Mesi', label: '2 Mesi (tot. 8 Labs)' },
+    { value: '3 Mesi', label: '3 Mesi (tot. 12 Labs)' },
+    { value: 'Scolastico', label: 'Scolastico' },
+    { value: 'Campus', label: 'Campus' },
+];
+
+const WORKSHOP_STANDARD_PRICES: Partial<Record<WorkshopType, number>> = {
+    '1 Mese': 65,
+    '2 Mesi': 120,
+    '3 Mesi': 165,
+};
+
+const WORKSHOP_TYPES_WITH_PRESET_PRICE: WorkshopType[] = ['1 Mese', '2 Mesi', '3 Mesi'];
+const TYPES_WITH_MANUAL_END_DATE: WorkshopType[] = ['Scolastico', 'Campus'];
+
 interface WorkshopsViewProps {
     workshops: Workshop[];
-    addWorkshop: (workshop: Workshop) => Promise<void>;
+    addWorkshop: (workshop: Omit<Workshop, 'id'>) => Promise<void>;
     updateWorkshop: (id: string, updates: Partial<Workshop>) => Promise<void>;
     removeWorkshop: (id: string) => Promise<void>;
     locations: Location[];
@@ -40,6 +60,16 @@ interface DetailItemProps {
     label: string;
     value: string | number;
 }
+
+const daysOfWeekOptions = [
+    { value: 'Lunedì', label: 'Lunedì' },
+    { value: 'Martedì', label: 'Martedì' },
+    { value: 'Mercoledì', label: 'Mercoledì' },
+    { value: 'Giovedì', label: 'Giovedì' },
+    { value: 'Venerdì', label: 'Venerdì' },
+    { value: 'Sabato', label: 'Sabato' },
+    { value: 'Domenica', label: 'Domenica' },
+];
 
 const DetailItem = ({icon, label, value}: DetailItemProps) => (
     <div className="flex items-start space-x-3 text-slate-700">
@@ -58,10 +88,12 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
     
     const [modalState, setModalState] = useState<ModalState>(null);
     const [deletingWorkshopId, setDeletingWorkshopId] = useState<string | null>(null);
-    const [formData, setFormData] = useState<Partial<Omit<Workshop, 'id'>>>({});
+    const [formData, setFormData] = useState<Partial<Workshop>>({});
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [priceConfig, setPriceConfig] = useState<{ isManual: boolean }>({ isManual: false });
 
-    // Create maps from props for efficient lookups
+    const [filters, setFilters] = useState({ name: '', dayOfWeek: '', startTime: '', minPrice: '', maxPrice: ''});
+
     const locationMap = useMemo(() => locations.reduce((acc, l) => ({...acc, [l.id]: l}), {} as Record<string, Location>), [locations]);
     const childMap = useMemo(() => children.reduce((acc, c) => ({...acc, [c.id]: c}), {} as Record<string, Child>), [children]);
     const parentMap = useMemo(() => parents.reduce((acc, p) => ({...acc, [p.id]: p}), {} as Record<string, Parent>), [parents]);
@@ -77,26 +109,100 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
     useEffect(() => {
         if (modalState?.mode === 'edit') {
             setFormData(modalState.workshop);
+            const { type, pricePerChild } = modalState.workshop;
+            const standardPrice = WORKSHOP_STANDARD_PRICES[type];
+            if (standardPrice !== undefined && pricePerChild !== standardPrice) {
+                setPriceConfig({ isManual: true });
+            } else {
+                setPriceConfig({ isManual: false });
+            }
         } else if (modalState?.mode === 'new') {
+            const defaultType: WorkshopType = '1 Mese';
             setFormData({
                 name: '',
+                type: defaultType,
                 locationId: locations[0]?.id || '',
-                pricePerChild: 0,
+                pricePerChild: WORKSHOP_STANDARD_PRICES[defaultType],
                 startDate: modalState.date,
-                endDate: modalState.date,
+                endDate: '', // Will be calculated
+                dayOfWeek: 'Lunedì',
+                startTime: '10:00',
+                endTime: '12:00',
             });
+            setPriceConfig({ isManual: false });
         } else {
             setFormData({});
         }
         setErrors({});
     }, [modalState, locations]);
 
+    useEffect(() => {
+        const { type, startDate } = formData;
+        if (!type || !startDate) return;
+
+        if (TYPES_WITH_MANUAL_END_DATE.includes(type as WorkshopType)) {
+            return;
+        }
+
+        const start = new Date(startDate);
+        let newEndDate = startDate;
+
+        switch (type) {
+            case '1 Mese':
+                start.setDate(start.getDate() + 21);
+                newEndDate = start.toISOString().split('T')[0];
+                break;
+            case '2 Mesi':
+                start.setDate(start.getDate() + 49);
+                newEndDate = start.toISOString().split('T')[0];
+                break;
+            case '3 Mesi':
+                start.setDate(start.getDate() + 77);
+                newEndDate = start.toISOString().split('T')[0];
+                break;
+        }
+        setFormData(prev => ({...prev, endDate: newEndDate}));
+    }, [formData.type, formData.startDate]);
+
+    useEffect(() => {
+        const { type } = formData;
+        if (!type) return;
+
+        if (type === 'OpenDay') {
+            setFormData(prev => ({...prev, pricePerChild: 0}));
+            setPriceConfig({ isManual: false });
+            return;
+        }
+
+        const standardPrice = WORKSHOP_STANDARD_PRICES[type as WorkshopType];
+        if (standardPrice !== undefined) {
+            if (!priceConfig.isManual) {
+                setFormData(prev => ({...prev, pricePerChild: standardPrice}));
+            }
+        } else {
+            setPriceConfig({ isManual: true });
+        }
+    }, [formData.type, priceConfig.isManual]);
+
+    const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        setFilters(prev => ({ ...prev, [e.target.id]: e.target.value }));
+    };
+    
+    const resetFilters = () => {
+        setFilters({ name: '', dayOfWeek: '', startTime: '', minPrice: '', maxPrice: '' });
+    };
+
     const filteredWorkshops = useMemo(() => {
         return workshops.filter(w => {
-            if (selectedLocation === 'all') return true;
-            return w.locationId === selectedLocation;
+            if (selectedLocation !== 'all' && w.locationId !== selectedLocation) return false;
+            if (filters.name && !w.name.toLowerCase().includes(filters.name.toLowerCase())) return false;
+            if (filters.dayOfWeek && w.dayOfWeek !== filters.dayOfWeek) return false;
+            if (filters.startTime && w.startTime < filters.startTime) return false;
+            if (filters.minPrice && w.pricePerChild < parseFloat(filters.minPrice)) return false;
+            if (filters.maxPrice && w.pricePerChild > parseFloat(filters.maxPrice)) return false;
+            return true;
         });
-    }, [selectedLocation, workshops]);
+    }, [selectedLocation, workshops, filters]);
     
     const workshopsByDate = useMemo(() => {
         const map = new Map<string, Workshop[]>();
@@ -143,9 +249,6 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
     const handleConfirmDelete = async () => {
         if (deletingWorkshopId) {
             await removeWorkshop(deletingWorkshopId);
-            // Note: cascading deletes (e.g., registrations) should be handled
-            // via Firebase Functions for robustness, or manually in the client.
-            // For now, we only delete the workshop itself.
             alert(`Workshop eliminato!`);
             setDeletingWorkshopId(null);
             closeModal();
@@ -155,9 +258,19 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
     const validate = () => {
         const newErrors: Record<string, string> = {};
         if (!formData.name?.trim()) newErrors.name = 'Il nome è obbligatorio.';
+        if (!formData.type) newErrors.type = 'Il tipo è obbligatorio.';
         if (!formData.locationId) newErrors.locationId = 'Il luogo è obbligatorio.';
-        if (formData.pricePerChild === undefined || parseFloat(String(formData.pricePerChild)) <= 0) newErrors.pricePerChild = 'Il prezzo deve essere un numero positivo.';
+        if (formData.pricePerChild === undefined || parseFloat(String(formData.pricePerChild)) < 0) newErrors.pricePerChild = 'Il prezzo non può essere negativo.';
+        if (formData.type === 'OpenDay' && parseFloat(String(formData.pricePerChild)) !== 0) newErrors.pricePerChild = 'Il prezzo per OpenDay deve essere 0.';
         if (!formData.startDate) newErrors.startDate = 'La data di inizio è obbligatoria.';
+        if (!formData.endDate) newErrors.endDate = 'La data di fine è obbligatoria.';
+        if (formData.startDate && formData.endDate && formData.startDate > formData.endDate) newErrors.endDate = 'Data di fine deve essere dopo quella di inizio.';
+        if (!formData.dayOfWeek) newErrors.dayOfWeek = 'Il giorno è obbligatorio.';
+        if (!formData.startTime) newErrors.startTime = "L'orario di inizio è obbligatorio.";
+        if (!formData.endTime) newErrors.endTime = "L'orario di fine è obbligatorio.";
+        if (formData.startTime && formData.endTime && formData.startTime >= formData.endTime) {
+            newErrors.endTime = 'Orario di fine deve essere dopo quello di inizio.';
+        }
         
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -168,20 +281,23 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
         if (validate()) {
             const dataToSave = {
                 ...formData,
-                pricePerChild: parseFloat(String(formData.pricePerChild))
+                pricePerChild: parseFloat(String(formData.pricePerChild || '0'))
             };
             
             if (modalState?.mode === 'edit') {
                 await updateWorkshop(modalState.workshop.id, dataToSave);
                 alert('Workshop aggiornato!');
             } else if (modalState?.mode === 'new') {
-                const newWorkshop: Workshop = {
-                    id: `ws_${Date.now()}`,
+                const newWorkshop: Omit<Workshop, 'id'> = {
                     name: dataToSave.name!,
+                    type: dataToSave.type! as WorkshopType,
                     locationId: dataToSave.locationId!,
                     startDate: dataToSave.startDate!,
                     endDate: dataToSave.endDate || dataToSave.startDate!,
                     pricePerChild: dataToSave.pricePerChild!,
+                    dayOfWeek: dataToSave.dayOfWeek!,
+                    startTime: dataToSave.startTime!,
+                    endTime: dataToSave.endTime!,
                 };
                 await addWorkshop(newWorkshop);
                 alert('Nuovo workshop salvato!');
@@ -191,7 +307,11 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
     };
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        setFormData({ ...formData, [e.target.id]: e.target.value });
+        const { id, value } = e.target;
+        if (id === 'type') {
+            setPriceConfig({ isManual: false });
+        }
+        setFormData(prev => ({ ...prev, [id]: value }));
     };
 
     const getModalTitle = () => {
@@ -217,8 +337,10 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
             return (
                  <>
                     <div className="space-y-4 text-sm">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-slate-50 rounded-lg">
-                            <DetailItem icon={<CalendarDaysIcon />} label="Data" value={new Date(workshop.startDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })} />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-2 p-4 bg-slate-50 rounded-lg">
+                            <DetailItem icon={<CalendarDaysIcon />} label="Tipo" value={workshop.type} />
+                            <DetailItem icon={<CalendarDaysIcon />} label="Date" value={`${new Date(workshop.startDate).toLocaleDateString('it-IT')} - ${new Date(workshop.endDate).toLocaleDateString('it-IT')}`} />
+                            <DetailItem icon={<ClockIcon />} label="Orario" value={`${workshop.dayOfWeek}, ${workshop.startTime} - ${workshop.endTime}`} />
                             <DetailItem icon={<LocationMarkerIcon />} label="Luogo" value={location?.name ?? 'N/A'} />
                             <DetailItem icon={<CurrencyDollarIcon />} label="Prezzo" value={`€${workshop.pricePerChild.toFixed(2)}`} />
                         </div>
@@ -258,6 +380,9 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
         
         if (modalState.mode === 'edit' || modalState.mode === 'new') {
             const locationOptions = locations.map(l => ({ value: l.id, label: l.name }));
+            const type = formData.type as WorkshopType;
+            const isEndDateDisabled = type && !TYPES_WITH_MANUAL_END_DATE.includes(type);
+
             const handleCancel = () => {
                 if (modalState.mode === 'edit') {
                     setModalState({ mode: 'view', workshop: modalState.workshop });
@@ -269,12 +394,47 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
             return (
                  <form onSubmit={handleSave} className="space-y-4" noValidate>
                     <Input id="name" label="Nome Workshop" type="text" value={formData.name || ''} onChange={handleChange} error={errors.name} required />
+                    <Select id="type" label="Tipo" options={workshopTypeOptions} value={type || ''} onChange={handleChange} error={errors.type} required />
                     <Select id="locationId" label="Luogo" options={locationOptions} value={formData.locationId || ''} onChange={handleChange} error={errors.locationId} required placeholder="Seleziona un luogo"/>
-                    <Input id="pricePerChild" label="Prezzo per Bambino (€)" type="number" step="0.01" value={String(formData.pricePerChild || '')} onChange={handleChange} error={errors.pricePerChild} required />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <Input id="startDate" label="Data Inizio" type="date" value={formData.startDate || ''} onChange={handleChange} error={errors.startDate} required />
-                        <Input id="endDate" label="Data Fine" type="date" value={formData.endDate || ''} onChange={handleChange} error={errors.endDate} />
+                        <Input id="endDate" label="Data Fine" type="date" value={formData.endDate || ''} onChange={handleChange} error={errors.endDate} disabled={isEndDateDisabled}/>
                     </div>
+                    <Select id="dayOfWeek" label="Giorno della Settimana" options={daysOfWeekOptions} value={formData.dayOfWeek || ''} onChange={handleChange} error={errors.dayOfWeek} required/>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                       <Input id="startTime" label="Orario Inizio" type="time" value={formData.startTime || ''} onChange={handleChange} error={errors.startTime} required/>
+                       <Input id="endTime" label="Orario Fine" type="time" value={formData.endTime || ''} onChange={handleChange} error={errors.endTime} required/>
+                    </div>
+                    
+                    {type === 'OpenDay' && (
+                        <Input id="pricePerChild" label="Prezzo per Bambino (€)" type="number" value="0.00" disabled />
+                    )}
+
+                    {type && WORKSHOP_TYPES_WITH_PRESET_PRICE.includes(type) && (
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Prezzo</label>
+                            <div className="flex space-x-4">
+                                <label className="flex items-center">
+                                    <input type="radio" name="priceOption" checked={!priceConfig.isManual} onChange={() => setPriceConfig({ isManual: false })} className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500" />
+                                    <span className="ml-2 text-sm text-slate-700">Standard (€{(WORKSHOP_STANDARD_PRICES[type] || 0).toFixed(2)})</span>
+                                </label>
+                                <label className="flex items-center">
+                                    <input type="radio" name="priceOption" checked={priceConfig.isManual} onChange={() => setPriceConfig({ isManual: true })} className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500" />
+                                    <span className="ml-2 text-sm text-slate-700">Personalizzato</span>
+                                </label>
+                            </div>
+                            {priceConfig.isManual && (
+                                <div className="mt-2">
+                                    <Input id="pricePerChild" label="" type="number" step="0.01" value={String(formData.pricePerChild || '0')} onChange={handleChange} error={errors.pricePerChild} required />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {type && ['Evento', 'Scolastico', 'Campus'].includes(type) && (
+                        <Input id="pricePerChild" label="Prezzo per Bambino (€)" type="number" step="0.01" value={String(formData.pricePerChild || '0')} onChange={handleChange} error={errors.pricePerChild} required />
+                    )}
+
                     <div className="flex justify-end space-x-3 pt-4">
                         <button type="button" onClick={handleCancel} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button>
                         <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salva</button>
@@ -288,10 +448,40 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
 
     return (
     <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center space-y-4 sm:space-y-0">
-             <h2 className="text-xl font-semibold text-slate-700">Calendario Workshop</h2>
-            <div className="flex items-center space-x-2">
-                <label htmlFor="location-filter" className="text-sm font-medium text-slate-600">Luogo:</label>
+        <h2 className="text-xl font-semibold text-slate-700">Calendario Workshop</h2>
+        
+        <Card>
+            <CardContent className="space-y-4">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Input id="name" label="Cerca per nome" value={filters.name} onChange={handleFilterChange} placeholder="Nome workshop..."/>
+                    <Select id="dayOfWeek" label="Giorno della settimana" options={daysOfWeekOptions} value={filters.dayOfWeek} onChange={handleFilterChange} placeholder="Qualsiasi giorno" />
+                    <Input id="startTime" label="Orario di inizio (dalle)" type="time" value={filters.startTime} onChange={handleFilterChange}/>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     <div className="col-span-1 md:col-span-1">
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Prezzo</label>
+                        <div className="flex items-center space-x-2">
+                           <Input id="minPrice" label="" type="number" value={filters.minPrice} onChange={handleFilterChange} placeholder="Min €"/>
+                           <Input id="maxPrice" label="" type="number" value={filters.maxPrice} onChange={handleFilterChange} placeholder="Max €"/>
+                        </div>
+                    </div>
+                    <div className="col-span-1 md:col-span-2 flex items-end space-x-2">
+                        <button onClick={resetFilters} className="w-full md:w-auto px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Resetta Filtri</button>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+
+        <Card>
+            <div className="p-4 flex items-center justify-between border-b border-slate-200">
+                <button onClick={handlePrevMonth} className="p-2 rounded-full hover:bg-slate-100"><ChevronLeftIcon/></button>
+                <h3 className="text-lg font-semibold text-slate-800 capitalize">
+                    {currentDate.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}
+                </h3>
+                <button onClick={handleNextMonth} className="p-2 rounded-full hover:bg-slate-100"><ChevronRightIcon/></button>
+            </div>
+             <div className="px-4 py-2 border-b border-slate-200 flex items-center space-x-2">
+                <label htmlFor="location-filter" className="text-sm font-medium text-slate-600">Filtra per Luogo:</label>
                 <select 
                     id="location-filter"
                     className="block w-full sm:w-auto rounded-md border-slate-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm"
@@ -303,16 +493,6 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                         <option key={loc.id} value={loc.id}>{loc.name}</option>
                     ))}
                 </select>
-            </div>
-        </div>
-        
-        <Card>
-            <div className="p-4 flex items-center justify-between border-b border-slate-200">
-                <button onClick={handlePrevMonth} className="p-2 rounded-full hover:bg-slate-100"><ChevronLeftIcon/></button>
-                <h3 className="text-lg font-semibold text-slate-800 capitalize">
-                    {currentDate.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}
-                </h3>
-                <button onClick={handleNextMonth} className="p-2 rounded-full hover:bg-slate-100"><ChevronRightIcon/></button>
             </div>
             <div className="grid grid-cols-7 gap-px bg-slate-200 border-t border-slate-200">
                 {weekDays.map((day, i) => (
@@ -347,6 +527,10 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                                           onClick={(e) => { e.stopPropagation(); setModalState({ mode: 'view', workshop: ws }); }}
                                         >
                                             <p className="font-bold truncate">{ws.name}</p>
+                                             <div className="flex items-center space-x-1 mt-0.5 opacity-80">
+                                              <ClockIcon className="h-3 w-3" />
+                                              <span>{ws.startTime}</span>
+                                            </div>
                                             <div className="flex items-center space-x-1 mt-0.5 opacity-80">
                                               <UsersIcon className="h-3 w-3" />
                                               <span>{registrationsByWorkshop.get(ws.id) || 0} / {location?.capacity ?? 'N/A'}</span>

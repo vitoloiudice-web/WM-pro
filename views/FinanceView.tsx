@@ -68,7 +68,7 @@ interface FinanceListItemProps {
 }
 
 const FinanceListItem = ({onEdit, onDelete, onDownload, children}: FinanceListItemProps) => (
-    <li className="p-3 bg-slate-100 rounded-md text-sm text-slate-700 flex justify-between items-center">
+    <>
       <span className="truncate pr-4">{children}</span>
       <div className="flex items-center space-x-2 transition-opacity">
         {onDownload && (
@@ -83,7 +83,7 @@ const FinanceListItem = ({onEdit, onDelete, onDownload, children}: FinanceListIt
           <TrashIcon className="h-4 w-4"/>
         </button>
       </div>
-    </li>
+    </>
 );
 
 const FinanceView = ({
@@ -398,11 +398,9 @@ const FinanceView = ({
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if(validate()){
-            // Fix: Explicitly typed `dataToSave` to prevent incorrect type inference by TypeScript,
-            // which was causing errors when accessing properties like `costType`.
+        if (validate()) {
             const dataToSave: Record<string, any> = { ...formData, amount: parseFloat(formData.amount || '0') };
-            
+    
             if (activeTab === 'costs' && (dataToSave.costType || 'general') === 'fuel') {
                 const distance = parseFloat(dataToSave.distanceKm) || 0;
                 const costPerKm = parseFloat(dataToSave.fuelCostPerKm) || 0;
@@ -410,19 +408,22 @@ const FinanceView = ({
                 const locationName = locationMap[dataToSave.locationId]?.name || 'N/D';
                 dataToSave.description = `Carburante per ${locationName} (${distance}km A/R)`;
             }
-            
-            if(editingItem) {
-                const { id, ...updates } = { ...editingItem, ...dataToSave };
-                switch(activeTab) {
+    
+            if (editingItem) {
+                const id = editingItem.id;
+                const updates = { ...editingItem, ...dataToSave };
+                delete (updates as Partial<FinanceItem>).id;
+    
+                switch (activeTab) {
                     case 'payments': await updatePayment(id, updates); break;
                     case 'costs': await updateCost(id, updates); break;
                     case 'quotes': await updateQuote(id, updates); break;
                     case 'invoices': await updateInvoice(id, updates); break;
                 }
-                 alert(`Elemento "${activeTab.slice(0, -1)}" aggiornato!`);
+                alert(`Elemento "${activeTab.slice(0, -1)}" aggiornato!`);
             } else {
                 const baseItem = { id: `item_${Date.now()}`, ...dataToSave };
-                switch(activeTab) {
+                switch (activeTab) {
                     case 'payments': await addPayment(baseItem as Payment); break;
                     case 'costs': await addCost(baseItem as OperationalCost); break;
                     case 'quotes': await addQuote(baseItem as Quote); break;
@@ -626,7 +627,13 @@ const FinanceView = ({
                 {...listProps} 
             />;
             case 'quotes': return <List<Quote> items={quotes} renderItem={q => `${getQuoteClientDisplayName(q)}: ${q.description} - €${q.amount.toFixed(2)} (${q.status})`} onDownload={handleGeneratePdf} {...listProps} />;
-            case 'invoices': return <List<Invoice> items={invoices} renderItem={i => `Fattura a ${parentMap[i.parentId] ? getParentDisplayName(parentMap[i.parentId]) : 'Sconosciuto'} - €${i.amount.toFixed(2)} (${getPaymentMethodLabel(i.method)}, SDI: ${i.sdiNumber})`} {...listProps} />;
+            // FIX: The self-closing tag was causing a TypeScript inference error in some environments.
+            // Expanding it to a multi-line format makes the props explicit and resolves the issue.
+            case 'invoices': return <List<Invoice> 
+                items={invoices} 
+                renderItem={i => `Fattura a ${parentMap[i.parentId] ? getParentDisplayName(parentMap[i.parentId]) : 'Sconosciuto'} - €${i.amount.toFixed(2)} (${getPaymentMethodLabel(i.method)}, SDI: ${i.sdiNumber})`} 
+                {...listProps} 
+            />;
             default: return null;
         }
     }
@@ -733,14 +740,18 @@ const FinanceView = ({
 const List = <T extends {id: string}>({ items, renderItem, onEdit, onDelete, onDownload }: { items: T[], renderItem: (item: T) => React.ReactNode, onEdit: (item: T) => void, onDelete: (id: string) => void, onDownload?: (item: T) => void }) => (
     <ul className="space-y-3">
         {items.map((item) => (
-            <FinanceListItem 
+            <li 
                 key={item.id}
-                onEdit={() => onEdit(item)}
-                onDelete={() => onDelete(item.id)}
-                onDownload={onDownload ? () => onDownload(item) : undefined}
+                className="p-3 bg-slate-100 rounded-md text-sm text-slate-700 flex justify-between items-center"
             >
-                {renderItem(item)}
-            </FinanceListItem>
+                <FinanceListItem 
+                    onEdit={() => onEdit(item)}
+                    onDelete={() => onDelete(item.id)}
+                    {...(onDownload && { onDownload: () => onDownload(item) })}
+                >
+                    {renderItem(item)}
+                </FinanceListItem>
+            </li>
         ))}
         {items.length === 0 && <p className="text-center text-slate-500 py-4">Nessun elemento da visualizzare.</p>}
     </ul>

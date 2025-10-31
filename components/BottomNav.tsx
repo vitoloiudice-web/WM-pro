@@ -68,13 +68,15 @@ const BottomNav = ({ currentView, setCurrentView }: BottomNavProps) => {
         <h1 className="text-lg font-bold text-white tracking-wider">WM Pro</h1>
         <nav className="flex">
           {navItems.map((item) => (
-            <NavItem
-              key={item.view}
-              label={item.label}
-              icon={item.icon}
-              isActive={currentView === item.view}
-              onClick={() => setCurrentView(item.view)}
-            />
+            // FIX: Added React.Fragment with a key to resolve the TypeScript error about 'key' prop.
+            <React.Fragment key={item.view}>
+              <NavItem
+                label={item.label}
+                icon={item.icon}
+                isActive={currentView === item.view}
+                onClick={() => setCurrentView(item.view)}
+              />
+            </React.Fragment>
           ))}
         </nav>
       </div>

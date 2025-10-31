@@ -213,30 +213,40 @@ const LogisticsView = ({
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (validate()) {
-            const preparedData: Partial<Supplier & Location> = { ...formData };
-            if (activeTab === 'locations') {
-                preparedData.capacity = parseInt(formData.capacity, 10);
-                if (preparedData.supplierId === '') {
-                    preparedData.supplierId = undefined;
-                }
-            }
-
             if (editingItem) {
-                const { id, ...updates } = { ...editingItem, ...preparedData };
+                const id = editingItem.id;
+                const preparedData: Partial<Supplier & Location> = { ...formData };
+                if (activeTab === 'locations') {
+                    preparedData.capacity = parseInt(formData.capacity, 10);
+                    if (preparedData.supplierId === '') {
+                        preparedData.supplierId = undefined;
+                    }
+                }
+    
                 if (activeTab === 'suppliers') {
+                    const { id: itemId, ...updates } = { ...(editingItem as Supplier), ...preparedData };
                     await updateSupplier(id, updates);
                 } else {
+                    const { id: itemId, ...updates } = { ...(editingItem as Location), ...preparedData };
                     await updateLocation(id, updates);
                 }
                 alert(`${activeTab === 'suppliers' ? 'Fornitore' : 'Luogo'} aggiornato!`);
             } else {
-                 if (activeTab === 'suppliers') {
+                const preparedData: Partial<Supplier & Location> = { ...formData };
+                if (activeTab === 'locations') {
+                    preparedData.capacity = parseInt(formData.capacity, 10);
+                    if (preparedData.supplierId === '') {
+                        preparedData.supplierId = undefined;
+                    }
+                }
+    
+                if (activeTab === 'suppliers') {
                     const newItem = { id: `sup_${Date.now()}`, ...preparedData } as Supplier;
                     await addSupplier(newItem);
-                 } else {
+                } else {
                     const newItem = { id: `loc_${Date.now()}`, ...preparedData } as Location;
                     await addLocation(newItem);
-                 }
+                }
                 alert(`Nuovo ${activeTab === 'suppliers' ? 'Fornitore' : 'Luogo'} salvato!`);
             }
             closeModal();
@@ -302,25 +312,27 @@ const LogisticsView = ({
             case 'suppliers': return (
                 <div className="space-y-4">
                     {suppliers.map(supplier => (
-                        <SupplierCard 
-                            key={supplier.id} 
-                            supplier={supplier} 
-                            onEdit={() => handleEditClick(supplier)}
-                            onDelete={() => handleDeleteClick(supplier.id)}
-                        />
+                        <div key={supplier.id}>
+                            <SupplierCard 
+                                supplier={supplier} 
+                                onEdit={() => handleEditClick(supplier)}
+                                onDelete={() => handleDeleteClick(supplier.id)}
+                            />
+                        </div>
                     ))}
                 </div>
             );
             case 'locations': return (
                  <div className="space-y-4">
                     {locations.map(loc => (
-                        <LocationCard 
-                            key={loc.id} 
-                            location={loc}
-                            supplierName={loc.supplierId ? supplierMap[loc.supplierId]?.name : null}
-                            onEdit={() => handleEditClick(loc)}
-                            onDelete={() => handleDeleteClick(loc.id)}
-                        />
+                        <div key={loc.id}>
+                            <LocationCard 
+                                location={loc}
+                                supplierName={loc.supplierId ? supplierMap[loc.supplierId]?.name : null}
+                                onEdit={() => handleEditClick(loc)}
+                                onDelete={() => handleDeleteClick(loc.id)}
+                            />
+                        </div>
                     ))}
                 </div>
             )

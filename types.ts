@@ -61,13 +61,19 @@ export interface Location {
   supplierId?: string;
 }
 
+export type WorkshopType = 'OpenDay' | 'Evento' | '1 Mese' | '2 Mesi' | '3 Mesi' | 'Scolastico' | 'Campus';
+
 export interface Workshop {
   id: string;
   name: string;
+  type: WorkshopType;
   locationId: string;
   startDate: string; // YYYY-MM-DD
   endDate: string; // YYYY-MM-DD
   pricePerChild: number;
+  dayOfWeek: 'Lunedì' | 'Martedì' | 'Mercoledì' | 'Giovedì' | 'Venerdì' | 'Sabato' | 'Domenica';
+  startTime: string; // HH:MM
+  endTime: string; // HH:MM
 }
 
 export interface Registration {

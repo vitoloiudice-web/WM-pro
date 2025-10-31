@@ -59,6 +59,7 @@ const App = () => {
           registrations={registrations}
           locations={locations}
           addParent={addParent}
+          setCurrentView={setCurrentView}
         />;
       case 'workshops':
         return <WorkshopsView 
@@ -127,6 +128,7 @@ const App = () => {
           registrations={registrations}
           locations={locations}
           addParent={addParent}
+          setCurrentView={setCurrentView}
         />;
     }
   };

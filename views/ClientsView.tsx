@@ -34,7 +34,7 @@ const getParentDisplayName = (parent: Parent): string => {
     if (parent.clientType === 'persona giuridica') {
         return parent.companyName || 'Cliente Giuridico';
     }
-    return `${parent.name || ''} ${parent.surname || ''}`.trim();
+    return `${parent.surname || ''} ${parent.name || ''}`.trim();
 };
 
 
@@ -64,6 +64,11 @@ const ClientsView = ({
     payments, addPayment, 
     locations 
 }: ClientsViewProps) => {
+  // Filters State
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterWorkshopId, setFilterWorkshopId] = useState('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
   // Parent state
   const [editingClient, setEditingClient] = useState<Parent | null>(null);
   const [isNewClientModalOpen, setIsNewClientModalOpen] = useState(false);
@@ -100,6 +105,43 @@ const ClientsView = ({
       payments.forEach(p => map.set(`${p.parentId}_${p.workshopId}`, p));
       return map;
   }, [payments]);
+
+  const filteredAndSortedParents = useMemo(() => {
+    let filtered = [...parents];
+
+    if (searchTerm) {
+        const lowercasedFilter = searchTerm.toLowerCase();
+        filtered = filtered.filter(parent => {
+            const parentChildren = children.filter(c => c.parentId === parent.id);
+            const parentDisplayName = parent.clientType === 'persona giuridica' 
+                ? parent.companyName || '' 
+                : `${parent.name || ''} ${parent.surname || ''}`;
+            const parentMatch = parentDisplayName.toLowerCase().includes(lowercasedFilter) ||
+                                (parent.email && parent.email.toLowerCase().includes(lowercasedFilter));
+            const childMatch = parentChildren.some(c => c.name.toLowerCase().includes(lowercasedFilter));
+            return parentMatch || childMatch;
+        });
+    }
+
+    if (filterWorkshopId) {
+        const childrenInWorkshop = new Set(registrations.filter(r => r.workshopId === filterWorkshopId).map(r => r.childId));
+        filtered = filtered.filter(parent => {
+            const parentChildrenIds = children.filter(c => c.parentId === parent.id).map(c => c.id);
+            return parentChildrenIds.some(childId => childrenInWorkshop.has(childId));
+        });
+    }
+    
+    filtered.sort((a, b) => {
+        const nameA = getParentDisplayName(a).toLowerCase();
+        const nameB = getParentDisplayName(b).toLowerCase();
+        if (nameA < nameB) return sortOrder === 'asc' ? -1 : 1;
+        if (nameA > nameB) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    return filtered;
+  }, [parents, children, registrations, searchTerm, filterWorkshopId, sortOrder]);
+
 
   // Effects for modals
   useEffect(() => {
@@ -373,96 +415,137 @@ const ClientsView = ({
         </button>
       </div>
 
+       <Card>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              id="search"
+              label="Cerca cliente o figlio"
+              placeholder="Nome, cognome, ragione sociale..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <Select
+              id="filterWorkshop"
+              label="Filtra per workshop"
+              value={filterWorkshopId}
+              onChange={(e) => setFilterWorkshopId(e.target.value)}
+              options={workshops.map(ws => ({ value: ws.id, label: ws.name }))}
+              placeholder="Tutti i workshop"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Ordina per</label>
+            <div className="flex space-x-2">
+              <button 
+                onClick={() => setSortOrder('asc')} 
+                className={`px-3 py-1.5 text-sm rounded-md ${sortOrder === 'asc' ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-700'}`}
+              >
+                A-Z
+              </button>
+              <button 
+                onClick={() => setSortOrder('desc')}
+                className={`px-3 py-1.5 text-sm rounded-md ${sortOrder === 'desc' ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-700'}`}
+              >
+                Z-A
+              </button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="space-y-4">
-        {parents.map(parent => {
+        {filteredAndSortedParents.map(parent => {
           const parentChildren = children.filter(c => c.parentId === parent.id);
           const parentRegistrations = registrations.filter(r => parentChildren.some(c => c.id === r.childId));
           
           return (
-            <Card key={parent.id}>
-              <CardContent>
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center space-x-4">
-                    <div className="bg-slate-200 p-3 rounded-full"><UserCircleIcon className="text-slate-500 h-8 w-8"/></div>
-                    <div>
-                      <h4 className="font-bold text-lg text-slate-800">{getParentDisplayName(parent)}</h4>
-                      <p className="text-sm text-slate-500">{parent.email}</p>
-                      {parent.address && (
-                        <p className="text-sm text-slate-500 mt-1">{`${parent.address}, ${parent.zipCode} ${parent.city} (${parent.province})`}</p>
-                      )}
+            <div key={parent.id}>
+              <Card>
+                <CardContent>
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center space-x-4">
+                      <div className="bg-slate-200 p-3 rounded-full"><UserCircleIcon className="text-slate-500 h-8 w-8"/></div>
+                      <div>
+                        <h4 className="font-bold text-lg text-slate-800">{getParentDisplayName(parent)}</h4>
+                        <p className="text-sm text-slate-500">{parent.email}</p>
+                        {parent.address && (
+                          <p className="text-sm text-slate-500 mt-1">{`${parent.address}, ${parent.zipCode} ${parent.city} (${parent.province})`}</p>
+                        )}
+                      </div>
+                    </div>
+                     <div className="flex items-center space-x-2">
+                        <button onClick={() => setEditingClient(parent)} className="p-2 text-slate-500 hover:text-indigo-600 rounded-full hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="Modifica cliente"><PencilIcon className="h-5 w-5"/></button>
+                        <button onClick={() => setDeletingClientId(parent.id)} className="p-2 text-slate-500 hover:text-red-600 rounded-full hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500" aria-label="Elimina cliente"><TrashIcon className="h-5 w-5"/></button>
                     </div>
                   </div>
-                   <div className="flex items-center space-x-2">
-                      <button onClick={() => setEditingClient(parent)} className="p-2 text-slate-500 hover:text-indigo-600 rounded-full hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="Modifica cliente"><PencilIcon className="h-5 w-5"/></button>
-                      <button onClick={() => setDeletingClientId(parent.id)} className="p-2 text-slate-500 hover:text-red-600 rounded-full hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500" aria-label="Elimina cliente"><TrashIcon className="h-5 w-5"/></button>
-                  </div>
-                </div>
 
-                {/* Children section */}
-                <div className="mt-4 pt-4 border-t border-slate-200">
-                  <div className="flex justify-between items-center mb-2">
-                    <h5 className="font-semibold text-slate-700">Figli</h5>
-                    <button onClick={() => setChildModalState({ mode: 'new', parentId: parent.id })} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center space-x-1">
-                      <PlusIcon className="h-4 w-4" /><span>Aggiungi</span>
-                    </button>
-                  </div>
-                  {parentChildren.length > 0 ? (
-                    <ul className="space-y-2">
-                      {parentChildren.map(child => (
-                        <li key={child.id} className="flex justify-between items-center p-2 bg-slate-50 rounded-md">
-                          <div>
-                              <p className="font-medium text-slate-800">{child.name}</p>
-                              <p className="text-xs text-slate-500">Età: {calculateAge(child.birthDate)}</p>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                              <button onClick={() => setChildModalState({ mode: 'edit', child })} className="p-1 text-slate-500 hover:text-indigo-600"><PencilIcon className="h-4 w-4"/></button>
-                              <button onClick={() => setDeletingChildId(child.id)} className="p-1 text-slate-500 hover:text-red-600"><TrashIcon className="h-4 w-4"/></button>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : <p className="text-sm text-slate-500 italic">Nessun figlio registrato.</p>}
-                </div>
-
-                {/* Registrations section */}
-                <div className="mt-4 pt-4 border-t border-slate-200">
-                  <div className="flex justify-between items-center mb-2">
-                    <h5 className="font-semibold text-slate-700">Iscrizioni ai Workshop</h5>
-                    <button onClick={() => setRegistrationModalState({ parent })} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center space-x-1">
-                      <PlusIcon className="h-4 w-4" /><span>Iscrivi</span>
-                    </button>
-                  </div>
-                  {parentRegistrations.length > 0 ? (
-                    <ul className="space-y-2">
-                      {parentRegistrations.map(reg => {
-                        const workshop = workshopMap[reg.workshopId];
-                        const child = childMap[reg.childId];
-                        const payment = paymentMap.get(`${parent.id}_${reg.workshopId}`);
-                        return (
-                          <li key={reg.id} className="flex justify-between items-center p-2 bg-slate-50 rounded-md">
+                  {/* Children section */}
+                  <div className="mt-4 pt-4 border-t border-slate-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <h5 className="font-semibold text-slate-700">Figli</h5>
+                      <button onClick={() => setChildModalState({ mode: 'new', parentId: parent.id })} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center space-x-1">
+                        <PlusIcon className="h-4 w-4" /><span>Aggiungi</span>
+                      </button>
+                    </div>
+                    {parentChildren.length > 0 ? (
+                      <ul className="space-y-2">
+                        {parentChildren.map(child => (
+                          <li key={child.id} className="flex justify-between items-center p-2 bg-slate-50 rounded-md">
                             <div>
-                              <p className="font-medium text-slate-800">{workshop?.name || 'Workshop non trovato'}</p>
-                              <p className="text-xs text-slate-500">Bambino: {child?.name || 'N/D'}</p>
+                                <p className="font-medium text-slate-800">{child.name}</p>
+                                <p className="text-xs text-slate-500">Età: {calculateAge(child.birthDate)}</p>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              {payment ? (
-                                <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">Pagato</span>
-                              ) : (
-                                <button onClick={() => workshop && child && setPaymentModalState({ registration: reg, workshop, child, parent })} className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded-full hover:bg-blue-200">
-                                  Registra Pagamento
-                                </button>
-                              )}
-                              <button onClick={() => setDeletingRegistrationId(reg.id)} className="p-1 text-slate-500 hover:text-red-600"><TrashIcon className="h-4 w-4"/></button>
+                            <div className="flex items-center space-x-1">
+                                <button onClick={() => setChildModalState({ mode: 'edit', child })} className="p-1 text-slate-500 hover:text-indigo-600"><PencilIcon className="h-4 w-4"/></button>
+                                <button onClick={() => setDeletingChildId(child.id)} className="p-1 text-slate-500 hover:text-red-600"><TrashIcon className="h-4 w-4"/></button>
                             </div>
                           </li>
-                        );
-                      })}
-                    </ul>
-                  ) : <p className="text-sm text-slate-500 italic">Nessuna iscrizione attiva.</p>}
-                </div>
+                        ))}
+                      </ul>
+                    ) : <p className="text-sm text-slate-500 italic">Nessun figlio registrato.</p>}
+                  </div>
 
-              </CardContent>
-            </Card>
+                  {/* Registrations section */}
+                  <div className="mt-4 pt-4 border-t border-slate-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <h5 className="font-semibold text-slate-700">Iscrizioni ai Workshop</h5>
+                      <button onClick={() => setRegistrationModalState({ parent })} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center space-x-1">
+                        <PlusIcon className="h-4 w-4" /><span>Iscrivi</span>
+                      </button>
+                    </div>
+                    {parentRegistrations.length > 0 ? (
+                      <ul className="space-y-2">
+                        {parentRegistrations.map(reg => {
+                          const workshop = workshopMap[reg.workshopId];
+                          const child = childMap[reg.childId];
+                          const payment = paymentMap.get(`${parent.id}_${reg.workshopId}`);
+                          return (
+                            <li key={reg.id} className="flex justify-between items-center p-2 bg-slate-50 rounded-md">
+                              <div>
+                                <p className="font-medium text-slate-800">{workshop?.name || 'Workshop non trovato'}</p>
+                                <p className="text-xs text-slate-500">Bambino: {child?.name || 'N/D'}</p>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                {payment ? (
+                                  <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">Pagato</span>
+                                ) : (
+                                  <button onClick={() => workshop && child && setPaymentModalState({ registration: reg, workshop, child, parent })} className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded-full hover:bg-blue-200">
+                                    Registra Pagamento
+                                  </button>
+                                )}
+                                <button onClick={() => setDeletingRegistrationId(reg.id)} className="p-1 text-slate-500 hover:text-red-600"><TrashIcon className="h-4 w-4"/></button>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : <p className="text-sm text-slate-500 italic">Nessuna iscrizione attiva.</p>}
+                  </div>
+
+                </CardContent>
+              </Card>
+            </div>
           )
         })}
       </div>

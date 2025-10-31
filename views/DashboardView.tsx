@@ -4,7 +4,7 @@ import { ArrowUpRightIcon, UsersIcon, CurrencyDollarIcon, CalendarDaysIcon, Cog6
 import Modal from '../components/Modal.tsx';
 import Input from '../components/Input.tsx';
 import Select from '../components/Select.tsx';
-import type { Workshop, Parent, Payment, Registration, Location, CompanyProfile } from '../types.ts';
+import type { View, Workshop, Parent, Payment, Registration, Location, CompanyProfile } from '../types.ts';
 
 type ModalType = 'none' | 'newClient' | 'newWorkshop' | 'newPayment' | 'newCost' | 'settings';
 
@@ -18,13 +18,15 @@ interface DashboardViewProps {
   registrations: Registration[];
   locations: Location[];
   addParent: (parent: Parent) => Promise<void>;
+  setCurrentView: (view: View) => void;
 }
 
 const DashboardView = ({ 
     firestoreStatus,
     companyProfile, setCompanyProfile,
     workshops, parents, payments, registrations, locations,
-    addParent
+    addParent,
+    setCurrentView
 }: DashboardViewProps) => {
   const [activeModal, setActiveModal] = useState<ModalType>('none');
   const [formData, setFormData] = useState<Partial<Parent>>({ clientType: 'persona fisica' });
@@ -364,16 +366,19 @@ const DashboardView = ({
           title="Entrate Totali (Anno)" 
           value={`€${totalIncome.toFixed(2)}`} 
           icon={<CurrencyDollarIcon />} 
+          onClick={() => setCurrentView('finance')}
         />
         <StatCard 
           title="Clienti Attivi" 
           value={activeClients} 
           icon={<UsersIcon />} 
+          onClick={() => setCurrentView('clients')}
         />
         <StatCard 
           title="Workshop Futuri" 
           value={upcomingWorkshopsCount} 
           icon={<CalendarDaysIcon />} 
+          onClick={() => setCurrentView('workshops')}
         />
       </div>
 
@@ -427,8 +432,8 @@ const DashboardView = ({
   );
 };
 
-const StatCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode }> = ({ title, value, icon }) => (
-  <Card>
+const StatCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode; onClick?: () => void; }> = ({ title, value, icon, onClick }) => (
+  <Card onClick={onClick}>
     <CardContent>
       <div className="flex items-center space-x-4">
         <div className="flex-shrink-0 bg-indigo-100 p-3 rounded-full text-indigo-600">
