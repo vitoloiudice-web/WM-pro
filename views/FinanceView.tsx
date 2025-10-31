@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import Card, { CardContent } from '../components/Card.tsx';
 import { PlusIcon, PencilIcon, TrashIcon, DocumentArrowDownIcon } from '../components/icons/HeroIcons.tsx';
@@ -44,7 +43,13 @@ interface FinanceViewProps {
     suppliers: Supplier[];
 }
 
-const TabButton: React.FC<{ label: string; isActive: boolean; onClick: () => void; }> = ({ label, isActive, onClick }) => (
+interface TabButtonProps {
+    label: string;
+    isActive: boolean;
+    onClick: () => void;
+}
+
+const TabButton = ({ label, isActive, onClick }: TabButtonProps) => (
     <button
         onClick={onClick}
         className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
@@ -55,7 +60,14 @@ const TabButton: React.FC<{ label: string; isActive: boolean; onClick: () => voi
     </button>
 )
 
-const FinanceListItem: React.FC<{onEdit: () => void, onDelete: () => void, onDownload?: () => void, children: React.ReactNode}> = ({onEdit, onDelete, onDownload, children}) => (
+interface FinanceListItemProps {
+    onEdit: () => void;
+    onDelete: () => void;
+    onDownload?: () => void;
+    children: React.ReactNode;
+}
+
+const FinanceListItem = ({onEdit, onDelete, onDownload, children}: FinanceListItemProps) => (
     <li className="p-3 bg-slate-100 rounded-md text-sm text-slate-700 flex justify-between items-center">
       <span className="truncate pr-4">{children}</span>
       <div className="flex items-center space-x-2 transition-opacity">
@@ -74,14 +86,14 @@ const FinanceListItem: React.FC<{onEdit: () => void, onDelete: () => void, onDow
     </li>
 );
 
-const FinanceView: React.FC<FinanceViewProps> = ({
+const FinanceView = ({
     companyProfile,
     payments, addPayment, updatePayment, removePayment,
     costs, addCost, updateCost, removeCost,
     quotes, addQuote, updateQuote, removeQuote,
     invoices, addInvoice, updateInvoice, removeInvoice,
     parents, workshops, locations
-}) => {
+}: FinanceViewProps) => {
     const [activeTab, setActiveTab] = useState<FinanceTab>('payments');
     
     const [editingItem, setEditingItem] = useState<FinanceItem | null>(null);

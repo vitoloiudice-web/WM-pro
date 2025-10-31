@@ -7,11 +7,13 @@ interface SidebarProps {
   setCurrentView: (view: View) => void;
 }
 
-const NavItem: React.FC<{
+interface NavItemProps {
   item: NavItemConfig;
   isActive: boolean;
   onClick: () => void;
-}> = ({ item, isActive, onClick }) => (
+}
+
+const NavItem = ({ item, isActive, onClick }: NavItemProps) => (
   <li>
     <button
       onClick={onClick}
@@ -31,7 +33,7 @@ const NavItem: React.FC<{
   </li>
 );
 
-const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView }) => {
+const Sidebar = ({ currentView, setCurrentView }: SidebarProps) => {
   return (
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
       <div className="flex flex-col flex-grow bg-slate-800 pt-5 overflow-y-auto">

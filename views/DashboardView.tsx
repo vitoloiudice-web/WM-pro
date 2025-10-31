@@ -17,15 +17,18 @@ interface DashboardViewProps {
   payments: Payment[];
   registrations: Registration[];
   locations: Location[];
+  addParent: (parent: Parent) => Promise<void>;
 }
 
-const DashboardView: React.FC<DashboardViewProps> = ({ 
+const DashboardView = ({ 
     firestoreStatus,
     companyProfile, setCompanyProfile,
-    workshops, parents, payments, registrations, locations
-}) => {
+    workshops, parents, payments, registrations, locations,
+    addParent
+}: DashboardViewProps) => {
   const [activeModal, setActiveModal] = useState<ModalType>('none');
-  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [formData, setFormData] = useState<Partial<Parent>>({ clientType: 'persona fisica' });
+  const [genericFormData, setGenericFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   const [settingsFormData, setSettingsFormData] = useState<CompanyProfile>(companyProfile);
@@ -69,14 +72,17 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   // --- Modal Logic ---
   const openModal = (type: ModalType) => {
     setActiveModal(type);
-    setFormData({});
+    if (type === 'newClient') {
+      setFormData({ clientType: 'persona fisica' });
+    } else {
+      setGenericFormData({});
+    }
     setErrors({});
   };
 
-  const validate = () => {
+  const validate = (modalType: ModalType) => {
     const newErrors: Record<string, string> = {};
-    switch (activeModal) {
-      case 'newClient':
+    if (modalType === 'newClient') {
         const clientType = formData.clientType || 'persona fisica';
         if (clientType === 'persona giuridica') {
             if (!formData.companyName?.trim()) newErrors.companyName = 'La ragione sociale è obbligatoria.';
@@ -91,31 +97,46 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
           newErrors.email = 'Formato email non valido.';
         }
-        break;
-      case 'newWorkshop':
-        if (!formData['ws-name']?.trim()) newErrors['ws-name'] = 'Il nome del workshop è obbligatorio.';
-        if (!formData['ws-date']) newErrors['ws-date'] = 'La data di inizio è obbligatoria.';
-        if (!formData['ws-price'] || parseFloat(formData['ws-price']) <= 0) newErrors['ws-price'] = 'Il prezzo deve essere un numero positivo.';
-        break;
-      case 'newPayment':
-        if (!formData['pay-amount'] || parseFloat(formData['pay-amount']) <= 0) newErrors['pay-amount'] = "L'importo deve essere un numero positivo.";
-        if (!formData['pay-date']) newErrors['pay-date'] = 'La data di pagamento è obbligatoria.';
-        break;
-      case 'newCost':
-        if (!formData['cost-desc']?.trim()) newErrors['cost-desc'] = 'La descrizione è obbligatoria.';
-        if (!formData['cost-amount'] || parseFloat(formData['cost-amount']) <= 0) newErrors['cost-amount'] = "L'importo deve essere un numero positivo.";
-        break;
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validate()) {
-      console.log(`Saving from dashboard modal: ${activeModal}`, formData);
-      alert('Elemento salvato! (Simulazione - i dati reali si aggiornano nelle rispettive sezioni)');
-      setActiveModal('none');
+    if (activeModal === 'newClient') {
+      if (validate(activeModal)) {
+        const dataToSave: Partial<Parent> = { ...formData };
+        if (dataToSave.clientType === 'persona fisica') {
+            dataToSave.companyName = undefined;
+            dataToSave.vatNumber = undefined;
+        } else {
+            dataToSave.name = undefined;
+            dataToSave.surname = undefined;
+            dataToSave.taxCode = undefined;
+        }
+        const newParent = { 
+            id: `p_${Date.now()}`, 
+            ...dataToSave,
+            clientType: dataToSave.clientType || 'persona fisica',
+            email: dataToSave.email || '',
+            phone: dataToSave.phone || ''
+        } as Parent;
+
+        try {
+          await addParent(newParent);
+          alert('Nuovo cliente salvato con successo!');
+          setActiveModal('none');
+        } catch (error) {
+          console.error("Errore nel salvataggio del cliente:", error);
+          alert("Si è verificato un errore durante il salvataggio. Controlla la console per i dettagli.");
+        }
+      }
+    } else {
+        // Handle other modals (simulation)
+        console.log(`Saving from dashboard modal: ${activeModal}`, genericFormData);
+        alert('Azione completata! (Simulazione per workshop, pagamenti, etc.)');
+        setActiveModal('none');
     }
   };
 
@@ -127,7 +148,27 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   };
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value });
+    const { id, value } = e.target;
+    
+    setFormData((prev: Partial<Parent>) => {
+        const newState: Partial<Parent> = { ...prev, [id]: value };
+        
+        if (id === 'clientType') {
+            // When client type changes, preserve common fields but clear specific ones
+            if (value === 'persona fisica') {
+                newState.companyName = '';
+                newState.vatNumber = '';
+            } else {
+                newState.name = '';
+                newState.surname = '';
+                newState.taxCode = '';
+            }
+            // Reset errors to avoid showing irrelevant validation messages
+            setErrors({});
+        }
+        
+        return newState;
+    });
   }
   
   const handleSettingsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -192,11 +233,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 { value: 'persona giuridica', label: 'Persona Giuridica' }
               ]}
               value={clientType}
-              onChange={(e) => {
-                const newType = e.target.value;
-                setFormData({ clientType: newType }); // Reset form, keep only new type
-                setErrors({});
-              }}
+              onChange={handleChange}
               required
             />
             {clientType === 'persona giuridica' ? (
@@ -225,13 +262,14 @@ const DashboardView: React.FC<DashboardViewProps> = ({
           </form>
         );
         break;
+      // Other cases remain simulation for now
       case 'newWorkshop':
         title = 'Nuovo Workshop';
         content = (
            <form id={formId} onSubmit={handleSave} className="space-y-4" noValidate>
-            <Input id="ws-name" label="Nome Workshop" type="text" value={formData['ws-name'] || ''} onChange={handleChange} error={errors['ws-name']} required />
-            <Input id="ws-date" label="Data Inizio" type="date" value={formData['ws-date'] || ''} onChange={handleChange} error={errors['ws-date']} required />
-            <Input id="ws-price" label="Prezzo" type="number" step="0.01" value={formData['ws-price'] || ''} onChange={handleChange} error={errors['ws-price']} required />
+            <Input id="ws-name" label="Nome Workshop" type="text" onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGenericFormData(p => ({...p, 'ws-name': e.target.value}))} />
+            <Input id="ws-date" label="Data Inizio" type="date" onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGenericFormData(p => ({...p, 'ws-date': e.target.value}))} />
+            <Input id="ws-price" label="Prezzo" type="number" step="0.01" onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGenericFormData(p => ({...p, 'ws-price': e.target.value}))} />
             {commonButtons}
           </form>
         );
@@ -240,8 +278,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         title = 'Registra Pagamento';
         content = (
            <form id={formId} onSubmit={handleSave} className="space-y-4" noValidate>
-            <Input id="pay-amount" label="Importo" type="number" step="0.01" value={formData['pay-amount'] || ''} onChange={handleChange} error={errors['pay-amount']} required />
-            <Input id="pay-date" label="Data Pagamento" type="date" value={formData['pay-date'] || ''} onChange={handleChange} error={errors['pay-date']} required />
+            <Input id="pay-amount" label="Importo" type="number" step="0.01" onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGenericFormData(p => ({...p, 'pay-amount': e.target.value}))} />
+            <Input id="pay-date" label="Data Pagamento" type="date" onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGenericFormData(p => ({...p, 'pay-date': e.target.value}))} />
              {commonButtons}
           </form>
         );
@@ -250,8 +288,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         title = 'Aggiungi Costo';
         content = (
            <form id={formId} onSubmit={handleSave} className="space-y-4" noValidate>
-            <Input id="cost-desc" label="Descrizione" type="text" value={formData['cost-desc'] || ''} onChange={handleChange} error={errors['cost-desc']} required />
-            <Input id="cost-amount" label="Importo" type="number" step="0.01" value={formData['cost-amount'] || ''} onChange={handleChange} error={errors['cost-amount']} required />
+            <Input id="cost-desc" label="Descrizione" type="text" onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGenericFormData(p => ({...p, 'cost-desc': e.target.value}))} />
+            <Input id="cost-amount" label="Importo" type="number" step="0.01" onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGenericFormData(p => ({...p, 'cost-amount': e.target.value}))} />
             {commonButtons}
           </form>
         );
@@ -259,8 +297,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     }
     
     return (
-      // FIX: The expression `activeModal !== 'none'` is always true here due to the guard clause at the start of the function.
-      // Changed to `true` to resolve the TypeScript error.
       <Modal isOpen={true} onClose={() => setActiveModal('none')} title={title}>
         {content}
       </Modal>

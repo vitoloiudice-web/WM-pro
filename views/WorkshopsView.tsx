@@ -35,7 +35,13 @@ interface WorkshopsViewProps {
     parents: Parent[];
 }
 
-const DetailItem: React.FC<{icon: React.ReactNode; label: string; value: string | number}> = ({icon, label, value}) => (
+interface DetailItemProps {
+    icon: React.ReactNode;
+    label: string;
+    value: string | number;
+}
+
+const DetailItem = ({icon, label, value}: DetailItemProps) => (
     <div className="flex items-start space-x-3 text-slate-700">
         <span className="text-indigo-500 mt-1 h-5 w-5">{icon}</span>
         <div>
@@ -46,7 +52,7 @@ const DetailItem: React.FC<{icon: React.ReactNode; label: string; value: string 
 );
 
 
-const WorkshopsView: React.FC<WorkshopsViewProps> = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop, locations, registrations, children, parents }) => {
+const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop, locations, registrations, children, parents }: WorkshopsViewProps) => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedLocation, setSelectedLocation] = useState<string>('all');
     

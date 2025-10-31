@@ -7,12 +7,14 @@ interface BottomNavProps {
   setCurrentView: (view: View) => void;
 }
 
-const NavItem: React.FC<{
+interface NavItemProps {
   label: string;
   icon: React.ReactNode;
   isActive: boolean;
   onClick: () => void;
-}> = ({ label, icon, isActive, onClick }) => (
+}
+
+const NavItem = ({ label, icon, isActive, onClick }: NavItemProps) => (
   <button
     onClick={onClick}
     className={`relative flex flex-col items-center justify-center gap-1 px-2 py-2 transition-colors duration-200 ease-in-out
@@ -34,7 +36,7 @@ const NavItem: React.FC<{
   </button>
 );
 
-const BottomNav: React.FC<BottomNavProps> = ({ currentView, setCurrentView }) => {
+const BottomNav = ({ currentView, setCurrentView }: BottomNavProps) => {
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
 

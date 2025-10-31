@@ -56,14 +56,14 @@ interface ClientsViewProps {
   locations: Location[];
 }
 
-const ClientsView: React.FC<ClientsViewProps> = ({ 
+const ClientsView = ({ 
     parents, addParent, updateParent, removeParent,
     children, addChild, updateChild, removeChild,
     workshops, 
     registrations, addRegistration, removeRegistration,
     payments, addPayment, 
     locations 
-}) => {
+}: ClientsViewProps) => {
   // Parent state
   const [editingClient, setEditingClient] = useState<Parent | null>(null);
   const [isNewClientModalOpen, setIsNewClientModalOpen] = useState(false);
@@ -135,6 +135,27 @@ const ClientsView: React.FC<ClientsViewProps> = ({
   }, [paymentModalState])
 
   // --- Parent CRUD ---
+  const handleParentFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { id, value } = e.target;
+    setParentFormData(prev => {
+        const newState = { ...prev, [id]: value };
+        
+        if (id === 'clientType') {
+            if (value === 'persona fisica') {
+                newState.companyName = '';
+                newState.vatNumber = '';
+            } else {
+                newState.name = '';
+                newState.surname = '';
+                newState.taxCode = '';
+            }
+            setParentErrors({});
+        }
+        
+        return newState;
+    });
+  };
+
   const closeParentModal = () => {
     setEditingClient(null);
     setIsNewClientModalOpen(false);
@@ -369,167 +390,155 @@ const ClientsView: React.FC<ClientsViewProps> = ({
                       <button onClick={() => setDeletingClientId(parent.id)} className="p-2 text-slate-500 hover:text-red-600 rounded-full hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500" aria-label="Elimina cliente"><TrashIcon className="h-5 w-5"/></button>
                   </div>
                 </div>
-                
-                {parent.clientType === 'persona fisica' && (
-                  <div className="mt-4 border-t border-slate-200 pt-4">
-                    <h5 className="font-semibold text-sm text-slate-600 mb-2">Figli/e:</h5>
-                    <div className="space-y-2">
-                        {parentChildren.map(child => (
-                            <div key={child.id} className="flex items-center justify-between p-2 -m-2 rounded-md hover:bg-slate-100">
-                              <div className="flex items-center space-x-3 text-slate-700"><UserCircleIcon className="h-5 w-5 text-slate-400 flex-shrink-0"/><span>{child.name} ({calculateAge(child.birthDate)})</span></div>
-                              <div className="flex items-center space-x-1 transition-opacity">
-                                <button onClick={() => setChildModalState({mode: 'edit', child})} className="p-1 text-slate-500 hover:text-indigo-600 rounded-full hover:bg-slate-200" aria-label="Modifica figlio"><PencilIcon className="h-4 w-4"/></button>
-                                <button onClick={() => setDeletingChildId(child.id)} className="p-1 text-slate-500 hover:text-red-600 rounded-full hover:bg-slate-200" aria-label="Elimina figlio"><TrashIcon className="h-4 w-4"/></button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="mt-2"><button onClick={() => setChildModalState({mode:'new', parentId: parent.id})} className="text-indigo-600 hover:text-indigo-800 text-sm font-semibold flex items-center space-x-1"><PlusIcon className="h-4 w-4" /><span>Aggiungi Figlio/a</span></button></div>
-                  </div>
-                )}
-                
-                <div className="mt-4 border-t border-slate-200 pt-4">
-                   <h5 className="font-semibold text-sm text-slate-600 mb-2">Iscrizioni & Pagamenti:</h5>
-                   <div className="space-y-2">
-                     {parentRegistrations.map(reg => {
-                        const child = childMap[reg.childId];
-                        const workshop = workshopMap[reg.workshopId];
-                        const isPaid = paymentMap.has(`${parent.id}_${reg.workshopId}`);
-                        if(!child || !workshop) return null;
 
+                {/* Children section */}
+                <div className="mt-4 pt-4 border-t border-slate-200">
+                  <div className="flex justify-between items-center mb-2">
+                    <h5 className="font-semibold text-slate-700">Figli</h5>
+                    <button onClick={() => setChildModalState({ mode: 'new', parentId: parent.id })} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center space-x-1">
+                      <PlusIcon className="h-4 w-4" /><span>Aggiungi</span>
+                    </button>
+                  </div>
+                  {parentChildren.length > 0 ? (
+                    <ul className="space-y-2">
+                      {parentChildren.map(child => (
+                        <li key={child.id} className="flex justify-between items-center p-2 bg-slate-50 rounded-md">
+                          <div>
+                              <p className="font-medium text-slate-800">{child.name}</p>
+                              <p className="text-xs text-slate-500">Età: {calculateAge(child.birthDate)}</p>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                              <button onClick={() => setChildModalState({ mode: 'edit', child })} className="p-1 text-slate-500 hover:text-indigo-600"><PencilIcon className="h-4 w-4"/></button>
+                              <button onClick={() => setDeletingChildId(child.id)} className="p-1 text-slate-500 hover:text-red-600"><TrashIcon className="h-4 w-4"/></button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : <p className="text-sm text-slate-500 italic">Nessun figlio registrato.</p>}
+                </div>
+
+                {/* Registrations section */}
+                <div className="mt-4 pt-4 border-t border-slate-200">
+                  <div className="flex justify-between items-center mb-2">
+                    <h5 className="font-semibold text-slate-700">Iscrizioni ai Workshop</h5>
+                    <button onClick={() => setRegistrationModalState({ parent })} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center space-x-1">
+                      <PlusIcon className="h-4 w-4" /><span>Iscrivi</span>
+                    </button>
+                  </div>
+                  {parentRegistrations.length > 0 ? (
+                    <ul className="space-y-2">
+                      {parentRegistrations.map(reg => {
+                        const workshop = workshopMap[reg.workshopId];
+                        const child = childMap[reg.childId];
+                        const payment = paymentMap.get(`${parent.id}_${reg.workshopId}`);
                         return (
-                            <div key={reg.id} className="flex items-center justify-between p-2 -m-2 rounded-md hover:bg-slate-100">
-                               <div className="flex-grow">
-                                  <div className="flex items-center space-x-2">
-                                      <p className="font-medium text-slate-800">{child.name} - <span className="font-normal">{workshop.name}</span></p>
-                                      {isPaid 
-                                        ? <span className="text-xs font-semibold bg-green-100 text-green-800 px-2 py-1 rounded-full">Pagato</span>
-                                        : <span className="text-xs font-semibold bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Da Pagare</span>
-                                      }
-                                  </div>
-                                 <p className="text-xs text-slate-500">Data: {new Date(workshop.startDate).toLocaleDateString('it-IT', { timeZone: 'UTC' })}</p>
-                               </div>
-                               <div className="flex-shrink-0 flex items-center space-x-2">
-                                  <div className="flex items-center transition-opacity">
-                                    {!isPaid && <button onClick={() => setPaymentModalState({registration: reg, workshop, child, parent})} className="p-1 text-slate-500 hover:text-indigo-600 rounded-full hover:bg-slate-200" aria-label="Registra Pagamento"><CreditCardIcon className="h-4 w-4"/></button>}
-                                    <button onClick={() => setDeletingRegistrationId(reg.id)} className="p-1 text-slate-500 hover:text-red-600 rounded-full hover:bg-slate-200" aria-label="Elimina Iscrizione"><TrashIcon className="h-4 w-4"/></button>
-                                  </div>
-                               </div>
+                          <li key={reg.id} className="flex justify-between items-center p-2 bg-slate-50 rounded-md">
+                            <div>
+                              <p className="font-medium text-slate-800">{workshop?.name || 'Workshop non trovato'}</p>
+                              <p className="text-xs text-slate-500">Bambino: {child?.name || 'N/D'}</p>
                             </div>
-                        )
-                     })}
-                   </div>
-                   <div className="mt-2"><button onClick={() => setRegistrationModalState({ parent })} className="text-indigo-600 hover:text-indigo-800 text-sm font-semibold flex items-center space-x-1"><PlusIcon className="h-4 w-4" /><span>Aggiungi Iscrizione</span></button></div>
+                            <div className="flex items-center space-x-2">
+                              {payment ? (
+                                <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">Pagato</span>
+                              ) : (
+                                <button onClick={() => workshop && child && setPaymentModalState({ registration: reg, workshop, child, parent })} className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded-full hover:bg-blue-200">
+                                  Registra Pagamento
+                                </button>
+                              )}
+                              <button onClick={() => setDeletingRegistrationId(reg.id)} className="p-1 text-slate-500 hover:text-red-600"><TrashIcon className="h-4 w-4"/></button>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : <p className="text-sm text-slate-500 italic">Nessuna iscrizione attiva.</p>}
                 </div>
 
               </CardContent>
             </Card>
-          );
+          )
         })}
       </div>
-
+      
       {/* --- MODALS --- */}
-
-      {/* Parent Modal */}
-      <Modal isOpen={isParentModalOpen} onClose={closeParentModal} title={editingClient ? 'Modifica Cliente' : 'Aggiungi Nuovo Cliente'}>
-        <form onSubmit={handleSaveParent} className="space-y-4" noValidate>
-           <Select 
-            id="clientType"
-            label="Tipo Cliente"
-            options={[
-                { value: 'persona fisica', label: 'Persona Fisica' },
-                { value: 'persona giuridica', label: 'Persona Giuridica' }
-            ]}
-            value={parentFormData.clientType || 'persona fisica'}
-            onChange={e => {
-                const newType = e.target.value as 'persona fisica' | 'persona giuridica';
-                setParentFormData(prev => {
-                    const commonData = { ...prev, clientType: newType };
-                    // When switching, clear the fields that are no longer relevant for better UX
-                    if (newType === 'persona fisica') {
-                        commonData.companyName = '';
-                        commonData.vatNumber = '';
-                    } else {
-                        commonData.name = '';
-                        commonData.surname = '';
-                        commonData.taxCode = '';
-                    }
-                    return commonData;
-                });
-                setParentErrors({});
-            }}
-            required
-          />
-
-          {parentFormData.clientType === 'persona giuridica' ? (
+      <Modal isOpen={isParentModalOpen} onClose={closeParentModal} title={editingClient ? 'Modifica Cliente' : 'Nuovo Cliente'}>
+        <form id="parent-form" onSubmit={handleSaveParent} className="space-y-4" noValidate>
+            <Select id="clientType" label="Tipo Cliente" value={parentFormData.clientType || 'persona fisica'} onChange={handleParentFormChange} options={[{value: 'persona fisica', label: 'Persona Fisica'}, {value: 'persona giuridica', label: 'Persona Giuridica'}]} required />
+            {parentFormData.clientType === 'persona giuridica' ? (
               <>
-                  <Input id="companyName" label="Ragione Sociale" type="text" value={parentFormData.companyName || ''} onChange={e => setParentFormData(prev => ({...prev, companyName: e.target.value}))} error={parentErrors.companyName} required />
-                  <Input id="vatNumber" label="Partita IVA" type="text" value={parentFormData.vatNumber || ''} onChange={e => setParentFormData(prev => ({...prev, vatNumber: e.target.value}))} error={parentErrors.vatNumber} required />
+                <Input id="companyName" label="Ragione Sociale" type="text" value={parentFormData.companyName || ''} onChange={handleParentFormChange} error={parentErrors.companyName} required />
+                <Input id="vatNumber" label="Partita IVA" type="text" value={parentFormData.vatNumber || ''} onChange={handleParentFormChange} error={parentErrors.vatNumber} required />
               </>
-          ) : (
+            ) : (
               <>
-                  <Input id="name" label="Nome" type="text" value={parentFormData.name || ''} onChange={e => setParentFormData(prev => ({...prev, name: e.target.value}))} error={parentErrors.name} required />
-                  <Input id="surname" label="Cognome" type="text" value={parentFormData.surname || ''} onChange={e => setParentFormData(prev => ({...prev, surname: e.target.value}))} error={parentErrors.surname} required />
-                  <Input id="taxCode" label="Codice Fiscale" type="text" value={parentFormData.taxCode || ''} onChange={e => setParentFormData(prev => ({...prev, taxCode: e.target.value}))} error={parentErrors.taxCode} required />
+                <Input id="name" label="Nome" type="text" value={parentFormData.name || ''} onChange={handleParentFormChange} error={parentErrors.name} required />
+                <Input id="surname" label="Cognome" type="text" value={parentFormData.surname || ''} onChange={handleParentFormChange} error={parentErrors.surname} required />
+                <Input id="taxCode" label="Codice Fiscale" type="text" value={parentFormData.taxCode || ''} onChange={handleParentFormChange} error={parentErrors.taxCode} required />
               </>
-          )}
-
-          <Input id="email" label="Email" type="email" value={parentFormData.email || ''} onChange={e => setParentFormData(prev => ({...prev, email: e.target.value}))} error={parentErrors.email} required />
-          <Input id="phone" label="Telefono" type="tel" value={parentFormData.phone || ''} onChange={e => setParentFormData(prev => ({...prev, phone: e.target.value}))} error={parentErrors.phone} />
-          
-          <Input id="address" label="Indirizzo" type="text" value={parentFormData.address || ''} onChange={e => setParentFormData(prev => ({...prev, address: e.target.value}))} />
+            )}
+            <Input id="email" label="Email" type="email" value={parentFormData.email || ''} onChange={handleParentFormChange} error={parentErrors.email} required />
+            <Input id="phone" label="Telefono" type="tel" value={parentFormData.phone || ''} onChange={handleParentFormChange} />
+            <Input id="address" label="Indirizzo" type="text" value={parentFormData.address || ''} onChange={handleParentFormChange} />
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Input id="zipCode" label="CAP" type="text" value={parentFormData.zipCode || ''} onChange={e => setParentFormData(prev => ({...prev, zipCode: e.target.value}))} />
-                <Input id="city" label="Città" type="text" value={parentFormData.city || ''} onChange={e => setParentFormData(prev => ({...prev, city: e.target.value}))} />
-                <Input id="province" label="Provincia" type="text" value={parentFormData.province || ''} onChange={e => setParentFormData(prev => ({...prev, province: e.target.value}))} />
+                <Input id="zipCode" label="CAP" type="text" value={parentFormData.zipCode || ''} onChange={handleParentFormChange} />
+                <Input id="city" label="Città" type="text" value={parentFormData.city || ''} onChange={handleParentFormChange} />
+                <Input id="province" label="Provincia" type="text" value={parentFormData.province || ''} onChange={handleParentFormChange} />
             </div>
-
-          <div className="flex justify-end space-x-3 pt-4"><button type="button" onClick={closeParentModal} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button><button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salva</button></div>
+            <div className="flex justify-end space-x-3 pt-4">
+              <button type="button" onClick={closeParentModal} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button>
+              <button type="submit" form="parent-form" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salva</button>
+            </div>
         </form>
       </Modal>
-      <ConfirmModal isOpen={!!deletingClientId} onClose={() => setDeletingClientId(null)} onConfirm={handleConfirmDeleteClient} title="Conferma Eliminazione"><p>Sei sicuro di voler eliminare questo cliente? Saranno rimossi anche tutti i figli, le iscrizioni e i pagamenti collegati. L'azione è irreversibile.</p></ConfirmModal>
 
-      {/* Child Modal */}
-      <Modal isOpen={isChildModalOpen} onClose={closeChildModal} title={childModalState?.mode === 'edit' ? 'Modifica Dati Figlio' : 'Aggiungi Nuovo Figlio'}>
-        <form onSubmit={handleSaveChild} className="space-y-4" noValidate>
-            <Input id="name" label="Nome" type="text" value={childFormData.name} onChange={e => setChildFormData({...childFormData, name: e.target.value})} error={childErrors.name} required />
-            <div className="grid grid-cols-2 gap-4">
-                <Input id="ageYears" label="Età (Anni)" type="number" min="0" value={childFormData.ageYears} onChange={e => setChildFormData({...childFormData, ageYears: e.target.value})} error={childErrors.ageYears} />
-                <Input id="ageMonths" label="Età (Mesi)" type="number" min="0" max="11" value={childFormData.ageMonths} onChange={e => setChildFormData({...childFormData, ageMonths: e.target.value})} error={childErrors.ageMonths} />
-            </div>
-          <div className="flex justify-end space-x-3 pt-4"><button type="button" onClick={closeChildModal} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button><button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salva</button></div>
-        </form>
-      </Modal>
-      <ConfirmModal isOpen={!!deletingChildId} onClose={() => setDeletingChildId(null)} onConfirm={handleConfirmChildDelete} title="Conferma Eliminazione Figlio"><p>Sei sicuro di voler eliminare i dati di questo figlio? Saranno rimosse anche le eventuali iscrizioni ai workshop. L'azione è irreversibile.</p></ConfirmModal>
-
-      {/* Registration Modal */}
-      <Modal isOpen={!!registrationModalState} onClose={closeRegistrationModal} title={`Nuova Iscrizione per ${registrationModalState?.parent ? getParentDisplayName(registrationModalState.parent) : ''}`}>
-        {registrationModalState && (
-            <form onSubmit={handleSaveRegistration} className="space-y-4" noValidate>
-                <Select id="childId" label="Figlio/a" options={children.filter(c => c.parentId === registrationModalState.parent.id).map(c => ({value: c.id, label: `${c.name} (${getParentDisplayName(registrationModalState.parent)})`}))} placeholder="Seleziona un figlio" value={registrationFormData.childId || ''} onChange={e => setRegistrationFormData(prev => ({...prev, childId: e.target.value}))} error={registrationErrors.childId} required />
-                <Select id="workshopId" label="Workshop" options={workshops.filter(w => w.startDate >= todayStr).map(w => ({value: w.id, label: `${w.name} - ${new Date(w.startDate).toLocaleDateString('it-IT', { timeZone: 'UTC' })}`}))} placeholder="Seleziona un workshop" value={registrationFormData.workshopId || ''} onChange={e => setRegistrationFormData(prev => ({...prev, workshopId: e.target.value}))} error={registrationErrors.workshopId} required />
-                <div className="flex justify-end space-x-3 pt-4"><button type="button" onClick={closeRegistrationModal} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button><button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salva Iscrizione</button></div>
-            </form>
-        )}
-      </Modal>
-       <ConfirmModal isOpen={!!deletingRegistrationId} onClose={() => setDeletingRegistrationId(null)} onConfirm={handleConfirmRegistrationDelete} title="Conferma Eliminazione Iscrizione"><p>Sei sicuro di voler eliminare questa iscrizione? Il pagamento associato (se presente) non sarà eliminato. L'azione è irreversibile.</p></ConfirmModal>
-       
-      {/* Payment Modal */}
-      <Modal isOpen={!!paymentModalState} onClose={closePaymentModal} title={`Registra Pagamento`}>
-          {paymentModalState && (
-             <form onSubmit={handleSavePayment} className="space-y-4" noValidate>
-                <div>
-                  <p className="text-sm text-slate-600">Stai registrando un pagamento per:</p>
-                  <p className="font-semibold text-slate-800">{paymentModalState.child.name} - {paymentModalState.workshop.name}</p>
-                </div>
-                 <Input id="amount" label="Importo" type="number" step="0.01" value={paymentFormData.amount || ''} onChange={e => setPaymentFormData({...paymentFormData, amount: parseFloat(e.target.value)})} error={paymentErrors.amount} required />
-                 <Select id="method" label="Metodo di Pagamento" options={[{value:'cash', label: 'Contanti'}, {value:'transfer', label:'Bonifico'}, {value:'card', label:'Carta'}]} value={paymentFormData.method || ''} onChange={e => setPaymentFormData({...paymentFormData, method: e.target.value as PaymentMethod})} error={paymentErrors.method} required />
-                 <Input id="paymentDate" label="Data Pagamento" type="date" value={paymentFormData.paymentDate || ''} onChange={e => setPaymentFormData({...paymentFormData, paymentDate: e.target.value})} error={paymentErrors.paymentDate} required />
-                 <div className="flex justify-end space-x-3 pt-4"><button type="button" onClick={closePaymentModal} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button><button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salva Pagamento</button></div>
-             </form>
-          )}
+      <Modal isOpen={isChildModalOpen} onClose={closeChildModal} title={childModalState?.mode === 'edit' ? 'Modifica Figlio' : 'Nuovo Figlio'}>
+          <form id="child-form" onSubmit={handleSaveChild} className="space-y-4" noValidate>
+              <Input id="name" label="Nome" type="text" value={childFormData.name} onChange={e => setChildFormData({...childFormData, name: e.target.value})} error={childErrors.name} required />
+              <div className="grid grid-cols-2 gap-4">
+                  <Input id="ageYears" label="Anni" type="number" value={childFormData.ageYears} onChange={e => setChildFormData({...childFormData, ageYears: e.target.value})} error={childErrors.ageYears} />
+                  <Input id="ageMonths" label="Mesi" type="number" value={childFormData.ageMonths} onChange={e => setChildFormData({...childFormData, ageMonths: e.target.value})} />
+              </div>
+               <div className="flex justify-end space-x-3 pt-4">
+                  <button type="button" onClick={closeChildModal} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button>
+                  <button type="submit" form="child-form" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salva</button>
+              </div>
+          </form>
       </Modal>
 
+      <Modal isOpen={!!registrationModalState} onClose={closeRegistrationModal} title="Nuova Iscrizione">
+          <form id="registration-form" onSubmit={handleSaveRegistration} className="space-y-4" noValidate>
+              <Select id="childId" label="Figlio da Iscrivere" value={registrationFormData.childId || ''} onChange={e => setRegistrationFormData({...registrationFormData, childId: e.target.value})} options={(children.filter(c => c.parentId === registrationModalState?.parent.id) || []).map(c => ({value: c.id, label: c.name}))} error={registrationErrors.childId} required placeholder="Seleziona un figlio" />
+              <Select id="workshopId" label="Workshop" value={registrationFormData.workshopId || ''} onChange={e => setRegistrationFormData({...registrationFormData, workshopId: e.target.value})} options={workshops.filter(ws => new Date(ws.startDate) >= new Date(todayStr)).map(ws => ({value: ws.id, label: `${ws.name} (${new Date(ws.startDate).toLocaleDateString('it-IT')})`}))} error={registrationErrors.workshopId} required placeholder="Seleziona un workshop" />
+               <div className="flex justify-end space-x-3 pt-4">
+                  <button type="button" onClick={closeRegistrationModal} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button>
+                  <button type="submit" form="registration-form" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salva Iscrizione</button>
+              </div>
+          </form>
+      </Modal>
+      
+       <Modal isOpen={!!paymentModalState} onClose={closePaymentModal} title={`Pagamento per ${paymentModalState?.child.name}`}>
+          <form id="payment-form" onSubmit={handleSavePayment} className="space-y-4" noValidate>
+              <Input id="amount" label="Importo" type="number" step="0.01" value={paymentFormData.amount || ''} onChange={e => setPaymentFormData({...paymentFormData, amount: parseFloat(e.target.value)})} error={paymentErrors.amount} required />
+              <Input id="paymentDate" label="Data Pagamento" type="date" value={paymentFormData.paymentDate || ''} onChange={e => setPaymentFormData({...paymentFormData, paymentDate: e.target.value})} error={paymentErrors.paymentDate} required />
+              <Select id="method" label="Metodo" options={[{value: 'cash', label: 'Contanti'}, {value: 'transfer', label: 'Bonifico'}, {value: 'card', label: 'Carta'}]} value={paymentFormData.method || ''} onChange={e => setPaymentFormData({...paymentFormData, method: e.target.value as PaymentMethod})} error={paymentErrors.method} required/>
+               <div className="flex justify-end space-x-3 pt-4">
+                  <button type="button" onClick={closePaymentModal} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button>
+                  <button type="submit" form="payment-form" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Registra Pagamento</button>
+              </div>
+          </form>
+      </Modal>
+
+      <ConfirmModal isOpen={!!deletingClientId} onClose={() => setDeletingClientId(null)} onConfirm={handleConfirmDeleteClient} title="Conferma Eliminazione Cliente">
+        <p>Sei sicuro di voler eliminare questo cliente? Verranno eliminati anche tutti i figli e le iscrizioni associate. I dati di pagamento verranno conservati.</p>
+      </ConfirmModal>
+
+      <ConfirmModal isOpen={!!deletingChildId} onClose={() => setDeletingChildId(null)} onConfirm={handleConfirmChildDelete} title="Conferma Eliminazione Figlio">
+        <p>Sei sicuro di voler eliminare questo figlio? Verranno rimosse anche tutte le iscrizioni associate.</p>
+      </ConfirmModal>
+
+      <ConfirmModal isOpen={!!deletingRegistrationId} onClose={() => setDeletingRegistrationId(null)} onConfirm={handleConfirmRegistrationDelete} title="Conferma Eliminazione Iscrizione">
+        <p>Sei sicuro di voler eliminare questa iscrizione?</p>
+      </ConfirmModal>
     </div>
   );
 };

@@ -11,7 +11,7 @@ import ReportsView from './views/ReportsView.tsx';
 import type { View, Workshop, Parent, Child, Payment, OperationalCost, Quote, Invoice, Supplier, Location, Registration, CompanyProfile } from './types.ts';
 import { MOCK_COMPANY_PROFILE } from './data.ts';
 
-const App: React.FC = () => {
+const App = () => {
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [firestoreStatus, setFirestoreStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
 
@@ -58,6 +58,7 @@ const App: React.FC = () => {
           payments={payments} 
           registrations={registrations}
           locations={locations}
+          addParent={addParent}
         />;
       case 'workshops':
         return <WorkshopsView 
@@ -125,6 +126,7 @@ const App: React.FC = () => {
           payments={payments} 
           registrations={registrations}
           locations={locations}
+          addParent={addParent}
         />;
     }
   };

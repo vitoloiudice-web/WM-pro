@@ -59,7 +59,7 @@ const generateChartColors = (numColors: number) => {
 };
 
 
-const KPICard: React.FC<{ title: string; value: string; icon: React.ReactNode }> = ({ title, value, icon }) => (
+const KPICard = ({ title, value, icon }: { title: string; value: string; icon: React.ReactNode }) => (
   <Card>
     <CardContent>
       <div className="flex items-center space-x-4">
@@ -75,7 +75,7 @@ const KPICard: React.FC<{ title: string; value: string; icon: React.ReactNode }>
   </Card>
 );
 
-const ChartCard: React.FC<{ title: string; chartRef: React.RefObject<HTMLCanvasElement>, chartHeight?: string }> = ({ title, chartRef, chartHeight = 'h-64' }) => (
+const ChartCard = ({ title, chartRef, chartHeight = 'h-64' }: { title: string; chartRef: React.RefObject<HTMLCanvasElement>, chartHeight?: string }) => (
     <Card>
         <CardHeader>{title}</CardHeader>
         <CardContent>
@@ -86,7 +86,7 @@ const ChartCard: React.FC<{ title: string; chartRef: React.RefObject<HTMLCanvasE
     </Card>
 );
 
-const ReportsView: React.FC<ReportsViewProps> = ({ payments, costs, workshops, suppliers, locations, registrations, quotes }) => {
+const ReportsView = ({ payments, costs, workshops, suppliers, locations, registrations, quotes }: ReportsViewProps) => {
     const [reportType, setReportType] = useState<ReportType>('');
     const [reportData, setReportData] = useState<ReportData | null>(null);
     
@@ -108,9 +108,8 @@ const ReportsView: React.FC<ReportsViewProps> = ({ payments, costs, workshops, s
     const locationMap = useMemo(() => locations.reduce((acc, l) => ({ ...acc, [l.id]: l }), {} as Record<string, Location>), [locations]);
     
     const overviewData = useMemo(() => {
-        const totalRevenue = payments.reduce((sum: number, p) => sum + p.amount, 0);
-        const totalCosts = costs.reduce((sum: number, c) => sum + c.amount, 0);
-        // Fix: Removed redundant Number() casting which was causing issues.
+        const totalRevenue = payments.reduce((sum, p) => sum + p.amount, 0);
+        const totalCosts = costs.reduce((sum, c) => sum + c.amount, 0);
         const netProfit = totalRevenue - totalCosts;
         const totalParticipants = new Set(registrations.map(r => r.childId)).size;
 
@@ -120,27 +119,23 @@ const ReportsView: React.FC<ReportsViewProps> = ({ payments, costs, workshops, s
         const conversionRate = decidedQuotesCount > 0 ? (approvedQuotesCount / decidedQuotesCount) * 100 : 0;
         
         // Data for charts
-        const revenueByMethod = payments.reduce((acc: Record<string, number>, p) => {
+        const revenueByMethod = payments.reduce((acc, p) => {
             const methodLabel = p.method === 'cash' ? 'Contanti' : p.method === 'transfer' ? 'Bonifico' : 'Carta';
-            // Fix: Removed redundant Number() casting. `p.amount` is already a number.
             acc[methodLabel] = (acc[methodLabel] || 0) + p.amount;
             return acc;
         }, {} as Record<string, number>);
 
-        const costsByMethod = costs.reduce((acc: Record<string, number>, c) => {
+        const costsByMethod = costs.reduce((acc, c) => {
             if (c.method) {
                 const methodLabel = c.method === 'cash' ? 'Contanti' : c.method === 'transfer' ? 'Bonifico' : 'Carta';
-                // Fix: Removed redundant Number() casting. `c.amount` is already a number.
                 acc[methodLabel] = (acc[methodLabel] || 0) + c.amount;
             } else {
-                // Fix: Removed redundant Number() casting.
                 acc['Non specificato'] = (acc['Non specificato'] || 0) + c.amount;
             }
             return acc;
         }, {} as Record<string, number>);
 
-        const revenueByWs = payments.reduce((acc: Record<string, number>, p) => {
-            // Fix: Removed redundant Number() casting. `p.amount` is already a number.
+        const revenueByWs = payments.reduce((acc, p) => {
             acc[p.workshopId] = (acc[p.workshopId] || 0) + p.amount;
             return acc;
         }, {} as Record<string, number>);
@@ -149,8 +144,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ payments, costs, workshops, s
             .slice(0, 5)
             .map(([wsId, amount]) => ({ name: workshopMap[wsId]?.name || `ID: ${wsId}`, value: amount }));
 
-        const participantsByWs = registrations.reduce((acc: Record<string, number>, reg) => {
-            // Fix: Removed redundant Number() casting.
+        const participantsByWs = registrations.reduce((acc, reg) => {
             acc[reg.workshopId] = (acc[reg.workshopId] || 0) + 1;
             return acc;
         }, {} as Record<string, number>);
@@ -159,10 +153,9 @@ const ReportsView: React.FC<ReportsViewProps> = ({ payments, costs, workshops, s
             .slice(0, 5)
             .map(([wsId, count]) => ({ name: workshopMap[wsId]?.name || `ID: ${wsId}`, value: count }));
 
-        const workshopLocationMap = workshops.reduce((acc: Record<string, string>, ws) => ({ ...acc, [ws.id]: ws.locationId }), {} as Record<string, string>);
-        const participantsByLoc = registrations.reduce((acc: Record<string, number>, reg) => {
+        const workshopLocationMap = workshops.reduce((acc, ws) => ({ ...acc, [ws.id]: ws.locationId }), {} as Record<string, string>);
+        const participantsByLoc = registrations.reduce((acc, reg) => {
             const locId = workshopLocationMap[reg.workshopId];
-            // Fix: Removed redundant Number() casting.
             if (locId) acc[locId] = (acc[locId] || 0) + 1;
             return acc;
         }, {} as Record<string, number>);
@@ -171,9 +164,8 @@ const ReportsView: React.FC<ReportsViewProps> = ({ payments, costs, workshops, s
             .slice(0, 5)
             .map(([locId, count]) => ({ name: locationMap[locId]?.name || `ID: ${locId}`, value: count }));
 
-        const costsBySup = costs.reduce((acc: Record<string, number>, cost) => {
+        const costsBySup = costs.reduce((acc, cost) => {
             const supId = cost.supplierId || 'none';
-            // Fix: Removed redundant Number() casting.
             acc[supId] = (acc[supId] || 0) + cost.amount;
             return acc;
         }, {} as Record<string, number>);
@@ -449,31 +441,25 @@ const ReportsView: React.FC<ReportsViewProps> = ({ payments, costs, workshops, s
         let data: ReportData | null = null;
         switch (reportType) {
             case 'revenue-total': {
-                const revenueByMethod = payments.reduce((acc: Record<PaymentMethod, number>, p) => {
-                    // Fix: Removed redundant Number() casting.
+                const revenueByMethod = payments.reduce((acc, p) => {
                     acc[p.method] = (acc[p.method] || 0) + p.amount;
                     return acc;
                 }, {} as Record<PaymentMethod, number>);
-                const totalRevenue = Object.values(revenueByMethod).reduce((sum: number, amount: number) => sum + amount, 0);
+                const totalRevenue = Object.values(revenueByMethod).reduce((sum, amount) => sum + amount, 0);
                 
                 data = {
                     headers: ['Metodo di Pagamento', 'Ricavi Totali'],
                     rows: [
-                        // Fix: Removed redundant Number() casting.
                         { 'Metodo di Pagamento': 'Contanti', 'Ricavi Totali': `€${(revenueByMethod['cash'] || 0).toFixed(2)}` },
-                        // Fix: Removed redundant Number() casting.
                         { 'Metodo di Pagamento': 'Bonifico', 'Ricavi Totali': `€${(revenueByMethod['transfer'] || 0).toFixed(2)}` },
-                        // Fix: Removed redundant Number() casting.
                         { 'Metodo di Pagamento': 'Carta', 'Ricavi Totali': `€${(revenueByMethod['card'] || 0).toFixed(2)}` },
-                        // Fix: Removed redundant Number() casting.
                         { 'Metodo di Pagamento': 'Totale', 'Ricavi Totali': `€${totalRevenue.toFixed(2)}` }
                     ]
                 };
                 break;
             }
             case 'revenue-by-workshop': {
-                const revenueByWs = payments.reduce((acc: Record<string, number>, p) => {
-                    // Fix: Removed redundant Number() casting.
+                const revenueByWs = payments.reduce((acc, p) => {
                     acc[p.workshopId] = (acc[p.workshopId] || 0) + p.amount;
                     return acc;
                 }, {} as Record<string, number>);
@@ -481,40 +467,33 @@ const ReportsView: React.FC<ReportsViewProps> = ({ payments, costs, workshops, s
                     headers: ['Workshop', 'Ricavi'],
                     rows: Object.entries(revenueByWs).map(([wsId, amount]) => ({
                         'Workshop': workshopMap[wsId]?.name || `ID: ${wsId}`,
-                        // Fix: Removed redundant Number() casting.
                         'Ricavi': `€${amount.toFixed(2)}`
                     }))
                 };
                 break;
             }
              case 'costs-total': {
-                const costsByMethod = costs.reduce((acc: Record<string, number>, c) => {
+                const costsByMethod = costs.reduce((acc, c) => {
                     const method = c.method || 'cash'; // Default to cash if not specified
-                    // Fix: Removed redundant Number() casting.
                     acc[method] = (acc[method] || 0) + c.amount;
                     return acc;
                 }, {} as Record<string, number>);
-                const totalCosts = Object.values(costsByMethod).reduce((sum: number, amount: number) => sum + amount, 0);
+                const totalCosts = Object.values(costsByMethod).reduce((sum, amount) => sum + amount, 0);
 
                 data = {
                     headers: ['Metodo di Pagamento', 'Costi Totali'],
                     rows: [
-                        // Fix: Removed redundant Number() casting.
                         { 'Metodo di Pagamento': 'Contanti', 'Costi Totali': `€${(costsByMethod['cash'] || 0).toFixed(2)}` },
-                        // Fix: Removed redundant Number() casting.
                         { 'Metodo di Pagamento': 'Bonifico', 'Costi Totali': `€${(costsByMethod['transfer'] || 0).toFixed(2)}` },
-                        // Fix: Removed redundant Number() casting.
                         { 'Metodo di Pagamento': 'Carta', 'Costi Totali': `€${(costsByMethod['card'] || 0).toFixed(2)}` },
-                        // Fix: Removed redundant Number() casting.
                         { 'Metodo di Pagamento': 'Totale', 'Costi Totali': `€${totalCosts.toFixed(2)}` }
                     ]
                 };
                 break;
             }
             case 'costs-by-supplier': {
-                const costsBySup = costs.reduce((acc: Record<string, number>, cost) => {
+                const costsBySup = costs.reduce((acc, cost) => {
                     const supId = cost.supplierId || 'none';
-                    // Fix: Removed redundant Number() casting.
                     acc[supId] = (acc[supId] || 0) + cost.amount;
                     return acc;
                 }, {} as Record<string, number>);
@@ -522,25 +501,20 @@ const ReportsView: React.FC<ReportsViewProps> = ({ payments, costs, workshops, s
                     headers: ['Fornitore', 'Costo Totale'],
                     rows: Object.entries(costsBySup).map(([supId, amount]) => ({
                         'Fornitore': supplierMap[supId]?.name || 'Senza fornitore',
-                        // Fix: Removed redundant Number() casting.
                         'Costo Totale': `€${amount.toFixed(2)}`
                     }))
                 };
                 break;
             }
             case 'net-profit': {
-                const totalRevenueForProfit = payments.reduce((sum: number, p) => sum + p.amount, 0);
-                const totalCostsForProfit = costs.reduce((sum: number, c) => sum + c.amount, 0);
-                // Fix: Removed redundant Number() casting.
+                const totalRevenueForProfit = payments.reduce((sum, p) => sum + p.amount, 0);
+                const totalCostsForProfit = costs.reduce((sum, c) => sum + c.amount, 0);
                 const netProfit = totalRevenueForProfit - totalCostsForProfit;
                 data = {
                     headers: ['Descrizione', 'Valore'],
                     rows: [
-                        // Fix: Removed redundant Number() casting.
                         { 'Descrizione': 'Ricavi Totali', 'Valore': `€${totalRevenueForProfit.toFixed(2)}` },
-                        // Fix: Removed redundant Number() casting.
                         { 'Descrizione': 'Costi Operativi Totali', 'Valore': `€${totalCostsForProfit.toFixed(2)}` },
-                        // Fix: Removed redundant Number() casting.
                         { 'Descrizione': 'Utile Netto (EBITDA)', 'Valore': `€${netProfit.toFixed(2)}` }
                     ]
                 };
@@ -559,9 +533,9 @@ const ReportsView: React.FC<ReportsViewProps> = ({ payments, costs, workshops, s
                 const decidedQuotes = approvedCount + rejectedCount;
                 const conversionRate = decidedQuotes > 0 ? (approvedCount / decidedQuotes) * 100 : 0;
                 
-                const approvedValue = approvedQuotes.reduce((sum: number, q) => sum + q.amount, 0);
-                const rejectedValue = rejectedQuotes.reduce((sum: number, q) => sum + q.amount, 0);
-                const sentValue = sentQuotes.reduce((sum: number, q) => sum + q.amount, 0);
+                const approvedValue = approvedQuotes.reduce((sum, q) => sum + q.amount, 0);
+                const rejectedValue = rejectedQuotes.reduce((sum, q) => sum + q.amount, 0);
+                const sentValue = sentQuotes.reduce((sum, q) => sum + q.amount, 0);
 
                 data = {
                     headers: ['Metrica', 'Valore'],
@@ -579,8 +553,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ payments, costs, workshops, s
                 break;
             }
             case 'participants-by-workshop': {
-                const participantsByWs = registrations.reduce((acc: Record<string, number>, reg) => {
-                    // Fix: Removed redundant Number() casting.
+                const participantsByWs = registrations.reduce((acc, reg) => {
                     acc[reg.workshopId] = (acc[reg.workshopId] || 0) + 1;
                     return acc;
                 }, {} as Record<string, number>);
@@ -594,8 +567,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ payments, costs, workshops, s
                 break;
             }
              case 'workshops-by-location': {
-                const workshopsByLoc = workshops.reduce((acc: Record<string, number>, ws) => {
-                    // Fix: Removed redundant Number() casting.
+                const workshopsByLoc = workshops.reduce((acc, ws) => {
                     acc[ws.locationId] = (acc[ws.locationId] || 0) + 1;
                     return acc;
                 }, {} as Record<string, number>);
@@ -609,15 +581,14 @@ const ReportsView: React.FC<ReportsViewProps> = ({ payments, costs, workshops, s
                 break;
             }
             case 'participants-by-location': {
-                const workshopLocationMap = workshops.reduce((acc: Record<string, string>, ws) => {
+                const workshopLocationMap = workshops.reduce((acc, ws) => {
                     acc[ws.id] = ws.locationId;
                     return acc;
                 }, {} as Record<string, string>);
 
-                const participantsByLoc = registrations.reduce((acc: Record<string, number>, reg) => {
+                const participantsByLoc = registrations.reduce((acc, reg) => {
                     const locId = workshopLocationMap[reg.workshopId];
                     if (locId) {
-                        // Fix: Removed redundant Number() casting.
                         acc[locId] = (acc[locId] || 0) + 1;
                     }
                     return acc;
@@ -634,7 +605,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ payments, costs, workshops, s
             }
             
             case 'revenue-per-participant': {
-                const totalRevenueForAvg = payments.reduce((sum: number, p) => sum + p.amount, 0);
+                const totalRevenueForAvg = payments.reduce((sum, p) => sum + p.amount, 0);
                 const totalParticipants = registrations.length;
                 const avgRevenue = totalParticipants > 0 ? totalRevenueForAvg / totalParticipants : 0;
                 data = {
@@ -645,9 +616,8 @@ const ReportsView: React.FC<ReportsViewProps> = ({ payments, costs, workshops, s
             }
 
             case 'costs-per-workshop': {
-                const costsByWs = costs.reduce((acc: Record<string, number>, cost) => {
+                const costsByWs = costs.reduce((acc, cost) => {
                     if (cost.workshopId) {
-                        // Fix: Removed redundant Number() casting.
                         acc[cost.workshopId] = (acc[cost.workshopId] || 0) + cost.amount;
                     }
                     return acc;
@@ -657,29 +627,25 @@ const ReportsView: React.FC<ReportsViewProps> = ({ payments, costs, workshops, s
                     headers: ['Workshop', 'Costo Totale'],
                     rows: Object.entries(costsByWs).map(([wsId, amount]) => ({
                         'Workshop': workshopMap[wsId]?.name || `ID: ${wsId}`,
-                        // Fix: Removed redundant Number() casting.
                         'Costo Totale': `€${amount.toFixed(2)}`
                     }))
                 };
                 break;
             }
             case 'profit-per-participant-stats': {
-                const revenueByWsForProfit = payments.reduce((acc: Record<string, number>, p) => {
-                    // Fix: Removed redundant Number() casting.
+                const revenueByWsForProfit = payments.reduce((acc, p) => {
                     acc[p.workshopId] = (acc[p.workshopId] || 0) + p.amount;
                     return acc;
                 }, {} as Record<string, number>);
     
-                const costsByWsForProfit = costs.reduce((acc: Record<string, number>, cost) => {
+                const costsByWsForProfit = costs.reduce((acc, cost) => {
                     if (cost.workshopId) {
-                        // Fix: Removed redundant Number() casting.
                         acc[cost.workshopId] = (acc[cost.workshopId] || 0) + cost.amount;
                     }
                     return acc;
                 }, {} as Record<string, number>);
     
-                const participantsByWsForProfit = registrations.reduce((acc: Record<string, number>, reg) => {
-                    // Fix: Removed redundant Number() casting.
+                const participantsByWsForProfit = registrations.reduce((acc, reg) => {
                     acc[reg.workshopId] = (acc[reg.workshopId] || 0) + 1;
                     return acc;
                 }, {} as Record<string, number>);
@@ -700,7 +666,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ payments, costs, workshops, s
                 if (profitsPerParticipant.length > 0) {
                     const minProfit = Math.min(...profitsPerParticipant);
                     const maxProfit = Math.max(...profitsPerParticipant);
-                    const avgProfit = profitsPerParticipant.reduce((sum: number, p) => sum + p, 0) / profitsPerParticipant.length;
+                    const avgProfit = profitsPerParticipant.reduce((sum, p) => sum + p, 0) / profitsPerParticipant.length;
                     
                     data = {
                         headers: ['Statistica', 'Valore'],

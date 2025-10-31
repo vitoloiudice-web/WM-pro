@@ -20,7 +20,13 @@ interface LogisticsViewProps {
     removeLocation: (id: string) => Promise<void>;
 }
 
-const TabButton: React.FC<{ label: string; isActive: boolean; onClick: () => void; }> = ({ label, isActive, onClick }) => (
+interface TabButtonProps {
+    label: string;
+    isActive: boolean;
+    onClick: () => void;
+}
+
+const TabButton = ({ label, isActive, onClick }: TabButtonProps) => (
     <button
         onClick={onClick}
         className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
@@ -31,7 +37,13 @@ const TabButton: React.FC<{ label: string; isActive: boolean; onClick: () => voi
     </button>
 )
 
-const DetailRow: React.FC<{icon: React.ReactNode, label: string, value: string | number}> = ({ icon, label, value }) => (
+interface DetailRowProps {
+    icon: React.ReactNode;
+    label: string;
+    value: string | number;
+}
+
+const DetailRow = ({ icon, label, value }: DetailRowProps) => (
     <div className="flex items-start space-x-3 text-slate-700 text-sm">
         <span className="text-slate-400 mt-0.5">{icon}</span>
         <div>
@@ -41,7 +53,13 @@ const DetailRow: React.FC<{icon: React.ReactNode, label: string, value: string |
     </div>
 );
 
-const SupplierCard: React.FC<{supplier: Supplier, onEdit: () => void, onDelete: () => void}> = ({supplier, onEdit, onDelete}) => (
+interface SupplierCardProps {
+    supplier: Supplier;
+    onEdit: () => void;
+    onDelete: () => void;
+}
+
+const SupplierCard = ({supplier, onEdit, onDelete}: SupplierCardProps) => (
     <Card>
         <CardContent>
              <div className="flex justify-between items-start">
@@ -75,7 +93,14 @@ const SupplierCard: React.FC<{supplier: Supplier, onEdit: () => void, onDelete: 
     </Card>
 );
 
-const LocationCard: React.FC<{location: Location, supplierName: string | null, onEdit: () => void, onDelete: () => void}> = ({location, supplierName, onEdit, onDelete}) => {
+interface LocationCardProps {
+    location: Location;
+    supplierName: string | null;
+    onEdit: () => void;
+    onDelete: () => void;
+}
+
+const LocationCard = ({location, supplierName, onEdit, onDelete}: LocationCardProps) => {
     return (
      <Card>
         <CardContent>
@@ -112,10 +137,10 @@ const LocationCard: React.FC<{location: Location, supplierName: string | null, o
 };
 
 
-const LogisticsView: React.FC<LogisticsViewProps> = ({ 
+const LogisticsView = ({ 
     suppliers, addSupplier, updateSupplier, removeSupplier,
     locations, addLocation, updateLocation, removeLocation
-}) => {
+}: LogisticsViewProps) => {
     const [activeTab, setActiveTab] = useState<LogisticsTab>('suppliers');
     
     const [editingItem, setEditingItem] = useState<Supplier | Location | null>(null);

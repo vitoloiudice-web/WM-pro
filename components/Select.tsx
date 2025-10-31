@@ -13,7 +13,7 @@ type SelectProps = React.ComponentPropsWithoutRef<'select'> & {
   placeholder?: string;
 };
 
-const Select: React.FC<SelectProps> = ({ label, id, options, error, placeholder, ...props }) => {
+const Select = ({ label, id, options, error, placeholder, ...props }: SelectProps) => {
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-slate-700 mb-1">

@@ -6,7 +6,7 @@ type InputProps = React.ComponentPropsWithoutRef<'input'> & {
   error?: string;
 };
 
-const Input: React.FC<InputProps> = ({ label, id, error, ...props }) => {
+const Input = ({ label, id, error, ...props }: InputProps) => {
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-slate-700 mb-1">
