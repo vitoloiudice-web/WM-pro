@@ -443,7 +443,7 @@ const ClientsView: React.FC<ClientsViewProps> = ({
             value={parentFormData.clientType || 'persona fisica'}
             onChange={e => {
                 const newType = e.target.value as 'persona fisica' | 'persona giuridica';
-                setParentFormData(prev => ({...prev, clientType: newType}));
+                setParentFormData({ clientType: newType });
                 setParentErrors({});
             }}
             required
@@ -451,25 +451,25 @@ const ClientsView: React.FC<ClientsViewProps> = ({
 
           {parentFormData.clientType === 'persona giuridica' ? (
               <>
-                  <Input id="companyName" label="Ragione Sociale" type="text" value={parentFormData.companyName || ''} onChange={e => setParentFormData({...parentFormData, companyName: e.target.value})} error={parentErrors.companyName} required />
-                  <Input id="vatNumber" label="Partita IVA" type="text" value={parentFormData.vatNumber || ''} onChange={e => setParentFormData({...parentFormData, vatNumber: e.target.value})} error={parentErrors.vatNumber} required />
+                  <Input id="companyName" label="Ragione Sociale" type="text" value={parentFormData.companyName || ''} onChange={e => setParentFormData(prev => ({...prev, companyName: e.target.value}))} error={parentErrors.companyName} required />
+                  <Input id="vatNumber" label="Partita IVA" type="text" value={parentFormData.vatNumber || ''} onChange={e => setParentFormData(prev => ({...prev, vatNumber: e.target.value}))} error={parentErrors.vatNumber} required />
               </>
           ) : (
               <>
-                  <Input id="name" label="Nome" type="text" value={parentFormData.name || ''} onChange={e => setParentFormData({...parentFormData, name: e.target.value})} error={parentErrors.name} required />
-                  <Input id="surname" label="Cognome" type="text" value={parentFormData.surname || ''} onChange={e => setParentFormData({...parentFormData, surname: e.target.value})} error={parentErrors.surname} required />
-                  <Input id="taxCode" label="Codice Fiscale" type="text" value={parentFormData.taxCode || ''} onChange={e => setParentFormData({...parentFormData, taxCode: e.target.value})} error={parentErrors.taxCode} required />
+                  <Input id="name" label="Nome" type="text" value={parentFormData.name || ''} onChange={e => setParentFormData(prev => ({...prev, name: e.target.value}))} error={parentErrors.name} required />
+                  <Input id="surname" label="Cognome" type="text" value={parentFormData.surname || ''} onChange={e => setParentFormData(prev => ({...prev, surname: e.target.value}))} error={parentErrors.surname} required />
+                  <Input id="taxCode" label="Codice Fiscale" type="text" value={parentFormData.taxCode || ''} onChange={e => setParentFormData(prev => ({...prev, taxCode: e.target.value}))} error={parentErrors.taxCode} required />
               </>
           )}
 
-          <Input id="email" label="Email" type="email" value={parentFormData.email || ''} onChange={e => setParentFormData({...parentFormData, email: e.target.value})} error={parentErrors.email} required />
-          <Input id="phone" label="Telefono" type="tel" value={parentFormData.phone || ''} onChange={e => setParentFormData({...parentFormData, phone: e.target.value})} error={parentErrors.phone} />
+          <Input id="email" label="Email" type="email" value={parentFormData.email || ''} onChange={e => setParentFormData(prev => ({...prev, email: e.target.value}))} error={parentErrors.email} required />
+          <Input id="phone" label="Telefono" type="tel" value={parentFormData.phone || ''} onChange={e => setParentFormData(prev => ({...prev, phone: e.target.value}))} error={parentErrors.phone} />
           
-          <Input id="address" label="Indirizzo" type="text" value={parentFormData.address || ''} onChange={e => setParentFormData({...parentFormData, address: e.target.value})} />
+          <Input id="address" label="Indirizzo" type="text" value={parentFormData.address || ''} onChange={e => setParentFormData(prev => ({...prev, address: e.target.value}))} />
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Input id="zipCode" label="CAP" type="text" value={parentFormData.zipCode || ''} onChange={e => setParentFormData({...parentFormData, zipCode: e.target.value})} />
-                <Input id="city" label="Città" type="text" value={parentFormData.city || ''} onChange={e => setParentFormData({...parentFormData, city: e.target.value})} />
-                <Input id="province" label="Provincia" type="text" value={parentFormData.province || ''} onChange={e => setParentFormData({...parentFormData, province: e.target.value})} />
+                <Input id="zipCode" label="CAP" type="text" value={parentFormData.zipCode || ''} onChange={e => setParentFormData(prev => ({...prev, zipCode: e.target.value}))} />
+                <Input id="city" label="Città" type="text" value={parentFormData.city || ''} onChange={e => setParentFormData(prev => ({...prev, city: e.target.value}))} />
+                <Input id="province" label="Provincia" type="text" value={parentFormData.province || ''} onChange={e => setParentFormData(prev => ({...prev, province: e.target.value}))} />
             </div>
 
           <div className="flex justify-end space-x-3 pt-4"><button type="button" onClick={closeParentModal} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button><button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salva</button></div>
