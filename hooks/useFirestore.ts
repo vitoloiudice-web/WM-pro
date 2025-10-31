@@ -7,7 +7,12 @@ import {
     setDoc, 
     updateDoc, 
     deleteDoc, 
-    DocumentData 
+    DocumentData,
+    QuerySnapshot,
+    DocumentSnapshot,
+    FirestoreError,
+    QueryDocumentSnapshot,
+    DocumentReference
 } from 'firebase/firestore';
 
 // Interface for documents that must have an ID
@@ -29,14 +34,14 @@ export const useCollection = <T extends FirestoreDocument>(collectionName: strin
         setLoading(true);
         const colRef = collection(db, collectionName);
 
-        const unsubscribe = onSnapshot(colRef, (snapshot) => {
+        const unsubscribe = onSnapshot(colRef, (snapshot: QuerySnapshot<DocumentData>) => {
             const results: T[] = [];
-            snapshot.docs.forEach(doc => {
+            snapshot.docs.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
                 results.push({ ...doc.data(), id: doc.id } as T);
             });
             setData(results);
             setLoading(false);
-        }, (err) => {
+        }, (err: FirestoreError) => {
             console.error(`Error fetching collection ${collectionName}:`, err);
             setError(err);
             setLoading(false);
@@ -56,7 +61,10 @@ export const useCollection = <T extends FirestoreDocument>(collectionName: strin
 
     const updateItem = async (id: string, updates: Partial<T>) => {
         try {
-            await updateDoc(doc(db, collectionName, id), updates);
+            // FIX: The DocumentReference is cast to the specific generic type `T` to ensure
+            // type compatibility with the `updates` object passed to `updateDoc`.
+            const docRef = doc(db, collectionName, id) as DocumentReference<T>;
+            await updateDoc(docRef, updates);
         } catch (e) {
             console.error("Error updating document: ", e);
             throw e;
@@ -101,7 +109,7 @@ export const useDocument = <T extends DocumentData>(collectionName: string, docI
         setLoading(true);
         const docRef = doc(db, collectionName, docId);
 
-        const unsubscribe = onSnapshot(docRef, (docSnap) => {
+        const unsubscribe = onSnapshot(docRef, (docSnap: DocumentSnapshot<DocumentData>) => {
             if (docSnap.exists()) {
                 setData(docSnap.data() as T);
             } else {
@@ -111,7 +119,7 @@ export const useDocument = <T extends DocumentData>(collectionName: string, docI
                 setDoc(docRef, initialData).catch(err => console.error("Could not create initial document", err));
             }
             setLoading(false);
-        }, (err) => {
+        }, (err: FirestoreError) => {
             console.error(`Error fetching document ${docId}:`, err);
             setError(err);
             setLoading(false);

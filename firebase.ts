@@ -1,4 +1,3 @@
-// Fix: Add a triple-slash directive to include Vite's client types for `import.meta.env`.
 /// <reference types="vite/client" />
 
 import { initializeApp } from 'firebase/app';
