@@ -106,21 +106,30 @@ const DashboardView = ({
     e.preventDefault();
     if (activeModal === 'newClient') {
       if (validate(activeModal)) {
-        const dataToSave: Partial<Parent> = { ...formData };
+        // --- FIX START: Build a clean object for Firestore ---
+        const dataToSave: any = {
+          clientType: formData.clientType || 'persona fisica',
+          email: formData.email,
+          phone: formData.phone || '',
+          address: formData.address || '',
+          zipCode: formData.zipCode || '',
+          city: formData.city || '',
+          province: formData.province || '',
+        };
+
         if (dataToSave.clientType === 'persona fisica') {
-            dataToSave.companyName = undefined;
-            dataToSave.vatNumber = undefined;
+          dataToSave.name = formData.name;
+          dataToSave.surname = formData.surname;
+          dataToSave.taxCode = formData.taxCode;
         } else {
-            dataToSave.name = undefined;
-            dataToSave.surname = undefined;
-            dataToSave.taxCode = undefined;
+          dataToSave.companyName = formData.companyName;
+          dataToSave.vatNumber = formData.vatNumber;
         }
+        // --- FIX END ---
+
         const newParent = { 
             id: `p_${Date.now()}`, 
-            ...dataToSave,
-            clientType: dataToSave.clientType || 'persona fisica',
-            email: dataToSave.email || '',
-            phone: dataToSave.phone || ''
+            ...dataToSave
         } as Parent;
 
         try {

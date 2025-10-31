@@ -182,16 +182,26 @@ const ClientsView = ({
     setParentErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      const dataToSave: Partial<Parent> = { ...parentFormData };
-      // Clear unused fields based on type
+      // --- FIX START: Build a clean object for Firestore ---
+      const dataToSave: any = {
+        clientType: parentFormData.clientType || 'persona fisica',
+        email: parentFormData.email,
+        phone: parentFormData.phone || '',
+        address: parentFormData.address || '',
+        zipCode: parentFormData.zipCode || '',
+        city: parentFormData.city || '',
+        province: parentFormData.province || '',
+      };
+
       if (dataToSave.clientType === 'persona fisica') {
-          dataToSave.companyName = undefined;
-          dataToSave.vatNumber = undefined;
+        dataToSave.name = parentFormData.name;
+        dataToSave.surname = parentFormData.surname;
+        dataToSave.taxCode = parentFormData.taxCode;
       } else {
-          dataToSave.name = undefined;
-          dataToSave.surname = undefined;
-          dataToSave.taxCode = undefined;
+        dataToSave.companyName = parentFormData.companyName;
+        dataToSave.vatNumber = parentFormData.vatNumber;
       }
+      // --- FIX END ---
 
       if (editingClient) {
         await updateParent(editingClient.id, dataToSave);
@@ -200,9 +210,6 @@ const ClientsView = ({
         const newParent = { 
             id: `p_${Date.now()}`, 
             ...dataToSave,
-            clientType: dataToSave.clientType || 'persona fisica',
-            email: dataToSave.email || '',
-            phone: dataToSave.phone || ''
         } as Parent;
         await addParent(newParent);
         alert('Nuovo cliente salvato!');

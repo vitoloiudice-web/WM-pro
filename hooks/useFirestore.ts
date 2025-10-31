@@ -61,9 +61,10 @@ export const useCollection = <T extends FirestoreDocument>(collectionName: strin
 
     const updateItem = async (id: string, updates: Partial<T>) => {
         try {
-            // FIX: The DocumentReference is cast to the specific generic type `T` to ensure
-            // type compatibility with the `updates` object passed to `updateDoc`.
-            const docRef = doc(db, collectionName, id) as DocumentReference<T>;
+            // FIX: The previous cast `as DocumentReference<T>` caused a type mismatch with the `updateDoc` function.
+            // Removing the cast allows TypeScript to correctly use the overload that accepts a
+            // generic `DocumentReference<DocumentData>`, which is compatible with `updates` of type `Partial<T>`.
+            const docRef = doc(db, collectionName, id);
             await updateDoc(docRef, updates);
         } catch (e) {
             console.error("Error updating document: ", e);
