@@ -187,7 +187,7 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
     }, [formData.type, priceConfig.isManual]);
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        setFilters(prev => ({ ...prev, [e.target.id]: e.target.value }));
+        setFilters(prev => ({ ...prev, [e.currentTarget.id]: e.currentTarget.value }));
     };
     
     const resetFilters = () => {
