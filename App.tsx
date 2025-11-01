@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 // FIX: Updated imports to remove file extensions
 import { useCollection, useDocument } from './hooks/useFirestore';
@@ -16,9 +15,19 @@ const CampaignsView = lazy(() => import('./views/CampaignsView'));
 const SettingsView = lazy(() => import('./views/SettingsView'));
 
 
-import type { View, Workshop, Parent, Child, Payment, OperationalCost, Quote, Invoice, Supplier, Location, Registration, CompanyProfile, Campaign, ReminderSetting, ErrorLog } from './types';
+import type { View, Workshop, Parent, Child, Payment, OperationalCost, Quote, Invoice, Supplier, Location, Registration, CompanyProfile, Campaign, ReminderSetting, ErrorLog, CustomInscriptionType } from './types';
 import { MOCK_COMPANY_PROFILE } from './data';
 import { DocumentReference } from 'firebase/firestore';
+
+const DEFAULT_INSCRIPTION_TYPES: Omit<CustomInscriptionType, 'id'>[] = [
+    { name: 'Open Day', durationMonths: 0, price: 15, numberOfTimeslots: 1 },
+    { name: 'Evento', durationMonths: 0, price: 20, numberOfTimeslots: 1 },
+    { name: '1 Mese', durationMonths: 1, price: 60, numberOfTimeslots: 4 },
+    { name: '2 Mesi', durationMonths: 2, price: 110, numberOfTimeslots: 8 },
+    { name: '3 Mesi', durationMonths: 3, price: 165, numberOfTimeslots: 12 },
+    { name: 'Scolastico', durationMonths: 9, price: 450, numberOfTimeslots: 0 }, // 0 indicates manual setting
+    { name: 'Campus', durationMonths: 0, price: 150, numberOfTimeslots: 0 }, // 0 indicates manual setting
+];
 
 const App = () => {
   const [currentView, setCurrentView] = useState<View>('dashboard');
@@ -39,11 +48,25 @@ const App = () => {
   const { data: locations, loading: loLoading, error: loError, addItem: addLocation, updateItem: updateLocation, removeItem: removeLocation } = useCollection<Location>('locations');
   const { data: campaigns, loading: caLoading, error: caError, addItem: addCampaign, updateItem: updateCampaign, removeItem: removeCampaign } = useCollection<Campaign>('campaigns');
   const { data: reminderSettings, loading: rsLoading, error: rsError, addItem: addReminderSetting, updateItem: updateReminderSetting, removeItem: removeReminderSetting } = useCollection<ReminderSetting>('reminderSettings');
+  const { data: inscriptionTypes, loading: itLoading, error: itError, addItem: addInscriptionType, updateItem: updateInscriptionType, removeItem: removeInscriptionType } = useCollection<CustomInscriptionType>('inscriptionTypes');
 
+  // Seed initial inscription types if the collection is empty
+  useEffect(() => {
+    if (!itLoading && inscriptionTypes.length === 0 && itError === null) {
+      console.log("Inscription types collection is empty. Seeding with default data...");
+      DEFAULT_INSCRIPTION_TYPES.forEach(async (type) => {
+        try {
+          await addInscriptionType(type);
+        } catch (e) {
+          console.error("Failed to seed inscription type:", type.name, e);
+        }
+      });
+    }
+  }, [itLoading, inscriptionTypes, itError, addInscriptionType]);
 
   useEffect(() => {
-    const allLoadings = [cpLoading, wsLoading, paLoading, chLoading, rgLoading, pyLoading, coLoading, quLoading, inLoading, suLoading, loLoading, caLoading, rsLoading];
-    const anyErrors = [cpError, wsError, paError, chError, rgError, pyError, coError, quError, inError, suError, loError, caError, rsError].some(e => e);
+    const allLoadings = [cpLoading, wsLoading, paLoading, chLoading, rgLoading, pyLoading, coLoading, quLoading, inLoading, suLoading, loLoading, caLoading, rsLoading, itLoading];
+    const anyErrors = [cpError, wsError, paError, chError, rgError, pyError, coError, quError, inError, suError, loError, caError, rsError, itError].some(e => e);
 
     if (anyErrors) {
       setFirestoreStatus('error');
@@ -55,7 +78,7 @@ const App = () => {
   }, [
     cpLoading, cpError, wsLoading, wsError, paLoading, paError, chLoading, chError, 
     rgLoading, rgError, pyLoading, pyError, coLoading, coError, quLoading, quError, 
-    inLoading, inError, suLoading, suError, loLoading, loError, caLoading, caError, rsLoading, rsError
+    inLoading, inError, suLoading, suError, loLoading, loError, caLoading, caError, rsLoading, rsError, itLoading, itError
   ]);
 
     // FIX: Redefined functions to properly handle Promise<DocumentReference>
@@ -122,6 +145,7 @@ const App = () => {
             addPayment={handleAddPayment}
             updatePayment={updatePayment}
             locations={locations}
+            inscriptionTypes={inscriptionTypes}
         />;
       case 'finance':
         return <FinanceView 
@@ -171,6 +195,10 @@ const App = () => {
           errorLogs={errorLogs}
           parents={parents}
           campaigns={campaigns}
+          inscriptionTypes={inscriptionTypes}
+          addInscriptionType={addInscriptionType}
+          updateInscriptionType={updateInscriptionType}
+          removeInscriptionType={removeInscriptionType}
          />;
       default:
         return <DashboardView 
@@ -189,7 +217,7 @@ const App = () => {
   const LoadingFallback = () => (
     <div className="flex justify-center items-center h-64">
         <div className="flex items-center space-x-2 text-testo-input/80">
-            <svg className="animate-spin h-5 w-5 text-testo-input/70" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin h-5 w-5 text-testo-input/70" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>

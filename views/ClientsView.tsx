@@ -4,9 +4,8 @@ import Modal from '../components/Modal';
 import { ConfirmModal } from '../components/ConfirmModal';
 import Input from '../components/Input';
 import Select from '../components/Select';
-import { PlusIcon, PencilIcon, TrashIcon, UserCircleIcon, CakeIcon } from '../components/icons/HeroIcons';
-import type { Parent, Child, Workshop, Registration, Payment, Location, InscriptionType } from '../types';
-import { INSCRIPTION_TYPES } from '../types';
+import { PlusIcon, PencilIcon, TrashIcon, UserCircleIcon, CakeIcon, StarIcon } from '../components/icons/HeroIcons';
+import type { Parent, Child, Workshop, Registration, Payment, Location, InscriptionType, CustomInscriptionType } from '../types';
 
 interface ClientsViewProps {
     parents: Parent[];
@@ -25,11 +24,22 @@ interface ClientsViewProps {
     addPayment: (payment: Omit<Payment, 'id'>) => Promise<void>;
     updatePayment: (id: string, updates: Partial<Payment>) => Promise<void>;
     locations: Location[];
+    inscriptionTypes: CustomInscriptionType[];
 }
 
 type ParentModalState = { mode: 'new' } | { mode: 'edit', parent: Parent } | null;
 type ChildModalState = { mode: 'new', parentId: string } | { mode: 'edit', child: Child } | null;
 type RegistrationModalState = { childId: string } | null;
+
+const StarRating = ({ rating, onRatingChange }: { rating: number, onRatingChange: (newRating: number) => void }) => (
+    <div className="flex items-center">
+        {[1, 2, 3, 4, 5].map(star => (
+            <button key={star} onClick={() => onRatingChange(star)} className="focus:outline-none">
+                <StarIcon className={`h-5 w-5 ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`} solid={star <= rating} />
+            </button>
+        ))}
+    </div>
+);
 
 const ClientsView = (props: ClientsViewProps) => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -92,15 +102,16 @@ const ClientsView = (props: ClientsViewProps) => {
     
     const handleSaveRegistration = async (e: React.FormEvent) => {
         e.preventDefault();
-        const inscriptionType = registrationForm.inscriptionType!;
-        const details = INSCRIPTION_TYPES[inscriptionType];
+        const inscriptionTypeName = registrationForm.inscriptionType!;
+        const details = props.inscriptionTypes.find(it => it.name === inscriptionTypeName);
+
+        if (!details) {
+            alert("Errore: tipo di iscrizione non valido.");
+            return;
+        }
 
         let endDate: string | undefined = undefined;
-        let duration = details.durationMonths;
-
-        if (registrationForm.durationInMonths) { // Custom duration for 'X Mesi'
-            duration = Number(registrationForm.durationInMonths);
-        }
+        const duration = details.durationMonths;
 
         if (duration > 0) {
             const startDate = new Date();
@@ -111,9 +122,9 @@ const ClientsView = (props: ClientsViewProps) => {
             childId: registrationForm.childId!,
             workshopId: registrationForm.workshopId!,
             registrationDate: new Date().toISOString(),
-            inscriptionType: inscriptionType,
+            inscriptionType: inscriptionTypeName,
             inscriptionEndDate: endDate,
-            durationInMonths: registrationForm.durationInMonths,
+            durationInMonths: duration > 0 ? duration : undefined,
             status: 'confermata',
         };
 
@@ -127,7 +138,7 @@ const ClientsView = (props: ClientsViewProps) => {
                 amount: details.price,
                 paymentDate: new Date().toISOString(),
                 method: 'contanti',
-                description: `Iscrizione ${inscriptionType} per workshop ${props.workshops.find(w => w.id === registrationForm.workshopId)?.code}`
+                description: `Iscrizione ${inscriptionTypeName} per workshop ${props.workshops.find(w => w.id === registrationForm.workshopId)?.code}`
             };
             await props.addPayment(payment);
         }
@@ -148,13 +159,14 @@ const ClientsView = (props: ClientsViewProps) => {
     const renderParentModal = () => (
         <Modal isOpen={!!parentModal} onClose={() => setParentModal(null)} title={parentModal?.mode === 'new' ? 'Nuovo Cliente' : 'Modifica Cliente'}>
             <form onSubmit={handleSaveParent} className="space-y-4">
-                <Select id="status" label="Status" value={parentForm.status || ''} onChange={e => setParentForm({...parentForm, status: e.target.value as Parent['status']})} options={[{value: 'attivo', label: 'Attivo'}, {value: 'sospeso', label: 'Sospeso'}, {value: 'prospect', label: 'Prospect'}, {value: 'archiviato', label: 'Archiviato'}]} required/>
+                <Select id="status" label="Status" value={parentForm.status || ''} onChange={e => setParentForm({...parentForm, status: e.target.value as Parent['status']})} options={[{value: 'attivo', label: 'Attivo'}, {value: 'sospeso', label: 'Sospeso'}, {value: 'prospect', label: 'Prospect'}, {value: 'cessato', label: 'Cessato'}]} required/>
                 <div className="grid grid-cols-2 gap-4">
                     <Input id="name" label="Nome" value={parentForm.name || ''} onChange={e => setParentForm({...parentForm, name: e.target.value})} required/>
                     <Input id="surname" label="Cognome" value={parentForm.surname || ''} onChange={e => setParentForm({...parentForm, surname: e.target.value})} required/>
                 </div>
                 <Input id="email" label="Email" type="email" value={parentForm.email || ''} onChange={e => setParentForm({...parentForm, email: e.target.value})} required/>
                 <Input id="phone" label="Telefono" type="tel" value={parentForm.phone || ''} onChange={e => setParentForm({...parentForm, phone: e.target.value})} required/>
+                 <Select id="rating" label="Rating" value={parentForm.rating || ''} onChange={e => setParentForm({...parentForm, rating: Number(e.target.value)})} options={[{value: 1, label: '1 Stella'}, {value: 2, label: '2 Stelle'}, {value: 3, label: '3 Stelle'}, {value: 4, label: '4 Stelle'}, {value: 5, label: '5 Stelle'}]} placeholder="Nessun rating" />
                 <div className="flex justify-end space-x-3 pt-4"><button type="submit" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md">Salva</button></div>
             </form>
         </Modal>
@@ -177,12 +189,15 @@ const ClientsView = (props: ClientsViewProps) => {
          <Modal isOpen={!!registrationModal} onClose={() => setRegistrationModal(null)} title="Iscrivi a Workshop">
             <form onSubmit={handleSaveRegistration} className="space-y-4">
                 <Select id="workshopId" label="Workshop" value={registrationForm.workshopId || ''} onChange={e => setRegistrationForm({...registrationForm, workshopId: e.target.value})} options={props.workshops.map(w => ({value: w.id, label: w.code}))} required placeholder="Seleziona workshop"/>
-                <Select id="inscriptionType" label="Tipo Iscrizione" value={registrationForm.inscriptionType || ''} onChange={e => setRegistrationForm({...registrationForm, inscriptionType: e.target.value as InscriptionType})} options={Object.keys(INSCRIPTION_TYPES).map(k => ({value: k, label: k}))} required placeholder="Seleziona tipo"/>
-                
-                {registrationForm.inscriptionType?.includes('Mesi') && (
-                    <Input type="number" id="durationInMonths" label="Durata (mesi)" value={registrationForm.durationInMonths || ''} onChange={e => setRegistrationForm({...registrationForm, durationInMonths: Number(e.target.value)})}/>
-                )}
-
+                <Select 
+                    id="inscriptionType" 
+                    label="Tipo Iscrizione" 
+                    value={registrationForm.inscriptionType || ''} 
+                    onChange={e => setRegistrationForm({...registrationForm, inscriptionType: e.target.value as InscriptionType})} 
+                    options={props.inscriptionTypes.map(it => ({value: it.name, label: `${it.name} - €${it.price}`}))}
+                    required 
+                    placeholder="Seleziona tipo"
+                />
                 <div className="flex justify-end space-x-3 pt-4"><button type="submit" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md">Iscrivi</button></div>
             </form>
         </Modal>
@@ -209,7 +224,10 @@ const ClientsView = (props: ClientsViewProps) => {
                             <CardContent>
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <h4 className="font-bold text-lg text-testo-input">{parent.name} {parent.surname}</h4>
+                                        <div className="flex items-center space-x-2">
+                                            <h4 className="font-bold text-lg text-testo-input">{parent.name} {parent.surname}</h4>
+                                            <StarRating rating={parent.rating || 0} onRatingChange={(newRating) => props.updateParent(parent.id, { rating: newRating })} />
+                                        </div>
                                         <p className="text-sm text-testo-input/80">{parent.email}</p>
                                     </div>
                                     <div className="flex items-center space-x-2">

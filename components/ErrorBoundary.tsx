@@ -9,9 +9,9 @@ interface State {
   hasError: boolean;
 }
 
-// FIX: Changed to extend React.Component directly to resolve issue with 'this.props' not being found.
 class ErrorBoundary extends React.Component<Props, State> {
-  state: State = {
+  // FIX: Initialize state using a property initializer for cleaner code.
+  public state: State = {
     hasError: false,
   };
 
