@@ -41,7 +41,7 @@ export const ConfirmModal = ({ isOpen, onClose, onConfirm, title, children }: Co
           <h3 className="text-lg font-semibold text-testo-input">{title}</h3>
           <button
             onClick={onClose}
-            className="text-testo-input/70 hover:text-testo-input p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-bottone-corpo"
+            className="text-testo-input/70 hover:text-testo-input p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-bottone-azione"
             aria-label="Close"
           >
             <XIcon className="h-5 w-5" />
@@ -53,13 +53,13 @@ export const ConfirmModal = ({ isOpen, onClose, onConfirm, title, children }: Co
         <div className="flex justify-end items-center p-4 bg-slate-50 border-t border-slate-200 rounded-b-lg space-x-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400 text-sm font-medium"
+            className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90 text-sm font-medium"
           >
             Annulla
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
+            className="px-4 py-2 bg-bottone-eliminazione text-white rounded-md hover:opacity-90 text-sm font-medium"
           >
             Conferma
           </button>

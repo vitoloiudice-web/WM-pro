@@ -38,13 +38,13 @@ const reportOptions: { value: ReportType; label: string }[] = [
 // Helper to generate colors for charts
 const generateChartColors = (numColors: number) => {
     const colors = [
-        'rgba(176, 2, 2, 0.6)',    // bottone-corpo (#b00202)
+        'rgba(168, 213, 255, 0.6)', // bottone-azione (#a8d5ff)
+        'rgba(1, 125, 18, 0.6)',    // bottone-salvataggio (#017d12)
         'rgba(8, 102, 255, 0.6)',  // bottone-navbar (#0866ff)
-        'rgba(168, 121, 2, 0.6)',  // status-sospeso-text (#a87902)
-        'rgba(2, 115, 36, 0.6)',   // status-attivo-text (#027324)
+        'rgba(176, 2, 2, 0.6)',    // bottone-eliminazione (#b00202)
+        'rgba(220, 169, 232, 0.6)', // bottone-annullamento (#dca9e8)
         'rgba(3, 2, 56, 0.6)',     // navbar-blu (#030238)
         'rgba(2, 139, 217, 0.6)',  // status-prospect-text (#028bd9)
-        'rgba(128, 128, 128, 0.6)' // neutral grey
     ];
     const borderColors = colors.map(c => c.replace('0.6', '1'));
     
@@ -63,7 +63,7 @@ const KPICard = ({ title, value, icon }: { title: string; value: string; icon: R
   <Card>
     <CardContent>
       <div className="flex items-center space-x-4">
-        <div className="flex-shrink-0 bg-bottone-corpo/10 p-3 rounded-full text-bottone-corpo">
+        <div className="flex-shrink-0 bg-bottone-azione/20 p-3 rounded-full text-testo-input">
           {icon}
         </div>
         <div>
@@ -722,7 +722,7 @@ const ReportsView = ({ payments, costs, workshops, suppliers, locations, registr
                                 setReportType(e.target.value as ReportType);
                                 setReportData(null); // Reset report data on new selection
                             }}
-                            className="block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-corpo focus:ring-bottone-corpo"
+                            className="block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-azione focus:ring-bottone-azione"
                         >
                             {reportOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                         </select>
@@ -730,7 +730,7 @@ const ReportsView = ({ payments, costs, workshops, suppliers, locations, registr
                     <button 
                         onClick={generateReport}
                         disabled={!reportType}
-                        className="w-full sm:w-auto px-4 py-2 bg-bottone-corpo text-white font-semibold rounded-md shadow-sm hover:opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed self-end"
+                        className="w-full sm:w-auto px-4 py-2 bg-bottone-azione text-testo-input font-semibold rounded-md shadow-sm hover:opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed self-end"
                     >
                         Genera
                     </button>
@@ -773,7 +773,7 @@ const ReportsView = ({ payments, costs, workshops, suppliers, locations, registr
                     {reportData && (
                          <Card>
                             <CardHeader actions={
-                                <button onClick={exportToCsv} className="flex items-center space-x-2 text-sm text-bottone-corpo hover:opacity-80 font-medium">
+                                <button onClick={exportToCsv} className="flex items-center space-x-2 text-sm text-bottone-azione hover:opacity-80 font-medium">
                                     <DocumentDownloadIcon />
                                     <span>Esporta CSV</span>
                                 </button>

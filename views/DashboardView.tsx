@@ -203,8 +203,8 @@ const DashboardView = ({
     
     const commonButtons = (
        <div className="flex justify-end space-x-3 pt-4">
-          <button type="button" onClick={() => setActiveModal('none')} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
-          <button type="submit" form={formId} className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Salva</button>
+          <button type="button" onClick={() => setActiveModal('none')} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
+          <button type="submit" form={formId} className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Salva</button>
         </div>
     );
 
@@ -230,7 +230,7 @@ const DashboardView = ({
                     value={settingsFormData.taxRegime || ''}
                     onChange={handleSettingsChange}
                     rows={4}
-                    className="block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-corpo focus:ring-bottone-corpo sm:text-sm"
+                    className="block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-azione focus:ring-bottone-azione sm:text-sm"
                     placeholder="Es: Operazione in regime forfettario..."
                 />
             </div>
@@ -410,7 +410,7 @@ const DashboardView = ({
                 <div className="col-span-2 sm:col-span-3">
                     <button
                         onClick={() => openModal('settings')}
-                        className="w-full flex items-center justify-between p-4 bg-white/40 hover:bg-white/60 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-bottone-corpo text-left"
+                        className="w-full flex items-center justify-between p-4 bg-white/40 hover:bg-white/60 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-bottone-azione text-left"
                     >
                         <div>
                             <span className="font-semibold text-testo-input">Configura Profilo Azienda</span>
@@ -452,7 +452,7 @@ const StatCard: React.FC<{ title: string; value: string | number; icon: React.Re
   <Card onClick={onClick}>
     <CardContent>
       <div className="flex items-center space-x-4">
-        <div className="flex-shrink-0 bg-bottone-corpo/10 p-3 rounded-full text-bottone-corpo">
+        <div className="flex-shrink-0 bg-bottone-azione/20 p-3 rounded-full text-testo-input">
           {icon}
         </div>
         <div>
@@ -467,7 +467,7 @@ const StatCard: React.FC<{ title: string; value: string | number; icon: React.Re
 const QuickLinkButton: React.FC<{ label: string; onClick: () => void; icon: React.ReactNode }> = ({ label, onClick, icon }) => (
   <button 
     onClick={onClick}
-    className="w-full flex items-center justify-between p-4 bg-white/40 hover:bg-white/60 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-bottone-corpo"
+    className="w-full flex items-center justify-between p-4 bg-white/40 hover:bg-white/60 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-bottone-azione"
   >
     <span className="font-semibold text-testo-input text-left">{label}</span>
     <div className="text-testo-input/80 flex-shrink-0">{icon}</div>

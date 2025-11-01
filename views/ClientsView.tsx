@@ -456,7 +456,7 @@ const ClientsView = ({
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-testo-input">Anagrafica Clienti</h2>
-        <button onClick={() => setIsNewClientModalOpen(true)} className="bg-bottone-corpo text-white px-4 py-2 rounded-lg shadow hover:opacity-90 flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bottone-corpo">
+        <button onClick={() => setIsNewClientModalOpen(true)} className="bg-bottone-azione text-testo-input px-4 py-2 rounded-lg shadow hover:opacity-90 flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bottone-azione">
           <PlusIcon /><span>Nuovo Cliente</span>
         </button>
       </div>
@@ -493,13 +493,13 @@ const ClientsView = ({
             <div className="flex space-x-2">
               <button 
                 onClick={() => setSortOrder('asc')} 
-                className={`px-3 py-1.5 text-sm rounded-md ${sortOrder === 'asc' ? 'bg-bottone-corpo text-white' : 'bg-gray-300 text-black'}`}
+                className={`px-3 py-1.5 text-sm rounded-md ${sortOrder === 'asc' ? 'bg-bottone-azione text-testo-input' : 'bg-gray-300 text-black'}`}
               >
                 A-Z
               </button>
               <button 
                 onClick={() => setSortOrder('desc')}
-                className={`px-3 py-1.5 text-sm rounded-md ${sortOrder === 'desc' ? 'bg-bottone-corpo text-white' : 'bg-gray-300 text-black'}`}
+                className={`px-3 py-1.5 text-sm rounded-md ${sortOrder === 'desc' ? 'bg-bottone-azione text-testo-input' : 'bg-gray-300 text-black'}`}
               >
                 Z-A
               </button>
@@ -532,8 +532,8 @@ const ClientsView = ({
                       </div>
                     </div>
                      <div className="flex items-center space-x-2">
-                        <button onClick={() => setEditingClient(parent)} className="p-2 text-testo-input/80 hover:text-bottone-corpo rounded-full hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-bottone-corpo" aria-label="Modifica cliente"><PencilIcon className="h-5 w-5"/></button>
-                        <button onClick={() => setDeletingClientId(parent.id)} className="p-2 text-testo-input/80 hover:text-red-600 rounded-full hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500" aria-label="Elimina cliente"><TrashIcon className="h-5 w-5"/></button>
+                        <button onClick={() => setEditingClient(parent)} className="p-2 text-testo-input/80 hover:text-bottone-azione rounded-full hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-bottone-azione" aria-label="Modifica cliente"><PencilIcon className="h-5 w-5"/></button>
+                        <button onClick={() => setDeletingClientId(parent.id)} className="p-2 text-testo-input/80 hover:text-bottone-eliminazione rounded-full hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-bottone-eliminazione" aria-label="Elimina cliente"><TrashIcon className="h-5 w-5"/></button>
                     </div>
                   </div>
 
@@ -541,7 +541,7 @@ const ClientsView = ({
                   <div className="mt-4 pt-4 border-t border-black/10">
                     <div className="flex justify-between items-center mb-2">
                       <h5 className="font-semibold text-testo-input">Figli</h5>
-                      <button onClick={() => setChildModalState({ mode: 'new', parentId: parent.id })} className="text-sm text-bottone-corpo hover:opacity-80 font-medium flex items-center space-x-1">
+                      <button onClick={() => setChildModalState({ mode: 'new', parentId: parent.id })} className="text-sm text-bottone-azione hover:opacity-80 font-medium flex items-center space-x-1">
                         <PlusIcon className="h-4 w-4" /><span>Aggiungi</span>
                       </button>
                     </div>
@@ -554,8 +554,8 @@ const ClientsView = ({
                                 <p className="text-xs text-testo-input/80">Età: {calculateAge(child.birthDate)}</p>
                             </div>
                             <div className="flex items-center space-x-1">
-                                <button onClick={() => setChildModalState({ mode: 'edit', child })} className="p-1 text-testo-input/80 hover:text-bottone-corpo"><PencilIcon className="h-4 w-4"/></button>
-                                <button onClick={() => setDeletingChildId(child.id)} className="p-1 text-testo-input/80 hover:text-red-600"><TrashIcon className="h-4 w-4"/></button>
+                                <button onClick={() => setChildModalState({ mode: 'edit', child })} className="p-1 text-testo-input/80 hover:text-bottone-azione"><PencilIcon className="h-4 w-4"/></button>
+                                <button onClick={() => setDeletingChildId(child.id)} className="p-1 text-testo-input/80 hover:text-bottone-eliminazione"><TrashIcon className="h-4 w-4"/></button>
                             </div>
                           </li>
                         ))}
@@ -567,7 +567,7 @@ const ClientsView = ({
                   <div className="mt-4 pt-4 border-t border-black/10">
                     <div className="flex justify-between items-center mb-2">
                       <h5 className="font-semibold text-testo-input">Iscrizioni ai Workshop</h5>
-                      <button onClick={() => setRegistrationModalState({ parent })} className="text-sm text-bottone-corpo hover:opacity-80 font-medium flex items-center space-x-1">
+                      <button onClick={() => setRegistrationModalState({ parent })} className="text-sm text-bottone-azione hover:opacity-80 font-medium flex items-center space-x-1">
                         <PlusIcon className="h-4 w-4" /><span>Iscrivi</span>
                       </button>
                     </div>
@@ -587,11 +587,11 @@ const ClientsView = ({
                                 {payment ? (
                                   <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">Pagato</span>
                                 ) : (
-                                  <button onClick={() => workshop && child && setPaymentModalState({ registration: reg, workshop, child, parent })} className="text-xs font-semibold text-bottone-corpo bg-bottone-corpo/10 px-2 py-1 rounded-full hover:bg-bottone-corpo/20">
+                                  <button onClick={() => workshop && child && setPaymentModalState({ registration: reg, workshop, child, parent })} className="text-xs font-semibold text-bottone-azione bg-bottone-azione/20 px-2 py-1 rounded-full hover:bg-bottone-azione/40">
                                     Registra Pagamento
                                   </button>
                                 )}
-                                <button onClick={() => setDeletingRegistrationId(reg.id)} className="p-1 text-testo-input/80 hover:text-red-600"><TrashIcon className="h-4 w-4"/></button>
+                                <button onClick={() => setDeletingRegistrationId(reg.id)} className="p-1 text-testo-input/80 hover:text-bottone-eliminazione"><TrashIcon className="h-4 w-4"/></button>
                               </div>
                             </li>
                           );
@@ -635,8 +635,8 @@ const ClientsView = ({
                 <Input id="province" label="Provincia" type="text" value={parentFormData.province || ''} onChange={handleParentFormChange} />
             </div>
             <div className="flex justify-end space-x-3 pt-4">
-              <button type="button" onClick={closeParentModal} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
-              <button type="submit" form="parent-form" className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Salva</button>
+              <button type="button" onClick={closeParentModal} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
+              <button type="submit" form="parent-form" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Salva</button>
             </div>
         </form>
       </Modal>
@@ -649,8 +649,8 @@ const ClientsView = ({
                   <Input id="ageMonths" label="Mesi" type="number" value={childFormData.ageMonths} onChange={e => setChildFormData({...childFormData, ageMonths: e.target.value})} />
               </div>
                <div className="flex justify-end space-x-3 pt-4">
-                  <button type="button" onClick={closeChildModal} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
-                  <button type="submit" form="child-form" className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Salva</button>
+                  <button type="button" onClick={closeChildModal} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
+                  <button type="submit" form="child-form" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Salva</button>
               </div>
           </form>
       </Modal>
@@ -667,11 +667,12 @@ const ClientsView = ({
                     id="workshopIds"
                     multiple
                     value={registrationFormData.workshopIds || []}
-                    onChange={e => {
+                    // FIX: Explicitly type the event parameter 'e' to resolve the 'unknown' type error.
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                       const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
                       setRegistrationFormData({...registrationFormData, workshopIds: selectedIds});
                     }}
-                    className={`block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-corpo focus:ring-bottone-corpo sm:text-sm h-32 ${registrationErrors.workshopIds ? 'border-red-500 text-red-900 focus:border-red-500 focus:ring-red-500' : ''}`}
+                    className={`block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-azione focus:ring-bottone-azione sm:text-sm h-32 ${registrationErrors.workshopIds ? 'border-red-500 text-red-900 focus:border-red-500 focus:ring-red-500' : ''}`}
                   >
                      {workshops.filter(ws => new Date(ws.startDate) >= new Date(todayStr)).map(ws => (
                         <option key={ws.id} value={ws.id}>
@@ -682,8 +683,8 @@ const ClientsView = ({
                   {registrationErrors.workshopIds && <p className="mt-1 text-sm text-red-600">{registrationErrors.workshopIds}</p>}
               </div>
                <div className="flex justify-end space-x-3 pt-4">
-                  <button type="button" onClick={closeRegistrationModal} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
-                  <button type="submit" form="registration-form" className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Salva Iscrizione</button>
+                  <button type="button" onClick={closeRegistrationModal} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
+                  <button type="submit" form="registration-form" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Salva Iscrizione</button>
               </div>
           </form>
       </Modal>
@@ -694,8 +695,8 @@ const ClientsView = ({
               <Input id="paymentDate" label="Data Pagamento" type="date" value={paymentFormData.paymentDate || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentFormData({...paymentFormData, paymentDate: e.target.value})} error={paymentErrors.paymentDate} required />
               <Select id="method" label="Metodo" options={[{value: 'cash', label: 'Contanti'}, {value: 'transfer', label: 'Bonifico'}, {value: 'card', label: 'Carta'}]} value={paymentFormData.method || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPaymentFormData({...paymentFormData, method: e.target.value as PaymentMethod})} error={paymentErrors.method} required/>
                <div className="flex justify-end space-x-3 pt-4">
-                  <button type="button" onClick={closePaymentModal} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
-                  <button type="submit" form="payment-form" className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Registra Pagamento</button>
+                  <button type="button" onClick={closePaymentModal} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
+                  <button type="submit" form="payment-form" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Registra Pagamento</button>
               </div>
           </form>
       </Modal>

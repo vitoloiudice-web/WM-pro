@@ -8,7 +8,7 @@ interface CardProps {
 
 const Card = ({ children, className, onClick }: CardProps) => {
   const baseClasses = "bg-cards-giallo rounded-xl shadow-md overflow-hidden transition-shadow duration-300";
-  const clickableClasses = onClick ? "cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-bottone-corpo/50" : "";
+  const clickableClasses = onClick ? "cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-bottone-azione/50" : "";
   
   return (
     <div className={`${baseClasses} ${clickableClasses} ${className}`} onClick={onClick}>

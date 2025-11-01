@@ -74,7 +74,7 @@ const daysOfWeekOptions = [
 
 const DetailItem = ({icon, label, value}: DetailItemProps) => (
     <div className="flex items-start space-x-3 text-testo-input">
-        <span className="text-bottone-corpo mt-1 h-5 w-5">{icon}</span>
+        <span className="text-bottone-navbar mt-1 h-5 w-5">{icon}</span>
         <div>
             <p className="text-xs font-medium text-testo-input/80">{label}</p>
             <p className="font-semibold text-testo-input">{value}</p>
@@ -372,8 +372,8 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                         </div>
                     </div>
                     <div className="mt-6 pt-4 border-t border-black/10 flex justify-end items-center space-x-3">
-                        <button type="button" onClick={() => setModalState({ mode: 'edit', workshop })} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400 flex items-center space-x-2"><PencilIcon className="h-4 w-4" /><span>Modifica</span></button>
-                        <button type="button" onClick={() => setDeletingWorkshopId(workshop.id)} className="px-4 py-2 bg-red-100 text-red-800 rounded-md hover:bg-red-200 flex items-center space-x-2"><TrashIcon className="h-4 w-4"/><span>Elimina</span></button>
+                        <button type="button" onClick={() => setModalState({ mode: 'edit', workshop })} className="px-4 py-2 bg-bottone-azione text-testo-input rounded-md hover:opacity-90 flex items-center space-x-2"><PencilIcon className="h-4 w-4" /><span>Modifica</span></button>
+                        <button type="button" onClick={() => setDeletingWorkshopId(workshop.id)} className="px-4 py-2 bg-bottone-eliminazione text-white rounded-md hover:opacity-90 flex items-center space-x-2"><TrashIcon className="h-4 w-4"/><span>Elimina</span></button>
                     </div>
                  </>
             );
@@ -416,11 +416,11 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                             <label className="block text-sm font-medium text-testo-input mb-2">Prezzo</label>
                             <div className="flex space-x-4">
                                 <label className="flex items-center">
-                                    <input type="radio" name="priceOption" checked={!priceConfig.isManual} onChange={() => setPriceConfig({ isManual: false })} className="h-4 w-4 text-bottone-corpo border-gray-500 focus:ring-bottone-corpo" />
+                                    <input type="radio" name="priceOption" checked={!priceConfig.isManual} onChange={() => setPriceConfig({ isManual: false })} className="h-4 w-4 text-bottone-azione border-gray-500 focus:ring-bottone-azione" />
                                     <span className="ml-2 text-sm text-testo-input">Standard (€{(WORKSHOP_STANDARD_PRICES[type] || 0).toFixed(2)})</span>
                                 </label>
                                 <label className="flex items-center">
-                                    <input type="radio" name="priceOption" checked={priceConfig.isManual} onChange={() => setPriceConfig({ isManual: true })} className="h-4 w-4 text-bottone-corpo border-gray-500 focus:ring-bottone-corpo" />
+                                    <input type="radio" name="priceOption" checked={priceConfig.isManual} onChange={() => setPriceConfig({ isManual: true })} className="h-4 w-4 text-bottone-azione border-gray-500 focus:ring-bottone-azione" />
                                     <span className="ml-2 text-sm text-testo-input">Personalizzato</span>
                                 </label>
                             </div>
@@ -437,8 +437,8 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                     )}
 
                     <div className="flex justify-end space-x-3 pt-4">
-                        <button type="button" onClick={handleCancel} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
-                        <button type="submit" className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Salva</button>
+                        <button type="button" onClick={handleCancel} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
+                        <button type="submit" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Salva</button>
                     </div>
                 </form>
             );
@@ -485,7 +485,7 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                 <label htmlFor="location-filter" className="text-sm font-medium text-testo-input/90">Filtra per Luogo:</label>
                 <select 
                     id="location-filter"
-                    className="block w-full sm:w-auto rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-corpo focus:ring-bottone-corpo text-sm"
+                    className="block w-full sm:w-auto rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-azione focus:ring-bottone-azione text-sm"
                     value={selectedLocation}
                     onChange={(e) => setSelectedLocation(e.target.value)}
                 >
@@ -524,7 +524,7 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                                     return (
                                         <div 
                                           key={ws.id} 
-                                          className="p-1.5 rounded-md bg-bottone-corpo/10 text-bottone-corpo text-xs cursor-pointer transition-all duration-200 hover:bg-bottone-corpo/20 hover:scale-105 hover:shadow-sm" 
+                                          className="p-1.5 rounded-md bg-bottone-azione/20 text-testo-input text-xs cursor-pointer transition-all duration-200 hover:bg-bottone-azione/40 hover:scale-105 hover:shadow-sm" 
                                           onClick={(e) => { e.stopPropagation(); setModalState({ mode: 'view', workshop: ws }); }}
                                         >
                                             <p className="font-bold truncate">{ws.name}</p>

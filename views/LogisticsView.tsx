@@ -188,7 +188,7 @@ const LogisticsView = ({
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold text-testo-input">Gestione Logistica</h2>
-                <button onClick={() => setIsNewSupplierModalOpen(true)} className="bg-bottone-corpo text-white px-4 py-2 rounded-lg shadow hover:opacity-90 flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bottone-corpo">
+                <button onClick={() => setIsNewSupplierModalOpen(true)} className="bg-bottone-azione text-testo-input px-4 py-2 rounded-lg shadow hover:opacity-90 flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bottone-azione">
                     <PlusIcon /><span>Nuovo Fornitore</span>
                 </button>
             </div>
@@ -208,13 +208,13 @@ const LogisticsView = ({
                             <div className="flex space-x-2">
                                 <button
                                     onClick={() => setSortOrder('asc')}
-                                    className={`px-3 py-1.5 text-sm rounded-md ${sortOrder === 'asc' ? 'bg-bottone-corpo text-white' : 'bg-gray-300 text-black'}`}
+                                    className={`px-3 py-1.5 text-sm rounded-md ${sortOrder === 'asc' ? 'bg-bottone-azione text-testo-input' : 'bg-gray-300 text-black'}`}
                                 >
                                     A-Z
                                 </button>
                                 <button
                                     onClick={() => setSortOrder('desc')}
-                                    className={`px-3 py-1.5 text-sm rounded-md ${sortOrder === 'desc' ? 'bg-bottone-corpo text-white' : 'bg-gray-300 text-black'}`}
+                                    className={`px-3 py-1.5 text-sm rounded-md ${sortOrder === 'desc' ? 'bg-bottone-azione text-testo-input' : 'bg-gray-300 text-black'}`}
                                 >
                                     Z-A
                                 </button>
@@ -246,8 +246,8 @@ const LogisticsView = ({
                                             </div>
                                         </div>
                                         <div className="flex items-center space-x-2">
-                                            <button onClick={() => setEditingSupplier(supplier)} className="p-2 text-testo-input/80 hover:text-bottone-corpo rounded-full hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-bottone-corpo" aria-label="Modifica fornitore"><PencilIcon className="h-5 w-5" /></button>
-                                            <button onClick={() => setDeletingSupplierId(supplier.id)} className="p-2 text-testo-input/80 hover:text-red-600 rounded-full hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500" aria-label="Elimina fornitore"><TrashIcon className="h-5 w-5" /></button>
+                                            <button onClick={() => setEditingSupplier(supplier)} className="p-2 text-testo-input/80 hover:text-bottone-azione rounded-full hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-bottone-azione" aria-label="Modifica fornitore"><PencilIcon className="h-5 w-5" /></button>
+                                            <button onClick={() => setDeletingSupplierId(supplier.id)} className="p-2 text-testo-input/80 hover:text-bottone-eliminazione rounded-full hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-bottone-eliminazione" aria-label="Elimina fornitore"><TrashIcon className="h-5 w-5" /></button>
                                         </div>
                                     </div>
 
@@ -255,7 +255,7 @@ const LogisticsView = ({
                                     <div className="mt-4 pt-4 border-t border-black/10">
                                         <div className="flex justify-between items-center mb-2">
                                             <h5 className="font-semibold text-testo-input">Sedi / Luoghi</h5>
-                                            <button onClick={() => setLocationModalState({ mode: 'new', supplierId: supplier.id })} className="text-sm text-bottone-corpo hover:opacity-80 font-medium flex items-center space-x-1">
+                                            <button onClick={() => setLocationModalState({ mode: 'new', supplierId: supplier.id })} className="text-sm text-bottone-azione hover:opacity-80 font-medium flex items-center space-x-1">
                                                 <PlusIcon className="h-4 w-4" /><span>Aggiungi Sede</span>
                                             </button>
                                         </div>
@@ -271,8 +271,8 @@ const LogisticsView = ({
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center space-x-1">
-                                                            <button onClick={() => setLocationModalState({ mode: 'edit', location: loc })} className="p-1 text-testo-input/80 hover:text-bottone-corpo"><PencilIcon className="h-4 w-4" /></button>
-                                                            <button onClick={() => setDeletingLocationId(loc.id)} className="p-1 text-testo-input/80 hover:text-red-600"><TrashIcon className="h-4 w-4" /></button>
+                                                            <button onClick={() => setLocationModalState({ mode: 'edit', location: loc })} className="p-1 text-testo-input/80 hover:text-bottone-azione"><PencilIcon className="h-4 w-4" /></button>
+                                                            <button onClick={() => setDeletingLocationId(loc.id)} className="p-1 text-testo-input/80 hover:text-bottone-eliminazione"><TrashIcon className="h-4 w-4" /></button>
                                                         </div>
                                                     </li>
                                                 ))}
@@ -302,8 +302,8 @@ const LogisticsView = ({
                     <Input id="phone" label="Telefono" type="tel" value={supplierFormData.phone || ''} onChange={e => setSupplierFormData({...supplierFormData, phone: e.target.value})} />
 
                     <div className="flex justify-end space-x-3 pt-4">
-                        <button type="button" onClick={closeSupplierModal} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
-                        <button type="submit" form="supplier-form" className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Salva</button>
+                        <button type="button" onClick={closeSupplierModal} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
+                        <button type="submit" form="supplier-form" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Salva</button>
                     </div>
                 </form>
             </Modal>
@@ -315,8 +315,8 @@ const LogisticsView = ({
                     <Input id="capacity" label="Capienza Massima" type="number" value={locationFormData.capacity || ''} onChange={e => setLocationFormData({ ...locationFormData, capacity: Number(e.target.value) })} error={locationErrors.capacity} required />
                     
                     <div className="flex justify-end space-x-3 pt-4">
-                        <button type="button" onClick={closeLocationModal} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
-                        <button type="submit" form="location-form" className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Salva</button>
+                        <button type="button" onClick={closeLocationModal} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
+                        <button type="submit" form="location-form" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Salva</button>
                     </div>
                 </form>
             </Modal>

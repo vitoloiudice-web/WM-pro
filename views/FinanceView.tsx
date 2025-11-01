@@ -54,7 +54,7 @@ const TabButton = ({ label, isActive, onClick }: TabButtonProps) => (
     <button
         onClick={onClick}
         className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-            isActive ? 'bg-bottone-corpo text-white' : 'text-testo-input/90 hover:bg-white/30'
+            isActive ? 'bg-bottone-azione text-testo-input' : 'text-testo-input/90 hover:bg-white/30'
         }`}
     >
         {label}
@@ -73,14 +73,14 @@ const FinanceListItem: React.FC<FinanceListItemProps> = ({onEdit, onDelete, onDo
       <span className="truncate pr-4">{children}</span>
       <div className="flex items-center space-x-2 transition-opacity">
         {onDownload && (
-          <button onClick={onDownload} className="p-1 text-testo-input/80 hover:text-bottone-corpo rounded-full hover:bg-white/50" aria-label="Scarica PDF">
+          <button onClick={onDownload} className="p-1 text-testo-input/80 hover:text-bottone-azione rounded-full hover:bg-white/50" aria-label="Scarica PDF">
             <DocumentArrowDownIcon className="h-4 w-4"/>
           </button>
         )}
-        <button onClick={onEdit} className="p-1 text-testo-input/80 hover:text-bottone-corpo rounded-full hover:bg-white/50" aria-label="Modifica">
+        <button onClick={onEdit} className="p-1 text-testo-input/80 hover:text-bottone-azione rounded-full hover:bg-white/50" aria-label="Modifica">
           <PencilIcon className="h-4 w-4"/>
         </button>
-        <button onClick={onDelete} className="p-1 text-testo-input/80 hover:text-red-600 rounded-full hover:bg-white/50" aria-label="Elimina">
+        <button onClick={onDelete} className="p-1 text-testo-input/80 hover:text-bottone-eliminazione rounded-full hover:bg-white/50" aria-label="Elimina">
           <TrashIcon className="h-4 w-4"/>
         </button>
       </div>
@@ -491,8 +491,8 @@ const FinanceView = ({
         const formId = `form-${activeTab}`;
         const commonButtons = (
            <div className="flex justify-end space-x-3 pt-4">
-              <button type="button" onClick={closeModal} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
-              <button type="submit" form={formId} className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Salva</button>
+              <button type="button" onClick={closeModal} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
+              <button type="submit" form={formId} className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Salva</button>
             </div>
         );
 
@@ -528,7 +528,7 @@ const FinanceView = ({
                                 <Input id="fuelCostPerKm" label="Costo carburante al km (€)" type="number" step="0.01" value={formData.fuelCostPerKm || ''} onChange={handleChange} error={errors.fuelCostPerKm} required />
                                 <div className="p-3 bg-white/30 rounded-md text-center">
                                     <p className="text-sm text-testo-input/90">Costo totale calcolato (A/R):</p>
-                                    <p className="text-xl font-bold text-bottone-corpo">€{calculatedAmount}</p>
+                                    <p className="text-xl font-bold text-bottone-salvataggio">€{calculatedAmount}</p>
                                 </div>
                             </>
                         ) : (
@@ -549,8 +549,8 @@ const FinanceView = ({
                     <div>
                         <label className="block text-sm font-medium text-testo-input mb-1">Cliente</label>
                         {formData.potentialClient ? (
-                             <div className="flex items-center justify-between p-3 bg-bottone-corpo/10 rounded-md">
-                                <span className="font-semibold text-bottone-corpo">
+                             <div className="flex items-center justify-between p-3 bg-bottone-azione/20 rounded-md">
+                                <span className="font-semibold text-testo-input">
                                     {formData.potentialClient.clientType === 'persona giuridica' 
                                         ? formData.potentialClient.companyName 
                                         : `${formData.potentialClient.name || ''} ${formData.potentialClient.surname || ''}`.trim()
@@ -668,7 +668,7 @@ const FinanceView = ({
                         <h3 className="font-semibold text-testo-input capitalize">{activeTab.replace('_', ' ')}</h3>
                          <button 
                             onClick={handleAddNewClick}
-                            className="bg-bottone-corpo text-white px-3 py-1.5 rounded-md shadow hover:opacity-90 flex items-center space-x-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bottone-corpo"
+                            className="bg-bottone-azione text-testo-input px-3 py-1.5 rounded-md shadow hover:opacity-90 flex items-center space-x-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bottone-azione"
                           >
                             <PlusIcon className="h-4 w-4" />
                             <span>Aggiungi</span>
@@ -730,8 +730,8 @@ const FinanceView = ({
                     </div>
                     
                     <div className="flex justify-end space-x-3 pt-4">
-                        <button type="button" onClick={() => setIsPotentialClientModalOpen(false)} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
-                        <button type="submit" form="potential-client-form" className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Aggiungi Cliente</button>
+                        <button type="button" onClick={() => setIsPotentialClientModalOpen(false)} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
+                        <button type="submit" form="potential-client-form" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Aggiungi Cliente</button>
                     </div>
                 </form>
             </Modal>

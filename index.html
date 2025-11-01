@@ -1,18 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Workshop Manager Pro</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WM Pro</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-    }
-  </style>
   <script>
     tailwind.config = {
       theme: {
@@ -21,9 +13,17 @@
             'sfondo-grigio': '#dadee0',
             'navbar-blu': '#030238',
             'icone-celeste': '#a8d5ff',
+            'testo-icone-celeste': '#a8d5ff',
             'cards-giallo': '#fff8b8',
             'bottone-navbar': '#0866ff',
-            'bottone-corpo': '#b00202',
+            
+            // New button palette
+            'bottone-azione': '#a8d5ff',
+            'bottone-annullamento': '#dca9e8',
+            'bottone-eliminazione': '#b00202',
+            'bottone-salvataggio': '#017d12',
+
+            'campo-bianco': '#ffffff',
             'testo-input': '#171616',
             'status-attivo-bg': '#7dfaa2',
             'status-attivo-text': '#027324',
@@ -38,22 +38,24 @@
       }
     }
   </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script type="importmap">
 {
   "imports": {
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.0",
+    "vite": "https://aistudiocdn.com/vite@^7.1.12",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.5.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
     "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "vite": "https://aistudiocdn.com/vite@^7.1.12",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.0",
-    "firebase/": "https://aistudiocdn.com/firebase@^12.4.0/"
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
   }
 }
 </script>
 <link rel="stylesheet" href="/index.css">
 </head>
-<body class="bg-sfondo-grigio text-testo-input">
+<body>
   <div id="root"></div>
   <div id="modal-root"></div>
   <script type="module" src="/index.tsx"></script>

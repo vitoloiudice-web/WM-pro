@@ -40,7 +40,7 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
           <h3 className="text-lg font-semibold text-testo-input">{title}</h3>
           <button 
             onClick={onClose} 
-            className="text-testo-input/70 hover:text-testo-input p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-bottone-corpo"
+            className="text-testo-input/70 hover:text-testo-input p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-bottone-azione"
             aria-label="Close"
           >
             <XIcon />

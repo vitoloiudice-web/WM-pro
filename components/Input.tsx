@@ -15,7 +15,7 @@ const Input = ({ label, id, error, ...props }: InputProps) => {
       <input
         id={id}
         {...props}
-        className={`block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-corpo focus:ring-bottone-corpo sm:text-sm ${
+        className={`block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-azione focus:ring-bottone-azione sm:text-sm ${
           error ? 'border-red-500 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500' : ''
         }`}
         aria-invalid={!!error}
