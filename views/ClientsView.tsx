@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 // FIX: Updated imports to remove file extensions
 import Card, { CardContent } from '../components/Card';
@@ -136,6 +135,21 @@ const ClientsView = ({
       payments.forEach(p => map.set(`${p.parentId}_${p.workshopId}`, p));
       return map;
   }, [payments]);
+
+  // *** BUG FIX ***
+  // Pre-calculate all registrations grouped by childId.
+  // This avoids calling a hook inside a loop, which is forbidden in React
+  // and was the cause of the application crash.
+  const registrationsByChildId = useMemo(() => {
+    return registrations.reduce((acc, reg) => {
+        if (!acc[reg.childId]) {
+            acc[reg.childId] = [];
+        }
+        acc[reg.childId].push(reg);
+        return acc;
+    }, {} as Record<string, Registration[]>);
+  }, [registrations]);
+
 
   const filteredAndSortedParents = useMemo(() => {
     // --- DEBUG START: CLIENTS_FILTER_LOGIC ---
@@ -539,21 +553,7 @@ const ClientsView = ({
       <div className="space-y-4">
         {filteredAndSortedParents.map(parent => {
           const parentChildren = children.filter(c => c.parentId === parent.id);
-          const parentRegistrations = registrations.filter(r => parentChildren.some(c => c.id === r.childId));
           
-          const registrationsByChild = useMemo(() => {
-                return parentRegistrations.reduce((acc, reg) => {
-                    const child = childMap[reg.childId];
-                    if (child) {
-                        if (!acc[child.id]) {
-                            acc[child.id] = [];
-                        }
-                        acc[child.id].push(reg);
-                    }
-                    return acc;
-                }, {} as Record<string, Registration[]>);
-            }, [parentRegistrations, childMap]);
-
           return (
             <div key={parent.id}>
               <Card>
@@ -612,10 +612,12 @@ const ClientsView = ({
                         <PlusIcon className="h-4 w-4" /><span>Iscrivi</span>
                       </button>
                     </div>
-                    {Object.keys(registrationsByChild).length > 0 ? (
+                    {parentChildren.some(c => registrationsByChildId[c.id]) ? (
                         <ul className="space-y-3">
-                            {Object.entries(registrationsByChild).map(([childId, childRegs]) => {
-                                const child = childMap[childId];
+                            {parentChildren.map(child => {
+                                const childRegs = registrationsByChildId[child.id] || [];
+                                if (childRegs.length === 0) return null;
+
                                 const uniqueLocationColors = [...new Set(
                                     childRegs
                                         .map(reg => workshopMap[reg.workshopId])
@@ -627,7 +629,7 @@ const ClientsView = ({
                                 )];
 
                                 return (
-                                    <li key={childId} className="bg-white/30 rounded-md flex overflow-hidden">
+                                    <li key={child.id} className="bg-white/30 rounded-md flex overflow-hidden">
                                         <div className="flex">
                                             {uniqueLocationColors.map((color, index) => (
                                                 <div key={index} className="w-2" style={{ backgroundColor: color }}></div>
@@ -636,7 +638,7 @@ const ClientsView = ({
                                         </div>
                                         
                                         <div className="p-3 flex-grow">
-                                            <p className="font-bold text-testo-input">{child?.name || 'Figlio non trovato'}</p>
+                                            <p className="font-bold text-testo-input">{child.name}</p>
                                             <ul className="mt-2 space-y-2">
                                             {childRegs.map(reg => {
                                                 const workshop = workshopMap[reg.workshopId];
@@ -763,7 +765,8 @@ const ClientsView = ({
               <Input id="amount" label="Importo" type="number" step="0.01" value={paymentFormData.amount || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentFormData({...paymentFormData, amount: parseFloat(e.target.value)})} error={paymentErrors.amount} required />
               <Input id="paymentDate" label="Data Pagamento" type="date" value={paymentFormData.paymentDate || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentFormData({...paymentFormData, paymentDate: e.target.value})} error={paymentErrors.paymentDate} required />
               {/* FIX: Replaced `e.currentTarget` with `e.target` and removed the failing `as any` cast. */}
-              <Select id="method" label="Metodo" options={[{value: 'cash', label: 'Contanti'}, {value: 'transfer', label: 'Bonifico'}, {value: 'card', label: 'Carta'}]} value={paymentFormData.method || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPaymentFormData({...paymentFormData, method: e.target.value as PaymentMethod})} error={paymentErrors.method} required/>
+              {/* FIX: Use `e.currentTarget` and inferred event type for robustness. */}
+              <Select id="method" label="Metodo" options={[{value: 'cash', label: 'Contanti'}, {value: 'transfer', label: 'Bonifico'}, {value: 'card', label: 'Carta'}]} value={paymentFormData.method || ''} onChange={(e) => setPaymentFormData({...paymentFormData, method: e.currentTarget.value as PaymentMethod})} error={paymentErrors.method} required/>
                <div className="flex justify-end space-x-3 pt-4">
                   <button type="button" onClick={closePaymentModal} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
                   <button type="submit" form="payment-form" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Registra Pagamento</button>
