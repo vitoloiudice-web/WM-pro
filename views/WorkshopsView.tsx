@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 // FIX: Updated imports to remove file extensions
 import Card, { CardContent } from '../components/Card';
