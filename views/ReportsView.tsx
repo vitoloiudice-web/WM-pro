@@ -38,12 +38,12 @@ const reportOptions: { value: ReportType; label: string }[] = [
 // Helper to generate colors for charts
 const generateChartColors = (numColors: number) => {
     const colors = [
-        'rgba(194, 2, 2, 0.6)',    // bottone-corpo
-        'rgba(8, 102, 255, 0.6)',  // bottone-navbar
-        'rgba(227, 168, 2, 0.6)',  // status-sospeso-text
-        'rgba(13, 140, 1, 0.6)',   // status-attivo-text
-        'rgba(3, 2, 56, 0.6)',     // navbar-blu
-        'rgba(106, 199, 252, 0.6)',// status-prospect-text
+        'rgba(176, 2, 2, 0.6)',    // bottone-corpo (#b00202)
+        'rgba(8, 102, 255, 0.6)',  // bottone-navbar (#0866ff)
+        'rgba(168, 121, 2, 0.6)',  // status-sospeso-text (#a87902)
+        'rgba(2, 115, 36, 0.6)',   // status-attivo-text (#027324)
+        'rgba(3, 2, 56, 0.6)',     // navbar-blu (#030238)
+        'rgba(2, 139, 217, 0.6)',  // status-prospect-text (#028bd9)
         'rgba(128, 128, 128, 0.6)' // neutral grey
     ];
     const borderColors = colors.map(c => c.replace('0.6', '1'));

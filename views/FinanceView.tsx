@@ -68,7 +68,7 @@ interface FinanceListItemProps {
     children: React.ReactNode;
 }
 
-const FinanceListItem = ({onEdit, onDelete, onDownload, children}: FinanceListItemProps) => (
+const FinanceListItem: React.FC<FinanceListItemProps> = ({onEdit, onDelete, onDownload, children}) => (
     <>
       <span className="truncate pr-4">{children}</span>
       <div className="flex items-center space-x-2 transition-opacity">
@@ -739,8 +739,16 @@ const FinanceView = ({
     )
 };
 
+{/* FIX: Refactored List component props into an interface for better clarity and type inference, resolving the "children is missing" error. */}
+interface ListProps<T extends {id: string}> {
+    items: T[];
+    renderItem: (item: T) => React.ReactNode;
+    onEdit: (item: T) => void;
+    onDelete: (id: string) => void;
+    onDownload?: (item: T) => void;
+}
 
-const List = <T extends {id: string}>({ items, renderItem, onEdit, onDelete, onDownload }: { items: T[], renderItem: (item: T) => React.ReactNode, onEdit: (item: T) => void, onDelete: (id: string) => void, onDownload?: (item: T) => void }) => (
+const List = <T extends {id: string}>({ items, renderItem, onEdit, onDelete, onDownload }: ListProps<T>) => (
     <ul className="space-y-3">
         {items.map((item) => (
             <li 

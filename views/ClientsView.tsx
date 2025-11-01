@@ -657,7 +657,8 @@ const ClientsView = ({
 
       <Modal isOpen={!!registrationModalState} onClose={closeRegistrationModal} title="Nuova Iscrizione">
           <form id="registration-form" onSubmit={handleSaveRegistration} className="space-y-4" noValidate>
-              <Select id="childId" label="Figlio da Iscrivere" value={registrationFormData.childId || ''} onChange={e => setRegistrationFormData({...registrationFormData, childId: e.target.value})} options={(children.filter(c => c.parentId === registrationModalState?.parent.id) || []).map(c => ({value: c.id, label: c.name}))} error={registrationErrors.childId} required placeholder="Seleziona un figlio" />
+{/* FIX: Explicitly type the event parameter 'e' to resolve the 'unknown' type error. */}
+              <Select id="childId" label="Figlio da Iscrivere" value={registrationFormData.childId || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRegistrationFormData({...registrationFormData, childId: e.target.value})} options={(children.filter(c => c.parentId === registrationModalState?.parent.id) || []).map(c => ({value: c.id, label: c.name}))} error={registrationErrors.childId} required placeholder="Seleziona un figlio" />
               <div>
                   <label htmlFor="workshopIds" className="block text-sm font-medium text-testo-input mb-1">
                     Workshop (seleziona uno o più)
