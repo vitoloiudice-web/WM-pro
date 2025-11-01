@@ -14,6 +14,7 @@ export interface CompanyProfile {
 export interface Parent {
   id: string;
   clientType: 'persona fisica' | 'persona giuridica';
+  status: 'attivo' | 'sospeso' | 'cessato' | 'prospect';
   
   // For 'persona fisica'
   name?: string;

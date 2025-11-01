@@ -7,7 +7,14 @@ import ConfirmModal from '../components/ConfirmModal.tsx';
 import Input from '../components/Input.tsx';
 import Select from '../components/Select.tsx';
 
-const emptyParentForm: Partial<Parent> = { clientType: 'persona fisica', name: '', surname: '', email: '', phone: '', taxCode: '', companyName: '', vatNumber: '', address: '', zipCode: '', city: '', province: '' };
+const parentStatusOptions = [
+    { value: 'attivo', label: 'Attivo' },
+    { value: 'sospeso', label: 'Sospeso' },
+    { value: 'cessato', label: 'Cessato' },
+    { value: 'prospect', label: 'Prospect' }
+];
+
+const emptyParentForm: Partial<Parent> = { clientType: 'persona fisica', status: 'attivo', name: '', surname: '', email: '', phone: '', taxCode: '', companyName: '', vatNumber: '', address: '', zipCode: '', city: '', province: '' };
 const emptyChildForm: { name: string; ageYears: string; ageMonths: string } = { name: '', ageYears: '', ageMonths: '' };
 
 const calculateAge = (birthDateString: string): string => {
@@ -35,6 +42,26 @@ const getParentDisplayName = (parent: Parent): string => {
         return parent.companyName || 'Cliente Giuridico';
     }
     return `${parent.surname || ''} ${parent.name || ''}`.trim();
+};
+
+const StatusBadge = ({ status }: { status: Parent['status'] }) => {
+    const statusStyles: Record<Parent['status'], string> = {
+        attivo: 'bg-green-100 text-green-800',
+        sospeso: 'bg-yellow-100 text-yellow-800',
+        cessato: 'bg-red-100 text-red-800',
+        prospect: 'bg-blue-100 text-blue-800'
+    };
+    const statusLabels: Record<Parent['status'], string> = {
+        attivo: 'Attivo',
+        sospeso: 'Sospeso',
+        cessato: 'Cessato',
+        prospect: 'Prospect'
+    };
+    return (
+        <span className={`ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyles[status] || ''}`}>
+            {statusLabels[status] || status}
+        </span>
+    );
 };
 
 
@@ -84,7 +111,7 @@ const ClientsView = ({
   
   // Registration state
   const [registrationModalState, setRegistrationModalState] = useState<{ parent: Parent } | null>(null);
-  const [registrationFormData, setRegistrationFormData] = useState<{childId?: string; workshopId?: string}>({});
+  const [registrationFormData, setRegistrationFormData] = useState<{childId?: string; workshopIds?: string[]}>({});
   const [registrationErrors, setRegistrationErrors] = useState<Record<string, string>>({});
   const [deletingRegistrationId, setDeletingRegistrationId] = useState<string | null>(null);
   
@@ -227,6 +254,7 @@ const ClientsView = ({
       // --- FIX START: Build a clean object for Firestore ---
       const dataToSave: any = {
         clientType: parentFormData.clientType || 'persona fisica',
+        status: parentFormData.status || 'attivo',
         email: parentFormData.email,
         phone: parentFormData.phone || '',
         address: parentFormData.address || '',
@@ -339,31 +367,43 @@ const ClientsView = ({
   const handleSaveRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
-    if (!registrationFormData.childId) newErrors.childId = 'Selezionare un figlio è obbligatorio.';
-    if (!registrationFormData.workshopId) newErrors.workshopId = 'Selezionare un workshop è obbligatorio.';
+    const { childId, workshopIds } = registrationFormData;
+    if (!childId) newErrors.childId = 'Selezionare un figlio è obbligatorio.';
+    if (!workshopIds || workshopIds.length === 0) {
+      newErrors.workshopIds = 'Selezionare almeno un workshop è obbligatorio.';
+    }
     
-    if (registrationFormData.childId && registrationFormData.workshopId) {
-        if(registrations.some(r => r.childId === registrationFormData.childId && r.workshopId === registrationFormData.workshopId)){
-            newErrors.workshopId = 'Questo bambino è già iscritto a questo workshop.';
+    if (childId && workshopIds && workshopIds.length > 0) {
+        const errorMessages = [];
+        for (const workshopId of workshopIds) {
+            if (registrations.some(r => r.childId === childId && r.workshopId === workshopId)) {
+                errorMessages.push(`Il bambino è già iscritto a "${workshopMap[workshopId]?.name}".`);
+            }
+            const workshop = workshopMap[workshopId];
+            const location = locationMap[workshop.locationId];
+            const currentRegistrations = registrations.filter(r => r.workshopId === workshopId).length;
+            if (location && currentRegistrations >= location.capacity) {
+                errorMessages.push(`"${workshopMap[workshopId]?.name}" ha raggiunto la capienza massima.`);
+            }
         }
-        const workshop = workshopMap[registrationFormData.workshopId];
-        const location = locationMap[workshop.locationId];
-        const currentRegistrations = registrations.filter(r => r.workshopId === registrationFormData.workshopId).length;
-        if(location && currentRegistrations >= location.capacity){
-             newErrors.workshopId = 'Il workshop ha raggiunto la capienza massima.';
+        if (errorMessages.length > 0) {
+            newErrors.workshopIds = errorMessages.join(' ');
         }
     }
     
     setRegistrationErrors(newErrors);
-    if(Object.keys(newErrors).length === 0){
-        const newRegistration: Registration = {
-            id: `r_${Date.now()}`,
-            childId: registrationFormData.childId!,
-            workshopId: registrationFormData.workshopId!,
-            registrationDate: new Date().toISOString().split('T')[0]
-        };
-        await addRegistration(newRegistration);
-        alert('Nuova iscrizione salvata!');
+
+    if (Object.keys(newErrors).length === 0 && childId && workshopIds) {
+        for (const workshopId of workshopIds) {
+            const newRegistration: Registration = {
+                id: `r_${Date.now()}_${workshopId}`,
+                childId: childId,
+                workshopId: workshopId,
+                registrationDate: new Date().toISOString().split('T')[0]
+            };
+            await addRegistration(newRegistration);
+        }
+        alert('Iscrizioni salvate con successo!');
         closeRegistrationModal();
     }
   };
@@ -467,7 +507,10 @@ const ClientsView = ({
                     <div className="flex items-center space-x-4">
                       <div className="bg-slate-200 p-3 rounded-full"><UserCircleIcon className="text-slate-500 h-8 w-8"/></div>
                       <div>
-                        <h4 className="font-bold text-lg text-slate-800">{getParentDisplayName(parent)}</h4>
+                        <h4 className="font-bold text-lg text-slate-800 flex items-center">
+                            {getParentDisplayName(parent)}
+                            <StatusBadge status={parent.status} />
+                        </h4>
                         <p className="text-sm text-slate-500">{parent.email}</p>
                         {parent.address && (
                           <p className="text-sm text-slate-500 mt-1">{`${parent.address}, ${parent.zipCode} ${parent.city} (${parent.province})`}</p>
@@ -553,7 +596,10 @@ const ClientsView = ({
       {/* --- MODALS --- */}
       <Modal isOpen={isParentModalOpen} onClose={closeParentModal} title={editingClient ? 'Modifica Cliente' : 'Nuovo Cliente'}>
         <form id="parent-form" onSubmit={handleSaveParent} className="space-y-4" noValidate>
-            <Select id="clientType" label="Tipo Cliente" value={parentFormData.clientType || 'persona fisica'} onChange={handleParentFormChange} options={[{value: 'persona fisica', label: 'Persona Fisica'}, {value: 'persona giuridica', label: 'Persona Giuridica'}]} required />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Select id="clientType" label="Tipo Cliente" value={parentFormData.clientType || 'persona fisica'} onChange={handleParentFormChange} options={[{value: 'persona fisica', label: 'Persona Fisica'}, {value: 'persona giuridica', label: 'Persona Giuridica'}]} required />
+                <Select id="status" label="Stato Cliente" value={parentFormData.status || 'attivo'} onChange={handleParentFormChange} options={parentStatusOptions} required />
+            </div>
             {parentFormData.clientType === 'persona giuridica' ? (
               <>
                 <Input id="companyName" label="Ragione Sociale" type="text" value={parentFormData.companyName || ''} onChange={handleParentFormChange} error={parentErrors.companyName} required />
@@ -598,7 +644,28 @@ const ClientsView = ({
       <Modal isOpen={!!registrationModalState} onClose={closeRegistrationModal} title="Nuova Iscrizione">
           <form id="registration-form" onSubmit={handleSaveRegistration} className="space-y-4" noValidate>
               <Select id="childId" label="Figlio da Iscrivere" value={registrationFormData.childId || ''} onChange={e => setRegistrationFormData({...registrationFormData, childId: e.target.value})} options={(children.filter(c => c.parentId === registrationModalState?.parent.id) || []).map(c => ({value: c.id, label: c.name}))} error={registrationErrors.childId} required placeholder="Seleziona un figlio" />
-              <Select id="workshopId" label="Workshop" value={registrationFormData.workshopId || ''} onChange={e => setRegistrationFormData({...registrationFormData, workshopId: e.target.value})} options={workshops.filter(ws => new Date(ws.startDate) >= new Date(todayStr)).map(ws => ({value: ws.id, label: `${ws.name} (${new Date(ws.startDate).toLocaleDateString('it-IT')})`}))} error={registrationErrors.workshopId} required placeholder="Seleziona un workshop" />
+              <div>
+                  <label htmlFor="workshopIds" className="block text-sm font-medium text-slate-700 mb-1">
+                    Workshop (seleziona uno o più)
+                  </label>
+                  <select 
+                    id="workshopIds"
+                    multiple
+                    value={registrationFormData.workshopIds || []}
+                    onChange={e => {
+                      const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
+                      setRegistrationFormData({...registrationFormData, workshopIds: selectedIds});
+                    }}
+                    className={`block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-32 ${registrationErrors.workshopIds ? 'border-red-500 text-red-900 focus:border-red-500 focus:ring-red-500' : ''}`}
+                  >
+                     {workshops.filter(ws => new Date(ws.startDate) >= new Date(todayStr)).map(ws => (
+                        <option key={ws.id} value={ws.id}>
+                            {`${ws.name} (${new Date(ws.startDate).toLocaleDateString('it-IT')})`}
+                        </option>
+                     ))}
+                  </select>
+                  {registrationErrors.workshopIds && <p className="mt-1 text-sm text-red-600">{registrationErrors.workshopIds}</p>}
+              </div>
                <div className="flex justify-end space-x-3 pt-4">
                   <button type="button" onClick={closeRegistrationModal} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button>
                   <button type="submit" form="registration-form" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salva Iscrizione</button>
@@ -608,9 +675,12 @@ const ClientsView = ({
       
        <Modal isOpen={!!paymentModalState} onClose={closePaymentModal} title={`Pagamento per ${paymentModalState?.child.name}`}>
           <form id="payment-form" onSubmit={handleSavePayment} className="space-y-4" noValidate>
-              <Input id="amount" label="Importo" type="number" step="0.01" value={paymentFormData.amount || ''} onChange={e => setPaymentFormData({...paymentFormData, amount: parseFloat(e.target.value)})} error={paymentErrors.amount} required />
-              <Input id="paymentDate" label="Data Pagamento" type="date" value={paymentFormData.paymentDate || ''} onChange={e => setPaymentFormData({...paymentFormData, paymentDate: e.target.value})} error={paymentErrors.paymentDate} required />
-              <Select id="method" label="Metodo" options={[{value: 'cash', label: 'Contanti'}, {value: 'transfer', label: 'Bonifico'}, {value: 'card', label: 'Carta'}]} value={paymentFormData.method || ''} onChange={e => setPaymentFormData({...paymentFormData, method: e.target.value as PaymentMethod})} error={paymentErrors.method} required/>
+{/* FIX: Explicitly type event `e` to resolve TS inference error */}
+              <Input id="amount" label="Importo" type="number" step="0.01" value={paymentFormData.amount || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentFormData({...paymentFormData, amount: parseFloat(e.target.value)})} error={paymentErrors.amount} required />
+{/* FIX: Explicitly type event `e` to resolve TS inference error */}
+              <Input id="paymentDate" label="Data Pagamento" type="date" value={paymentFormData.paymentDate || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentFormData({...paymentFormData, paymentDate: e.target.value})} error={paymentErrors.paymentDate} required />
+{/* FIX: Explicitly type event `e` to resolve TS inference error */}
+              <Select id="method" label="Metodo" options={[{value: 'cash', label: 'Contanti'}, {value: 'transfer', label: 'Bonifico'}, {value: 'card', label: 'Carta'}]} value={paymentFormData.method || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPaymentFormData({...paymentFormData, method: e.target.value as PaymentMethod})} error={paymentErrors.method} required/>
                <div className="flex justify-end space-x-3 pt-4">
                   <button type="button" onClick={closePaymentModal} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button>
                   <button type="submit" form="payment-form" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Registra Pagamento</button>

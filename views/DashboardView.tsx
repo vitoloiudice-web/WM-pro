@@ -8,6 +8,13 @@ import type { View, Workshop, Parent, Payment, Registration, Location, CompanyPr
 
 type ModalType = 'none' | 'newClient' | 'newWorkshop' | 'newPayment' | 'newCost' | 'settings';
 
+const parentStatusOptions = [
+    { value: 'attivo', label: 'Attivo' },
+    { value: 'sospeso', label: 'Sospeso' },
+    { value: 'cessato', label: 'Cessato' },
+    { value: 'prospect', label: 'Prospect' }
+];
+
 interface DashboardViewProps {
   firestoreStatus: 'connecting' | 'connected' | 'error';
   companyProfile: CompanyProfile;
@@ -29,7 +36,7 @@ const DashboardView = ({
     setCurrentView
 }: DashboardViewProps) => {
   const [activeModal, setActiveModal] = useState<ModalType>('none');
-  const [formData, setFormData] = useState<Partial<Parent>>({ clientType: 'persona fisica' });
+  const [formData, setFormData] = useState<Partial<Parent>>({ clientType: 'persona fisica', status: 'attivo' });
   const [genericFormData, setGenericFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   
@@ -47,7 +54,7 @@ const DashboardView = ({
     .filter(p => new Date(p.paymentDate).getFullYear() === currentYear)
     .reduce((sum, p) => sum + p.amount, 0);
 
-  const activeClients = parents.length;
+  const activeClients = parents.filter(p => p.status === 'attivo').length;
   
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -75,7 +82,7 @@ const DashboardView = ({
   const openModal = (type: ModalType) => {
     setActiveModal(type);
     if (type === 'newClient') {
-      setFormData({ clientType: 'persona fisica' });
+      setFormData({ clientType: 'persona fisica', status: 'attivo' });
     } else {
       setGenericFormData({});
     }
@@ -111,6 +118,7 @@ const DashboardView = ({
         // --- FIX START: Build a clean object for Firestore ---
         const dataToSave: any = {
           clientType: formData.clientType || 'persona fisica',
+          status: formData.status || 'attivo',
           email: formData.email,
           phone: formData.phone || '',
           address: formData.address || '',
@@ -244,6 +252,14 @@ const DashboardView = ({
                 { value: 'persona giuridica', label: 'Persona Giuridica' }
               ]}
               value={clientType}
+              onChange={handleChange}
+              required
+            />
+            <Select
+              id="status"
+              label="Stato Cliente"
+              options={parentStatusOptions}
+              value={formData.status || 'attivo'}
               onChange={handleChange}
               required
             />

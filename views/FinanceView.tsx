@@ -629,11 +629,16 @@ const FinanceView = ({
             case 'quotes': return <List<Quote> items={quotes} renderItem={q => `${getQuoteClientDisplayName(q)}: ${q.description} - €${q.amount.toFixed(2)} (${q.status})`} onDownload={handleGeneratePdf} {...listProps} />;
             // FIX: The self-closing tag was causing a TypeScript inference error in some environments.
             // Expanding it to a multi-line format makes the props explicit and resolves the issue.
-            case 'invoices': return <List<Invoice> 
-                items={invoices} 
-                renderItem={i => `Fattura a ${parentMap[i.parentId] ? getParentDisplayName(parentMap[i.parentId]) : 'Sconosciuto'} - €${i.amount.toFixed(2)} (${getPaymentMethodLabel(i.method)}, SDI: ${i.sdiNumber})`} 
-                {...listProps} 
-            />;
+            case 'invoices':
+                // FIX: The self-closing tag was causing a TypeScript inference error in some environments.
+                // Expanding it to a multi-line format makes the props explicit and resolves the issue.
+                return (
+                    <List<Invoice>
+                        items={invoices}
+                        renderItem={i => `Fattura a ${parentMap[i.parentId] ? getParentDisplayName(parentMap[i.parentId]) : 'Sconosciuto'} - €${i.amount.toFixed(2)} (${getPaymentMethodLabel(i.method)}, SDI: ${i.sdiNumber})`}
+                        {...listProps}
+                    />
+                );
             default: return null;
         }
     }
