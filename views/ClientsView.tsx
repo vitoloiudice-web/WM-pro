@@ -495,32 +495,35 @@ const ClientsView = ({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* --- DEBUG START: CLIENTS_FILTER_CHANGE --- */}
+            {/* FIX: Explicitly typed the event object to resolve potential "property 'value' does not exist on type 'unknown'" error. */}
             <Input
               id="search"
               label="Cerca cliente o figlio"
               placeholder="Nome, cognome, ragione sociale..."
               value={searchTerm}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   console.log('[DEBUG] ClientsView: Search term changed:', e.currentTarget.value);
                   setSearchTerm(e.currentTarget.value);
               }}
             />
+            {/* FIX: Explicitly typed the event object to resolve potential "property 'value' does not exist on type 'unknown'" error. */}
             <Select
               id="filterWorkshop"
               label="Filtra per workshop"
               value={filterWorkshopId}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                   console.log('[DEBUG] ClientsView: Workshop filter changed:', e.currentTarget.value);
                   setFilterWorkshopId(e.currentTarget.value);
               }}
               options={workshops.map(ws => ({ value: ws.id, label: ws.name }))}
               placeholder="Tutti i workshop"
             />
+             {/* FIX: Explicitly typed the event object to resolve potential "property 'value' does not exist on type 'unknown'" error. */}
              <Select
               id="filterStatus"
               label="Filtra per stato"
               value={filterStatus}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                   console.log('[DEBUG] ClientsView: Status filter changed:', e.currentTarget.value);
                   setFilterStatus(e.currentTarget.value);
               }}
@@ -714,10 +717,13 @@ const ClientsView = ({
 
       <Modal isOpen={isChildModalOpen} onClose={closeChildModal} title={childModalState?.mode === 'edit' ? 'Modifica Figlio' : 'Nuovo Figlio'}>
           <form id="child-form" onSubmit={handleSaveChild} className="space-y-4" noValidate>
-              <Input id="name" label="Nome" type="text" value={childFormData.name} onChange={e => setChildFormData({...childFormData, name: e.target.value})} error={childErrors.name} required />
+              {/* FIX: Explicitly typed the event object to resolve potential "property 'value' does not exist on type 'unknown'" error. */}
+              <Input id="name" label="Nome" type="text" value={childFormData.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setChildFormData({...childFormData, name: e.target.value})} error={childErrors.name} required />
               <div className="grid grid-cols-2 gap-4">
-                  <Input id="ageYears" label="Anni" type="number" value={childFormData.ageYears} onChange={e => setChildFormData({...childFormData, ageYears: e.target.value})} error={childErrors.ageYears} />
-                  <Input id="ageMonths" label="Mesi" type="number" value={childFormData.ageMonths} onChange={e => setChildFormData({...childFormData, ageMonths: e.target.value})} />
+                  {/* FIX: Explicitly typed the event object to resolve potential "property 'value' does not exist on type 'unknown'" error. */}
+                  <Input id="ageYears" label="Anni" type="number" value={childFormData.ageYears} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setChildFormData({...childFormData, ageYears: e.target.value})} error={childErrors.ageYears} />
+                  {/* FIX: Explicitly typed the event object to resolve potential "property 'value' does not exist on type 'unknown'" error. */}
+                  <Input id="ageMonths" label="Mesi" type="number" value={childFormData.ageMonths} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setChildFormData({...childFormData, ageMonths: e.target.value})} />
               </div>
                <div className="flex justify-end space-x-3 pt-4">
                   <button type="button" onClick={closeChildModal} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
@@ -729,11 +735,13 @@ const ClientsView = ({
       <Modal isOpen={!!registrationModalState} onClose={closeRegistrationModal} title="Nuova Iscrizione">
           <form id="registration-form" onSubmit={handleSaveRegistration} className="space-y-4" noValidate>
               {/* FIX: Removed failing 'as any' cast. Type inference should handle this correctly. */}
+              {/* FIX: Explicitly typed the event object to resolve the "property 'value' does not exist on type 'unknown'" error. */}
               <Select id="childId" label="Figlio da Iscrivere" value={registrationFormData.childId || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRegistrationFormData({...registrationFormData, childId: e.target.value})} options={children.filter(c => c.parentId === registrationModalState?.parent.id).map(c => ({value: c.id, label: c.name}))} error={registrationErrors.childId} required placeholder="Seleziona un figlio" />
               <div>
                   <label htmlFor="workshopIds" className="block text-sm font-medium text-testo-input mb-1">
                     Workshop (seleziona uno o più)
                   </label>
+                  {/* FIX: Explicitly typed the event object to resolve potential "property 'value' does not exist on type 'unknown'" error. */}
                   <select 
                     id="workshopIds"
                     multiple
