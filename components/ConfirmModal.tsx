@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { XIcon } from './icons/HeroIcons.tsx';
+// FIX: Removed .tsx extension from import path.
+import { XIcon } from './icons/HeroIcons';
 
 interface ConfirmModalProps {
   isOpen: boolean;

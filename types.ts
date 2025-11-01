@@ -1,6 +1,7 @@
+
 // This file defines all the shared data structures for the application.
 
-export type View = 'dashboard' | 'workshops' | 'clients' | 'finance' | 'reports' | 'logistics';
+export type View = 'dashboard' | 'workshops' | 'clients' | 'finance' | 'reports' | 'logistics' | 'campagne' | 'impostazioni';
 
 export type WorkshopType = 'OpenDay' | 'Evento' | '1 Mese' | '2 Mesi' | '3 Mesi' | 'Scolastico' | 'Campus';
 
@@ -8,11 +9,9 @@ export type ParentStatus = 'attivo' | 'sospeso' | 'cessato' | 'prospect';
 
 export type ClientType = 'persona fisica' | 'persona giuridica';
 
-export type PaymentMethod = 'cash' | 'transfer' | 'card';
+export type PaymentMethod = 'cash' | 'transfer' | 'card' | 'unspecified';
 
 export type QuoteStatus = 'sent' | 'approved' | 'rejected';
-
-export type CostType = 'general' | 'fuel';
 
 export interface CompanyProfile {
     companyName: string;
@@ -25,6 +24,7 @@ export interface CompanyProfile {
 
 export interface Workshop {
     id: string;
+    code: string;
     name: string;
     type: WorkshopType;
     locationId: string;
@@ -33,7 +33,7 @@ export interface Workshop {
     dayOfWeek: 'Lunedì' | 'Martedì' | 'Mercoledì' | 'Giovedì' | 'Venerdì' | 'Sabato' | 'Domenica';
     startTime: string; // e.g., '10:00'
     endTime: string;   // e.g., '12:00'
-    pricePerChild: number;
+    durationInMonths?: number;
 }
 
 export interface Parent {
@@ -77,18 +77,16 @@ export interface Payment {
 }
 
 export interface OperationalCost {
-    id: string;
-    description: string;
+    id:string;
+    description?: string;
     amount: number;
     date: string; // ISO date string
     supplierId?: string;
-    workshopId?: string;
-    method?: PaymentMethod;
-    // For fuel costs
-    costType?: CostType;
+    workshopIds?: string[];
+    method: PaymentMethod;
+    category: string;
+    subCategory: string;
     locationId?: string;
-    distanceKm?: number;
-    fuelCostPerKm?: number;
 }
 
 export interface ClientDetails {
@@ -148,4 +146,28 @@ export interface Location {
     rentalCost?: number;
     distanceKm?: number;
     color?: string;
+}
+
+// New types for Campaigns, Settings, and Debugging
+export interface Campaign {
+    id: string;
+    name: string;
+    type: 'sollecito' | 'sviluppo';
+    subject: string;
+    body: string; // Template with placeholders like {NOME_CLIENTE}
+    targetStatus?: ParentStatus[];
+}
+
+export interface ReminderSetting {
+    id: string;
+    name: string;
+    preWarningDays: number; // e.g., 7 days before
+    cadence: number; // e.g., repeat every 3 days
+    enabled: boolean;
+}
+
+export interface ErrorLog {
+    timestamp: string;
+    error: string;
+    componentStack: string | null;
 }

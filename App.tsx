@@ -1,23 +1,28 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 // FIX: Updated imports to remove file extensions
 import { useCollection, useDocument } from './hooks/useFirestore';
 import BottomNav from './components/BottomNav';
 import Sidebar from './components/Sidebar';
-import DashboardView from './views/DashboardView';
-import WorkshopsView from './views/WorkshopsView';
-import ClientsView from './views/ClientsView';
-import FinanceView from './views/FinanceView';
-import LogisticsView from './views/LogisticsView';
-// FIX: Changed import to be a named import as ReportsView does not have a default export.
-import { ReportsView } from './views/ReportsView';
-import type { View, Workshop, Parent, Child, Payment, OperationalCost, Quote, Invoice, Supplier, Location, Registration, CompanyProfile } from './types';
+import ErrorBoundary from './components/ErrorBoundary';
+// LAZY LOAD VIEWS FOR CODE SPLITTING
+const DashboardView = lazy(() => import('./views/DashboardView'));
+const WorkshopsView = lazy(() => import('./views/WorkshopsView'));
+const ClientsView = lazy(() => import('./views/ClientsView'));
+const FinanceView = lazy(() => import('./views/FinanceView'));
+const LogisticsView = lazy(() => import('./views/LogisticsView'));
+const ReportsView = lazy(() => import('./views/ReportsView').then(module => ({ default: module.ReportsView })));
+const CampaignsView = lazy(() => import('./views/CampaignsView'));
+const SettingsView = lazy(() => import('./views/SettingsView'));
+
+
+import type { View, Workshop, Parent, Child, Payment, OperationalCost, Quote, Invoice, Supplier, Location, Registration, CompanyProfile, Campaign, ReminderSetting, ErrorLog } from './types';
 import { MOCK_COMPANY_PROFILE } from './data';
 import { DocumentReference } from 'firebase/firestore';
 
 const App = () => {
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [firestoreStatus, setFirestoreStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
+  const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
 
   // --- Centralized state management with Firebase Hooks ---
   const { data: companyProfile, loading: cpLoading, error: cpError, updateData: setCompanyProfile } = useDocument<CompanyProfile>('companyProfile', 'main', MOCK_COMPANY_PROFILE);
@@ -31,10 +36,13 @@ const App = () => {
   const { data: invoices, loading: inLoading, error: inError, addItem: addInvoice, updateItem: updateInvoice, removeItem: removeInvoice } = useCollection<Invoice>('invoices');
   const { data: suppliers, loading: suLoading, error: suError, addItem: addSupplier, updateItem: updateSupplier, removeItem: removeSupplier } = useCollection<Supplier>('suppliers');
   const { data: locations, loading: loLoading, error: loError, addItem: addLocation, updateItem: updateLocation, removeItem: removeLocation } = useCollection<Location>('locations');
+  const { data: campaigns, loading: caLoading, error: caError, addItem: addCampaign, updateItem: updateCampaign, removeItem: removeCampaign } = useCollection<Campaign>('campaigns');
+  const { data: reminderSettings, loading: rsLoading, error: rsError, addItem: addReminderSetting, updateItem: updateReminderSetting, removeItem: removeReminderSetting } = useCollection<ReminderSetting>('reminderSettings');
+
 
   useEffect(() => {
-    const allLoadings = [cpLoading, wsLoading, paLoading, chLoading, rgLoading, pyLoading, coLoading, quLoading, inLoading, suLoading, loLoading];
-    const anyErrors = [cpError, wsError, paError, chError, rgError, pyError, coError, quError, inError, suError, loError].some(e => e);
+    const allLoadings = [cpLoading, wsLoading, paLoading, chLoading, rgLoading, pyLoading, coLoading, quLoading, inLoading, suLoading, loLoading, caLoading, rsLoading];
+    const anyErrors = [cpError, wsError, paError, chError, rgError, pyError, coError, quError, inError, suError, loError, caError, rsError].some(e => e);
 
     if (anyErrors) {
       setFirestoreStatus('error');
@@ -46,7 +54,7 @@ const App = () => {
   }, [
     cpLoading, cpError, wsLoading, wsError, paLoading, paError, chLoading, chError, 
     rgLoading, rgError, pyLoading, pyError, coLoading, coError, quLoading, quError, 
-    inLoading, inError, suLoading, suError, loLoading, loError
+    inLoading, inError, suLoading, suError, loLoading, loError, caLoading, caError, rsLoading, rsError
   ]);
 
     // FIX: Redefined functions to properly handle Promise<DocumentReference>
@@ -60,14 +68,22 @@ const App = () => {
         return addSupplier(supplier);
     };
 
+    const logError = (error: Error, componentStack: string | null) => {
+        console.error("Caught by Error Boundary:", error, componentStack);
+        const newLog: ErrorLog = {
+            timestamp: new Date().toISOString(),
+            error: error.toString(),
+            componentStack: componentStack,
+        };
+        setErrorLogs(prev => [...prev, newLog]);
+    };
+
 
   const renderView = () => {
     switch (currentView) {
       case 'dashboard':
         return <DashboardView 
           firestoreStatus={firestoreStatus}
-          companyProfile={companyProfile}
-          setCompanyProfile={setCompanyProfile}
           workshops={workshops} 
           parents={parents} 
           payments={payments} 
@@ -103,6 +119,7 @@ const App = () => {
             removeRegistration={removeRegistration}
             payments={payments}
             addPayment={handleAddPayment}
+            updatePayment={updatePayment}
             locations={locations}
         />;
       case 'finance':
@@ -132,11 +149,28 @@ const App = () => {
             suppliers={suppliers} addSupplier={handleAddSupplier} updateSupplier={updateSupplier} removeSupplier={removeSupplier}
             locations={locations} addLocation={handleAddLocation} updateLocation={updateLocation} removeLocation={removeLocation}
         />;
+      case 'campagne':
+        return <CampaignsView 
+          campaigns={campaigns}
+          addCampaign={addCampaign}
+          updateCampaign={updateCampaign}
+          removeCampaign={removeCampaign}
+        />;
+      case 'impostazioni':
+        return <SettingsView
+          companyProfile={companyProfile}
+          setCompanyProfile={setCompanyProfile}
+          reminderSettings={reminderSettings}
+          addReminderSetting={addReminderSetting}
+          updateReminderSetting={updateReminderSetting}
+          removeReminderSetting={removeReminderSetting}
+          errorLogs={errorLogs}
+          parents={parents}
+          campaigns={campaigns}
+         />;
       default:
         return <DashboardView 
           firestoreStatus={firestoreStatus}
-          companyProfile={companyProfile}
-          setCompanyProfile={setCompanyProfile}
           workshops={workshops} 
           parents={parents} 
           payments={payments} 
@@ -147,6 +181,18 @@ const App = () => {
         />;
     }
   };
+
+  const LoadingFallback = () => (
+    <div className="flex justify-center items-center h-64">
+        <div className="flex items-center space-x-2 text-testo-input/80">
+            <svg className="animate-spin h-5 w-5 text-testo-input/70" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span className="text-lg font-medium">Caricamento...</span>
+        </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-sfondo-grigio">
@@ -160,7 +206,11 @@ const App = () => {
         </header>
         <main className="flex-grow pt-20 md:pt-0 pb-8">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            {renderView()}
+            <ErrorBoundary logError={logError}>
+              <Suspense fallback={<LoadingFallback />}>
+                {renderView()}
+              </Suspense>
+            </ErrorBoundary>
           </div>
         </main>
       </div>

@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 // Icons are from Heroicons (https://heroicons.com/)
@@ -111,7 +110,7 @@ export const CreditCardIcon: React.FC<{className?: string}> = ({className}) => (
 
 export const EnvelopeIcon: React.FC<{className?: string}> = ({className}) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className || "h-6 w-6"}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25-2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
     </svg>
 );
 
@@ -153,8 +152,8 @@ export const DocumentArrowDownIcon: React.FC<{className?: string}> = ({className
 
 export const Cog6ToothIcon: React.FC<{className?: string}> = ({className}) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className || "h-6 w-6"}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-1.003 1.11-1.226a9 9 0 0 1 2.59 0c.55.223 1.02.684 1.11 1.226.09.542-.055 1.152-.46 1.62.405.468.55 1.078.46 1.62-.09.542-.56 1.003-1.11 1.226a9 9 0 0 1-2.59 0c-.55-.223-1.02-.684-1.11-1.226-.09-.542.055-1.152.46-1.62-.405-.468-.55-1.078-.46-1.62ZM19.5 12a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12a7.5 7.5 0 0 0 15 0m-15 0a7.5 7.5 0 1 1 15 0m-15 0H3m18 0h-1.5m-15 0H3.75m16.5 0c.278 0 .555.02.83.056M21 12c0 .278-.02.555-.056.83M3.75 12a9.04 9.04 0 0 1 .056-.83m2.194 0A9.01 9.01 0 0 1 12 3.75c1.26 0 2.447.26 3.55.722m-7.1 0A9.01 9.01 0 0 0 12 20.25c1.26 0 2.447-.26 3.55-.722m-7.1 0c-.278 0-.555-.02-.83-.056M4.5 12a9.04 9.04 0 0 0-.056.83m16.594 0c-.036.275-.056.552-.056.83" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
     </svg>
 );
 
@@ -173,6 +172,13 @@ export const ExclamationCircleIcon: React.FC<{className?: string}> = ({className
 export const ClockIcon: React.FC<{className?: string}> = ({className}) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className || "h-6 w-6"}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+    </svg>
+);
+
+export const MegaphoneIcon: React.FC<{className?: string}> = ({className}) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className || "h-6 w-6"}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
     </svg>
 );
 

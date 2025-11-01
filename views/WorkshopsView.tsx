@@ -24,27 +24,20 @@ import Select from '../components/Select';
 type ModalState = 
     | { mode: 'view'; workshop: Workshop }
     | { mode: 'edit'; workshop: Workshop }
-    | { mode: 'new'; date: string }
+    | { mode: 'new'; date?: string }
     | null;
 
 const workshopTypeOptions: { value: WorkshopType; label: string }[] = [
     { value: 'OpenDay', label: 'OpenDay' },
     { value: 'Evento', label: 'Evento' },
-    { value: '1 Mese', label: '1 Mese (tot. 4 Lab)' },
-    { value: '2 Mesi', label: '2 Mesi (tot. 8 Labs)' },
-    { value: '3 Mesi', label: '3 Mesi (tot. 12 Labs)' },
+    { value: '1 Mese', label: '1 Mese' },
+    { value: '2 Mesi', label: '2 Mesi' },
+    { value: '3 Mesi', label: '3 Mesi' },
     { value: 'Scolastico', label: 'Scolastico' },
     { value: 'Campus', label: 'Campus' },
 ];
 
-const WORKSHOP_STANDARD_PRICES: Partial<Record<WorkshopType, number>> = {
-    '1 Mese': 65,
-    '2 Mesi': 120,
-    '3 Mesi': 165,
-};
-
-const WORKSHOP_TYPES_WITH_PRESET_PRICE: WorkshopType[] = ['1 Mese', '2 Mesi', '3 Mesi'];
-const TYPES_WITH_MANUAL_END_DATE: WorkshopType[] = ['Scolastico', 'Campus'];
+const TYPES_WITH_MANUAL_DURATION: WorkshopType[] = ['Scolastico', 'Campus'];
 
 interface WorkshopsViewProps {
     workshops: Workshop[];
@@ -92,9 +85,8 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
     const [deletingWorkshopId, setDeletingWorkshopId] = useState<string | null>(null);
     const [formData, setFormData] = useState<Partial<Workshop>>({});
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const [priceConfig, setPriceConfig] = useState<{ isManual: boolean }>({ isManual: false });
-
-    const [filters, setFilters] = useState({ name: '', dayOfWeek: '', startTime: '', minPrice: '', maxPrice: ''});
+    const [repetitionCount, setRepetitionCount] = useState<number>(0);
+    const [filters, setFilters] = useState({ name: '', dayOfWeek: '', startTime: ''});
 
     const locationMap = useMemo(() => locations.reduce((acc, l) => ({...acc, [l.id]: l}), {} as Record<string, Location>), [locations]);
     const childMap = useMemo(() => children.reduce((acc, c) => ({...acc, [c.id]: c}), {} as Record<string, Child>), [children]);
@@ -111,128 +103,137 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
     useEffect(() => {
         if (modalState?.mode === 'edit') {
             setFormData(modalState.workshop);
-            const { type, pricePerChild } = modalState.workshop;
-            const standardPrice = WORKSHOP_STANDARD_PRICES[type];
-            if (standardPrice !== undefined && pricePerChild !== standardPrice) {
-                setPriceConfig({ isManual: true });
-            } else {
-                setPriceConfig({ isManual: false });
-            }
         } else if (modalState?.mode === 'new') {
-            const defaultType: WorkshopType = '1 Mese';
             setFormData({
                 name: '',
-                type: defaultType,
+                type: '1 Mese',
                 locationId: locations[0]?.id || '',
-                pricePerChild: WORKSHOP_STANDARD_PRICES[defaultType],
-                startDate: modalState.date,
-                endDate: '', // Will be calculated
+                startDate: modalState.date || new Date().toISOString().split('T')[0],
                 dayOfWeek: 'Lunedì',
-                startTime: '10:00',
-                endTime: '12:00',
+                startTime: '17:00',
+                durationInMonths: 1, // default for manual types
             });
-            setPriceConfig({ isManual: false });
         } else {
             setFormData({});
         }
         setErrors({});
     }, [modalState, locations]);
-
+    
+    // Automatic calculation for EndTime (1 hour after StartTime)
     useEffect(() => {
-        const { type, startDate } = formData;
-        if (!type || !startDate) return;
+        if (formData.startTime) {
+            const [hours, minutes] = formData.startTime.split(':').map(Number);
+            const date = new Date();
+            date.setHours(hours, minutes, 0, 0);
+            date.setHours(date.getHours() + 1);
+            const newEndTime = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+            setFormData(prev => ({ ...prev, endTime: newEndTime }));
+        }
+    }, [formData.startTime]);
 
-        if (TYPES_WITH_MANUAL_END_DATE.includes(type as WorkshopType)) {
+    // Automatic calculation for Repetitions and EndDate
+    useEffect(() => {
+        const { type, startDate, durationInMonths } = formData;
+        if (!type || !startDate) {
+            setRepetitionCount(0);
+            setFormData(p => ({...p, endDate: ''}));
             return;
         }
 
+        let reps = 0;
         const start = new Date(startDate);
-        let newEndDate = startDate;
+        if (isNaN(start.getTime())) return;
 
         switch (type) {
+            case 'OpenDay':
+            case 'Evento':
+                reps = 1;
+                break;
             case '1 Mese':
-                start.setDate(start.getDate() + 21);
-                newEndDate = start.toISOString().split('T')[0];
+                reps = 4;
                 break;
             case '2 Mesi':
-                start.setDate(start.getDate() + 49);
-                newEndDate = start.toISOString().split('T')[0];
+                reps = 8;
                 break;
             case '3 Mesi':
-                start.setDate(start.getDate() + 77);
-                newEndDate = start.toISOString().split('T')[0];
+                reps = 12;
+                break;
+            case 'Scolastico':
+            case 'Campus':
+                reps = (durationInMonths || 0) * 4;
                 break;
         }
-        setFormData(prev => ({...prev, endDate: newEndDate}));
-    }, [formData.type, formData.startDate]);
 
+        setRepetitionCount(reps);
+
+        if (reps > 0) {
+            const endDate = new Date(start);
+            endDate.setDate(endDate.getDate() + (reps - 1) * 7);
+            setFormData(p => ({ ...p, endDate: endDate.toISOString().split('T')[0] }));
+        } else {
+            setFormData(p => ({ ...p, endDate: startDate }));
+        }
+
+    }, [formData.type, formData.startDate, formData.durationInMonths]);
+
+    const getConsonants = (str: string): string => {
+        if (!str) return '';
+        return (str.match(/[bcdfghjklmnpqrstvwxyz]/ig) || []).join('');
+    };
+
+    // Automatic Code Generation
     useEffect(() => {
-        const { type } = formData;
-        if (!type) return;
-
-        if (type === 'OpenDay') {
-            setFormData(prev => ({...prev, pricePerChild: 0}));
-            setPriceConfig({ isManual: false });
+        const { locationId, dayOfWeek, startTime } = formData;
+        if (!locationId || !dayOfWeek || !startTime) {
+            setFormData(p => ({ ...p, code: ''}));
             return;
         }
-
-        const standardPrice = WORKSHOP_STANDARD_PRICES[type as WorkshopType];
-        if (standardPrice !== undefined) {
-            if (!priceConfig.isManual) {
-                setFormData(prev => ({...prev, pricePerChild: standardPrice}));
-            }
-        } else {
-            setPriceConfig({ isManual: true });
+    
+        const location = locationMap[locationId];
+        if (!location) {
+            setFormData(p => ({ ...p, code: ''}));
+            return;
         }
-    }, [formData.type, priceConfig.isManual]);
+    
+        const locCodePart = getConsonants(location.name).substring(0, 4).toUpperCase();
+        const dayCodePart = dayOfWeek.substring(0, 3).toUpperCase();
+        const timeCodePart = startTime;
+    
+        const code = `${locCodePart}-${dayCodePart}-${timeCodePart}`;
+        setFormData(p => ({...p, code: code}));
+    
+    }, [formData.locationId, formData.dayOfWeek, formData.startTime, locationMap]);
+
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        // --- DEBUG START: WORKSHOPS_FILTER_CHANGE ---
-        console.log('[DEBUG] WorkshopsView: handleFilterChange triggered.');
-        console.log(`[DEBUG] WorkshopsView: Field ID: ${e.currentTarget.id}, New Value: ${e.currentTarget.value}`);
         setFilters(prev => ({ ...prev, [e.currentTarget.id]: e.currentTarget.value }));
-        // --- DEBUG END: WORKSHOPS_FILTER_CHANGE ---
     };
     
     const resetFilters = () => {
-        setFilters({ name: '', dayOfWeek: '', startTime: '', minPrice: '', maxPrice: '' });
+        setFilters({ name: '', dayOfWeek: '', startTime: '' });
     };
 
     const filteredWorkshops = useMemo(() => {
-        // --- DEBUG START: WORKSHOPS_FILTER_LOGIC ---
-        console.log('[DEBUG] WorkshopsView: Recalculating filteredWorkshops.');
-        console.log('[DEBUG] WorkshopsView: workshops prop (pre-filter):', workshops);
-        console.log('[DEBUG] WorkshopsView: Current filters:', filters);
-        console.log('[DEBUG] WorkshopsView: Current selectedLocation:', selectedLocation);
-        
-        try {
-            const result = workshops.filter(w => {
-                if (selectedLocation !== 'all' && w.locationId !== selectedLocation) return false;
-                if (filters.name && !w.name.toLowerCase().includes(filters.name.toLowerCase())) return false;
-                if (filters.dayOfWeek && w.dayOfWeek !== filters.dayOfWeek) return false;
-                if (filters.startTime && w.startTime < filters.startTime) return false;
-                if (filters.minPrice && w.pricePerChild < parseFloat(filters.minPrice)) return false;
-                if (filters.maxPrice && w.pricePerChild > parseFloat(filters.maxPrice)) return false;
-                return true;
-            });
-            console.log('[DEBUG] WorkshopsView: Filtering successful. Result:', result);
-            return result;
-        } catch (error) {
-            console.error('[DEBUG] WorkshopsView: CRASH in filteredWorkshops useMemo!', error);
-            // Return an empty array to prevent the app from crashing completely
-            return [];
-        }
-        // --- DEBUG END: WORKSHOPS_FILTER_LOGIC ---
+        return workshops.filter(w => {
+            if (!w) return false;
+            if (selectedLocation !== 'all' && w.locationId !== selectedLocation) return false;
+            if (filters.name && !w.name.toLowerCase().includes(filters.name.toLowerCase())) return false;
+            if (filters.dayOfWeek && w.dayOfWeek !== filters.dayOfWeek) return false;
+            if (filters.startTime && w.startTime < filters.startTime) return false;
+            return true;
+        });
     }, [selectedLocation, workshops, filters]);
     
     const workshopsByDate = useMemo(() => {
         const map = new Map<string, Workshop[]>();
         filteredWorkshops.forEach(ws => {
-            const dateKey = ws.startDate;
-            if (!map.has(dateKey)) {
-                map.set(dateKey, []);
+            if (ws && ws.startDate) {
+                const dateKey = ws.startDate;
+                if (!map.has(dateKey)) {
+                    map.set(dateKey, []);
+                }
+                map.get(dateKey)!.push(ws);
             }
-            map.get(dateKey)!.push(ws);
         });
         return map;
     }, [filteredWorkshops]);
@@ -278,19 +279,16 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
     
     const validate = () => {
         const newErrors: Record<string, string> = {};
-        if (!formData.name?.trim()) newErrors.name = 'Il nome è obbligatorio.';
+        if (!formData.name?.trim()) newErrors.name = 'Il titolo è obbligatorio.';
         if (!formData.type) newErrors.type = 'Il tipo è obbligatorio.';
-        if (!formData.locationId) newErrors.locationId = 'Il luogo è obbligatorio.';
-        if (formData.pricePerChild === undefined || parseFloat(String(formData.pricePerChild)) < 0) newErrors.pricePerChild = 'Il prezzo non può essere negativo.';
-        if (formData.type === 'OpenDay' && parseFloat(String(formData.pricePerChild)) !== 0) newErrors.pricePerChild = 'Il prezzo per OpenDay deve essere 0.';
+        if (!formData.locationId) newErrors.locationId = 'La sede è obbligatoria.';
         if (!formData.startDate) newErrors.startDate = 'La data di inizio è obbligatoria.';
-        if (!formData.endDate) newErrors.endDate = 'La data di fine è obbligatoria.';
-        if (formData.startDate && formData.endDate && formData.startDate > formData.endDate) newErrors.endDate = 'Data di fine deve essere dopo quella di inizio.';
         if (!formData.dayOfWeek) newErrors.dayOfWeek = 'Il giorno è obbligatorio.';
         if (!formData.startTime) newErrors.startTime = "L'orario di inizio è obbligatorio.";
-        if (!formData.endTime) newErrors.endTime = "L'orario di fine è obbligatorio.";
-        if (formData.startTime && formData.endTime && formData.startTime >= formData.endTime) {
-            newErrors.endTime = 'Orario di fine deve essere dopo quello di inizio.';
+        
+        const type = formData.type as WorkshopType;
+        if (TYPES_WITH_MANUAL_DURATION.includes(type) && (!formData.durationInMonths || formData.durationInMonths <= 0)) {
+            newErrors.durationInMonths = "La durata in mesi è obbligatoria e deve essere positiva.";
         }
         
         setErrors(newErrors);
@@ -300,27 +298,24 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (validate()) {
-            const dataToSave = {
-                ...formData,
-                pricePerChild: parseFloat(String(formData.pricePerChild || '0'))
+            const dataToSave: Omit<Workshop, 'id'> = {
+                code: formData.code || '',
+                name: formData.name!,
+                type: formData.type! as WorkshopType,
+                locationId: formData.locationId!,
+                startDate: formData.startDate!,
+                endDate: formData.endDate!,
+                dayOfWeek: formData.dayOfWeek!,
+                startTime: formData.startTime!,
+                endTime: formData.endTime!,
+                durationInMonths: TYPES_WITH_MANUAL_DURATION.includes(formData.type! as WorkshopType) ? Number(formData.durationInMonths) : undefined,
             };
             
             if (modalState?.mode === 'edit') {
                 await updateWorkshop(modalState.workshop.id, dataToSave);
                 alert('Workshop aggiornato!');
             } else if (modalState?.mode === 'new') {
-                const newWorkshop: Omit<Workshop, 'id'> = {
-                    name: dataToSave.name!,
-                    type: dataToSave.type! as WorkshopType,
-                    locationId: dataToSave.locationId!,
-                    startDate: dataToSave.startDate!,
-                    endDate: dataToSave.endDate || dataToSave.startDate!,
-                    pricePerChild: dataToSave.pricePerChild!,
-                    dayOfWeek: dataToSave.dayOfWeek!,
-                    startTime: dataToSave.startTime!,
-                    endTime: dataToSave.endTime!,
-                };
-                await addWorkshop(newWorkshop);
+                await addWorkshop(dataToSave);
                 alert('Nuovo workshop salvato!');
             }
             closeModal();
@@ -329,9 +324,6 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { id, value } = e.target;
-        if (id === 'type') {
-            setPriceConfig({ isManual: false });
-        }
         setFormData(prev => ({ ...prev, [id]: value }));
     };
 
@@ -339,8 +331,8 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
         if (!modalState) return '';
         switch (modalState.mode) {
             case 'view': return modalState.workshop.name;
-            case 'edit': return `Modifica: ${modalState.workshop.name}`;
-            case 'new': return `Nuovo Workshop per il ${new Date(modalState.date).toLocaleDateString('it-IT')}`;
+            case 'edit': return `Modifica Workshop`;
+            case 'new': return `Nuovo Workshop`;
         }
     };
 
@@ -358,12 +350,16 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
             return (
                  <>
                     <div className="space-y-4 text-sm">
+                        <div className="p-2 bg-navbar-blu text-white rounded-md text-center font-mono tracking-wider">
+                           Codice: {workshop.code}
+                        </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-2 p-4 bg-white/30 rounded-lg">
                             <DetailItem icon={<CalendarDaysIcon />} label="Tipo" value={workshop.type} />
                             <DetailItem icon={<CalendarDaysIcon />} label="Date" value={`${new Date(workshop.startDate).toLocaleDateString('it-IT')} - ${new Date(workshop.endDate).toLocaleDateString('it-IT')}`} />
                             <DetailItem icon={<ClockIcon />} label="Orario" value={`${workshop.dayOfWeek}, ${workshop.startTime} - ${workshop.endTime}`} />
                             <DetailItem icon={<LocationMarkerIcon />} label="Luogo" value={location?.name ?? 'N/A'} />
-                            <DetailItem icon={<CurrencyDollarIcon />} label="Prezzo" value={`€${workshop.pricePerChild.toFixed(2)}`} />
+                            {/* FIX: Replaced missing ArrowPathIcon with ClockIcon for duration. */}
+                            {workshop.durationInMonths && <DetailItem icon={<ClockIcon />} label="Durata" value={`${workshop.durationInMonths} mesi`} />}
                         </div>
                         
                         <div className="pt-2">
@@ -400,10 +396,9 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
         }
         
         if (modalState.mode === 'edit' || modalState.mode === 'new') {
-            const locationOptions = locations.map(l => ({ value: l.id, label: l.name }));
+            const locationOptions = locations.map(l => ({ value: l.id, label: `${l.name} (${l.shortName || 'N/A'})` }));
             const type = formData.type as WorkshopType;
-            const isEndDateDisabled = type && !TYPES_WITH_MANUAL_END_DATE.includes(type);
-
+            
             const handleCancel = () => {
                 if (modalState.mode === 'edit') {
                     setModalState({ mode: 'view', workshop: modalState.workshop });
@@ -414,49 +409,38 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
 
             return (
                  <form onSubmit={handleSave} className="space-y-4" noValidate>
-                    <Input id="name" label="Nome Workshop" type="text" value={formData.name || ''} onChange={handleChange} error={errors.name} required />
-                    <Select id="type" label="Tipo" options={workshopTypeOptions} value={type || ''} onChange={handleChange} error={errors.type} required />
-                    <Select id="locationId" label="Luogo" options={locationOptions} value={formData.locationId || ''} onChange={handleChange} error={errors.locationId} required placeholder="Seleziona un luogo"/>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <Input id="startDate" label="Data Inizio" type="date" value={formData.startDate || ''} onChange={handleChange} error={errors.startDate} required />
-                        <Input id="endDate" label="Data Fine" type="date" value={formData.endDate || ''} onChange={handleChange} error={errors.endDate} disabled={isEndDateDisabled}/>
-                    </div>
-                    <Select id="dayOfWeek" label="Giorno della Settimana" options={daysOfWeekOptions} value={formData.dayOfWeek || ''} onChange={handleChange} error={errors.dayOfWeek} required/>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                       <Input id="startTime" label="Orario Inizio" type="time" value={formData.startTime || ''} onChange={handleChange} error={errors.startTime} required/>
-                       <Input id="endTime" label="Orario Fine" type="time" value={formData.endTime || ''} onChange={handleChange} error={errors.endTime} required/>
-                    </div>
-                    
-                    {type === 'OpenDay' && (
-                        <Input id="pricePerChild" label="Prezzo per Bambino (€)" type="number" value="0.00" disabled />
-                    )}
-
-                    {type && WORKSHOP_TYPES_WITH_PRESET_PRICE.includes(type) && (
-                        <div>
-                            <label className="block text-sm font-medium text-testo-input mb-2">Prezzo</label>
-                            <div className="flex space-x-4">
-                                <label className="flex items-center">
-                                    <input type="radio" name="priceOption" checked={!priceConfig.isManual} onChange={() => setPriceConfig({ isManual: false })} className="h-4 w-4 text-bottone-azione border-gray-500 focus:ring-bottone-azione" />
-                                    <span className="ml-2 text-sm text-testo-input">Standard (€{(WORKSHOP_STANDARD_PRICES[type] || 0).toFixed(2)})</span>
-                                </label>
-                                <label className="flex items-center">
-                                    <input type="radio" name="priceOption" checked={priceConfig.isManual} onChange={() => setPriceConfig({ isManual: true })} className="h-4 w-4 text-bottone-azione border-gray-500 focus:ring-bottone-azione" />
-                                    <span className="ml-2 text-sm text-testo-input">Personalizzato</span>
-                                </label>
-                            </div>
-                            {priceConfig.isManual && (
-                                <div className="mt-2">
-                                    <Input id="pricePerChild" label="" type="number" step="0.01" value={String(formData.pricePerChild || '0')} onChange={handleChange} error={errors.pricePerChild} required />
-                                </div>
-                            )}
+                    {formData.code && (
+                         <div className="p-2 bg-navbar-blu text-white rounded-md text-center font-mono tracking-wider">
+                           {formData.code}
                         </div>
                     )}
-
-                    {type && ['Evento', 'Scolastico', 'Campus'].includes(type) && (
-                        <Input id="pricePerChild" label="Prezzo per Bambino (€)" type="number" step="0.01" value={String(formData.pricePerChild || '0')} onChange={handleChange} error={errors.pricePerChild} required />
+                    <Input id="name" label="Titolo Workshop" type="text" value={formData.name || ''} onChange={handleChange} error={errors.name} required autoComplete="off" />
+                    <Select id="type" label="Tipo" options={workshopTypeOptions} value={type || ''} onChange={handleChange} error={errors.type} required />
+                    <Select id="locationId" label="Sede" options={locationOptions} value={formData.locationId || ''} onChange={handleChange} error={errors.locationId} required placeholder="Seleziona una sede"/>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Select id="dayOfWeek" label="Giorno Settimana" options={daysOfWeekOptions} value={formData.dayOfWeek || ''} onChange={handleChange} error={errors.dayOfWeek} required/>
+                        <Input id="startTime" label="Orario Inizio (1h)" type="time" value={formData.startTime || ''} onChange={handleChange} error={errors.startTime} required autoComplete="off"/>
+                    </div>
+                    
+                    <Input id="startDate" label="Data Inizio" type="date" value={formData.startDate || ''} onChange={handleChange} error={errors.startDate} required autoComplete="off" />
+                    
+                    {TYPES_WITH_MANUAL_DURATION.includes(type) && (
+                         <Input id="durationInMonths" label="Durata in Mesi" type="number" value={formData.durationInMonths || ''} onChange={handleChange} error={errors.durationInMonths} required autoComplete="off" />
                     )}
 
-                    <div className="flex justify-end space-x-3 pt-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-white/40 rounded-md">
+                        <div>
+                            <label className="block text-xs font-medium text-testo-input/80">Ripetizioni calcolate</label>
+                            <p className="font-semibold text-testo-input">{repetitionCount}</p>
+                        </div>
+                         <div>
+                            <label className="block text-xs font-medium text-testo-input/80">Data fine calcolata</label>
+                            <p className="font-semibold text-testo-input">{formData.endDate ? new Date(formData.endDate).toLocaleDateString('it-IT') : 'N/D'}</p>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end space-x-3 pt-4 border-t border-black/10">
                         <button type="button" onClick={handleCancel} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
                         <button type="submit" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Salva</button>
                     </div>
@@ -469,26 +453,22 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
 
     return (
     <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-testo-input">Calendario Workshop</h2>
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center space-y-2 sm:space-y-0">
+            <h2 className="text-xl font-semibold text-testo-input">Calendario Workshop</h2>
+            <button onClick={() => setModalState({ mode: 'new' })} className="bg-bottone-azione text-white px-4 py-2 rounded-full shadow hover:opacity-90 flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bottone-azione">
+              <PlusIcon /><span>Nuovo Workshop</span>
+            </button>
+        </div>
         
         <Card>
             <CardContent className="space-y-4">
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Input id="name" label="Cerca per nome" value={filters.name} onChange={handleFilterChange} placeholder="Nome workshop..."/>
+                    <Input id="name" label="Cerca per nome" value={filters.name} onChange={handleFilterChange} placeholder="Nome workshop..." autoComplete="off"/>
                     <Select id="dayOfWeek" label="Giorno della settimana" options={daysOfWeekOptions} value={filters.dayOfWeek} onChange={handleFilterChange} placeholder="Qualsiasi giorno" />
-                    <Input id="startTime" label="Orario di inizio (dalle)" type="time" value={filters.startTime} onChange={handleFilterChange}/>
+                    <Input id="startTime" label="Orario di inizio (dalle)" type="time" value={filters.startTime} onChange={handleFilterChange} autoComplete="off"/>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                     <div className="col-span-1 md:col-span-1">
-                        <label className="block text-sm font-medium text-testo-input mb-1">Prezzo</label>
-                        <div className="flex items-center space-x-2">
-                           <Input id="minPrice" label="" type="number" value={filters.minPrice} onChange={handleFilterChange} placeholder="Min €"/>
-                           <Input id="maxPrice" label="" type="number" value={filters.maxPrice} onChange={handleFilterChange} placeholder="Max €"/>
-                        </div>
-                    </div>
-                    <div className="col-span-1 md:col-span-2 flex items-end space-x-2">
-                        <button onClick={resetFilters} className="w-full md:w-auto px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Resetta Filtri</button>
-                    </div>
+                <div className="flex justify-end">
+                    <button onClick={resetFilters} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Resetta Filtri</button>
                 </div>
             </CardContent>
         </Card>
@@ -520,7 +500,7 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                     <div key={i} className="text-center py-2 text-xs font-semibold text-testo-input/80 bg-white/20">{day}</div>
                 ))}
             </div>
-            {/* --- DEBUG START: WORKSHOPS_RENDER_LOGIC --- */}
+            {/* --- BUG FIX: The logic inside this map was causing a hook violation. It has been corrected. --- */}
             <div className="grid grid-cols-7 gap-px bg-gray-300">
                 {days.map((day, index) => {
                     const isCurrentMonth = day.getMonth() === currentDate.getMonth();
@@ -541,6 +521,7 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                             )}
                             <div className="mt-1 space-y-1">
                                 {dailyWorkshops.map(ws => {
+                                    // This is just a map lookup, it is safe and does not violate hook rules.
                                     const location = locationMap[ws.locationId];
                                     return (
                                         <div 
@@ -565,7 +546,6 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                     )
                 })}
             </div>
-             {/* --- DEBUG END: WORKSHOPS_RENDER_LOGIC --- */}
         </Card>
         
         <Modal isOpen={!!modalState} onClose={closeModal} title={getModalTitle()}>

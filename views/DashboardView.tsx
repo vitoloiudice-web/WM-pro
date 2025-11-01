@@ -1,14 +1,13 @@
-
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 // FIX: Updated imports to remove file extensions
 import Card, { CardContent, CardHeader } from '../components/Card';
 import { ArrowUpRightIcon, UsersIcon, CurrencyDollarIcon, CalendarDaysIcon, Cog6ToothIcon, CheckCircleIcon, ExclamationCircleIcon } from '../components/icons/HeroIcons';
 import Modal from '../components/Modal';
 import Input from '../components/Input';
 import Select from '../components/Select';
-import type { View, Workshop, Parent, Payment, Registration, Location, CompanyProfile } from '../types';
+import type { View, Workshop, Parent, Payment, Registration, Location } from '../types';
 
-type ModalType = 'none' | 'newClient' | 'newWorkshop' | 'newPayment' | 'newCost' | 'settings';
+type ModalType = 'none' | 'newClient' | 'newWorkshop' | 'newPayment' | 'newCost';
 
 const parentStatusOptions = [
     { value: 'attivo', label: 'Attivo' },
@@ -19,20 +18,18 @@ const parentStatusOptions = [
 
 interface DashboardViewProps {
   firestoreStatus: 'connecting' | 'connected' | 'error';
-  companyProfile: CompanyProfile;
-  setCompanyProfile: (profile: CompanyProfile) => void;
   workshops: Workshop[];
   parents: Parent[];
   payments: Payment[];
   registrations: Registration[];
   locations: Location[];
-  addParent: (parent: Parent) => Promise<void>;
+  // FIX: Corrected prop type to align with `useFirestore.addItem` which expects an object without an ID.
+  addParent: (parent: Omit<Parent, 'id'>) => Promise<void>;
   setCurrentView: (view: View) => void;
 }
 
 const DashboardView = ({ 
     firestoreStatus,
-    companyProfile, setCompanyProfile,
     workshops, parents, payments, registrations, locations,
     addParent,
     setCurrentView
@@ -42,14 +39,6 @@ const DashboardView = ({
   const [genericFormData, setGenericFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   
-  const [settingsFormData, setSettingsFormData] = useState<CompanyProfile>(companyProfile);
-
-  useEffect(() => {
-    if (companyProfile) {
-        setSettingsFormData(companyProfile);
-    }
-  }, [companyProfile, activeModal]);
-
   // --- Dynamic Data Calculation ---
   const currentYear = new Date().getFullYear();
   const totalIncome = payments
@@ -118,34 +107,25 @@ const DashboardView = ({
     if (activeModal === 'newClient') {
       if (validate(activeModal)) {
         // --- FIX START: Build a clean object for Firestore ---
-        const dataToSave: any = {
+        const dataToSave: Omit<Parent, 'id'> = {
           clientType: formData.clientType || 'persona fisica',
           status: formData.status || 'attivo',
-          email: formData.email,
+          email: formData.email!,
           phone: formData.phone || '',
           address: formData.address || '',
           zipCode: formData.zipCode || '',
           city: formData.city || '',
           province: formData.province || '',
+          // Conditionally add fields based on clientType
+          ...(formData.clientType === 'persona fisica'
+            ? { name: formData.name, surname: formData.surname, taxCode: formData.taxCode }
+            : { companyName: formData.companyName, vatNumber: formData.vatNumber }),
         };
-
-        if (dataToSave.clientType === 'persona fisica') {
-          dataToSave.name = formData.name;
-          dataToSave.surname = formData.surname;
-          dataToSave.taxCode = formData.taxCode;
-        } else {
-          dataToSave.companyName = formData.companyName;
-          dataToSave.vatNumber = formData.vatNumber;
-        }
         // --- FIX END ---
-
-        const newParent = { 
-            id: `p_${Date.now()}`, 
-            ...dataToSave
-        } as Parent;
-
+        
         try {
-          await addParent(newParent);
+          // FIX: Pass the object without a manual ID. Firestore will generate it.
+          await addParent(dataToSave);
           alert('Nuovo cliente salvato con successo!');
           setActiveModal('none');
         } catch (error) {
@@ -159,13 +139,6 @@ const DashboardView = ({
         alert('Azione completata! (Simulazione per workshop, pagamenti, etc.)');
         setActiveModal('none');
     }
-  };
-
-  const handleSaveSettings = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCompanyProfile(settingsFormData);
-    setActiveModal('none');
-    alert('Profilo azienda salvato!');
   };
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -191,10 +164,6 @@ const DashboardView = ({
         return newState;
     });
   }
-  
-  const handleSettingsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setSettingsFormData({ ...settingsFormData, [e.target.id]: e.target.value });
-  }
 
   const renderModal = () => {
     if (activeModal === 'none') return null;
@@ -211,36 +180,6 @@ const DashboardView = ({
     );
 
     switch (activeModal) {
-      case 'settings':
-        title = 'Profilo Azienda';
-        content = (
-          <form id={formId} onSubmit={handleSaveSettings} className="space-y-4" noValidate>
-            <p className="text-sm text-testo-input/90">
-              Queste informazioni verranno utilizzate per generare preventivi e fatture.
-            </p>
-            <Input id="companyName" label="Nome Attività" type="text" value={settingsFormData.companyName || ''} onChange={handleSettingsChange} required />
-            <Input id="vatNumber" label="Partita IVA / C.F." type="text" value={settingsFormData.vatNumber || ''} onChange={handleSettingsChange} required />
-            <Input id="address" label="Indirizzo Completo" type="text" value={settingsFormData.address || ''} onChange={handleSettingsChange} required />
-            <Input id="email" label="Email" type="email" value={settingsFormData.email || ''} onChange={handleSettingsChange} required />
-            <Input id="phone" label="Telefono" type="tel" value={settingsFormData.phone || ''} onChange={handleSettingsChange} />
-            <div>
-                <label htmlFor="taxRegime" className="block text-sm font-medium text-testo-input mb-1">
-                    Note Fiscali / Regime
-                </label>
-                <textarea
-                    id="taxRegime"
-                    value={settingsFormData.taxRegime || ''}
-                    onChange={handleSettingsChange}
-                    rows={4}
-                    className="block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-azione focus:ring-bottone-azione sm:text-sm"
-                    placeholder="Es: Operazione in regime forfettario..."
-                />
-            </div>
-            {commonButtons}
-          </form>
-        );
-        break;
-
       case 'newClient':
         title = 'Nuovo Cliente';
         const clientType = formData.clientType || 'persona fisica';
@@ -267,24 +206,24 @@ const DashboardView = ({
             />
             {clientType === 'persona giuridica' ? (
               <>
-                <Input id="companyName" label="Ragione Sociale" type="text" value={formData.companyName || ''} onChange={handleChange} error={errors.companyName} required />
-                <Input id="vatNumber" label="Partita IVA" type="text" value={formData.vatNumber || ''} onChange={handleChange} error={errors.vatNumber} required />
+                <Input id="companyName" label="Ragione Sociale" type="text" value={formData.companyName || ''} onChange={handleChange} error={errors.companyName} required autoComplete="organization" />
+                <Input id="vatNumber" label="Partita IVA" type="text" value={formData.vatNumber || ''} onChange={handleChange} error={errors.vatNumber} required autoComplete="off" />
               </>
             ) : (
               <>
-                <Input id="name" label="Nome" type="text" value={formData.name || ''} onChange={handleChange} error={errors.name} required />
-                <Input id="surname" label="Cognome" type="text" value={formData.surname || ''} onChange={handleChange} error={errors.surname} required />
-                <Input id="taxCode" label="Codice Fiscale" type="text" value={formData.taxCode || ''} onChange={handleChange} error={errors.taxCode} required />
+                <Input id="name" label="Nome" type="text" value={formData.name || ''} onChange={handleChange} error={errors.name} required autoComplete="given-name" />
+                <Input id="surname" label="Cognome" type="text" value={formData.surname || ''} onChange={handleChange} error={errors.surname} required autoComplete="family-name" />
+                <Input id="taxCode" label="Codice Fiscale" type="text" value={formData.taxCode || ''} onChange={handleChange} error={errors.taxCode} required autoComplete="off" />
               </>
             )}
-            <Input id="email" label="Email" type="email" value={formData.email || ''} onChange={handleChange} error={errors.email} required />
-            <Input id="phone" label="Telefono" type="tel" value={formData.phone || ''} onChange={handleChange} error={errors.phone} />
+            <Input id="email" label="Email" type="email" value={formData.email || ''} onChange={handleChange} error={errors.email} required autoComplete="email" />
+            <Input id="phone" label="Telefono" type="tel" value={formData.phone || ''} onChange={handleChange} error={errors.phone} autoComplete="tel" />
             
-            <Input id="address" label="Indirizzo" type="text" value={formData.address || ''} onChange={handleChange} />
+            <Input id="address" label="Indirizzo" type="text" value={formData.address || ''} onChange={handleChange} autoComplete="street-address" />
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Input id="zipCode" label="CAP" type="text" value={formData.zipCode || ''} onChange={handleChange} />
-                <Input id="city" label="Città" type="text" value={formData.city || ''} onChange={handleChange} />
-                <Input id="province" label="Provincia" type="text" value={formData.province || ''} onChange={handleChange} />
+                <Input id="zipCode" label="CAP" type="text" value={formData.zipCode || ''} onChange={handleChange} autoComplete="postal-code" />
+                <Input id="city" label="Città" type="text" value={formData.city || ''} onChange={handleChange} autoComplete="address-level2" />
+                <Input id="province" label="Provincia" type="text" value={formData.province || ''} onChange={handleChange} autoComplete="address-level1" />
             </div>
 
             {commonButtons}
@@ -375,54 +314,33 @@ const DashboardView = ({
         }
       `}</style>
       <div className="flex flex-col sm:flex-row justify-between sm:items-center space-y-2 sm:space-y-0">
-        <h2 className="text-xl font-semibold text-testo-input">Panoramica</h2>
+        <h2 className="text-xl font-semibold text-testo-input">Dashboard</h2>
         <StatusIndicator />
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <StatCard 
-          title="Entrate Totali (Anno)" 
-          value={`€${totalIncome.toFixed(2)}`} 
-          icon={<CurrencyDollarIcon />} 
-          onClick={() => setCurrentView('finance')}
-        />
-        <StatCard 
-          title="Clienti Attivi" 
-          value={activeClients} 
-          icon={<UsersIcon />} 
-          onClick={() => setCurrentView('clients')}
-        />
-        <StatCard 
-          title="Workshop Futuri" 
-          value={upcomingWorkshopsCount} 
-          icon={<CalendarDaysIcon />} 
-          onClick={() => setCurrentView('workshops')}
-        />
-      </div>
-
       <Card>
-        <CardHeader>Accesso Rapido</CardHeader>
+        <CardHeader>Panoramica Attività</CardHeader>
         <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <QuickLinkButton label="Nuovo Cliente" onClick={() => openModal('newClient')} icon={<ArrowUpRightIcon />} />
-                <QuickLinkButton label="Nuovo Workshop" onClick={() => openModal('newWorkshop')} icon={<ArrowUpRightIcon />} />
-                <QuickLinkButton label="Registra Pagamento" onClick={() => openModal('newPayment')} icon={<ArrowUpRightIcon />} />
-                <QuickLinkButton label="Aggiungi Costo" onClick={() => openModal('newCost')} icon={<ArrowUpRightIcon />} />
-                
-                <div className="col-span-2 sm:col-span-3">
-                    <button
-                        onClick={() => openModal('settings')}
-                        className="w-full flex items-center justify-between p-4 bg-white/40 hover:bg-white/60 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-bottone-azione text-left"
-                    >
-                        <div>
-                            <span className="font-semibold text-testo-input">Configura Profilo Azienda</span>
-                        </div>
-                        <div className="text-testo-input/80 flex-shrink-0">
-                            <Cog6ToothIcon />
-                        </div>
-                    </button>
-                </div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <StatCard 
+              title="Entrate Totali (Anno)" 
+              value={`€${totalIncome.toFixed(2)}`} 
+              icon={<CurrencyDollarIcon />} 
+              onClick={() => setCurrentView('finance')}
+            />
+            <StatCard 
+              title="Clienti Attivi" 
+              value={activeClients} 
+              icon={<UsersIcon />} 
+              onClick={() => setCurrentView('clients')}
+            />
+            <StatCard 
+              title="Workshop Futuri" 
+              value={upcomingWorkshopsCount} 
+              icon={<CalendarDaysIcon />} 
+              onClick={() => setCurrentView('workshops')}
+            />
+          </div>
         </CardContent>
       </Card>
       
@@ -445,6 +363,33 @@ const DashboardView = ({
           </>
         )}
       </Card>
+
+      <Card>
+        <CardHeader>Accesso Rapido</CardHeader>
+        <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <QuickLinkButton label="Nuovo Cliente" onClick={() => openModal('newClient')} icon={<ArrowUpRightIcon />} />
+                <QuickLinkButton label="Nuovo Workshop" onClick={() => openModal('newWorkshop')} icon={<ArrowUpRightIcon />} />
+                <QuickLinkButton label="Registra Pagamento" onClick={() => openModal('newPayment')} icon={<ArrowUpRightIcon />} />
+                <QuickLinkButton label="Aggiungi Costo" onClick={() => openModal('newCost')} icon={<ArrowUpRightIcon />} />
+                
+                <div className="col-span-2 sm:col-span-4">
+                    <button
+                        onClick={() => setCurrentView('impostazioni')}
+                        className="w-full flex items-center justify-between p-4 bg-white/40 hover:bg-white/60 rounded-lg border border-black/10 transition-colors focus:outline-none focus:ring-2 focus:ring-bottone-azione text-left"
+                    >
+                        <div>
+                            <span className="font-semibold text-testo-input">Configura Profilo Azienda</span>
+                        </div>
+                        <div className="text-testo-input/80 flex-shrink-0">
+                            <Cog6ToothIcon />
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </CardContent>
+      </Card>
+
       {renderModal()}
     </div>
   );
@@ -469,7 +414,7 @@ const StatCard: React.FC<{ title: string; value: string | number; icon: React.Re
 const QuickLinkButton: React.FC<{ label: string; onClick: () => void; icon: React.ReactNode }> = ({ label, onClick, icon }) => (
   <button 
     onClick={onClick}
-    className="w-full flex items-center justify-between p-4 bg-white/40 hover:bg-white/60 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-bottone-azione"
+    className="w-full flex items-center justify-between p-4 bg-white/40 hover:bg-white/60 rounded-lg border border-black/10 transition-colors focus:outline-none focus:ring-2 focus:ring-bottone-azione"
   >
     <span className="font-semibold text-testo-input text-left">{label}</span>
     <div className="text-testo-input/80 flex-shrink-0">{icon}</div>

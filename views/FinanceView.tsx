@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 // FIX: Updated imports to remove file extensions
 import Card, { CardContent } from '../components/Card';
@@ -22,22 +21,30 @@ const getParentDisplayName = (parent: Parent): string => {
     return `${parent.name || ''} ${parent.surname || ''}`.trim();
 };
 
+const costCategories: Record<string, string[]> = {
+  'AUTO': ['Manutenzione Auto', 'Pratiche Auto'],
+  'LOGISTICA': ['Carburante', 'Mezzi Pubblici', 'Altro'],
+  'FORMAZIONE': ['Corsi / Webinar', 'Libri / Manuali', 'Trasferte'],
+  'WORKSHOP': ['Materiale per Attività', 'Allestimenti', 'Libri', 'Giochi'],
+  'PERSONALI': ['Tempo Libero', 'Estetica', 'Viaggi'],
+};
+
 interface FinanceViewProps {
     companyProfile: CompanyProfile;
     payments: Payment[];
-    addPayment: (item: Payment) => Promise<void>;
+    addPayment: (item: Omit<Payment, 'id'>) => Promise<void>;
     updatePayment: (id: string, updates: Partial<Payment>) => Promise<void>;
     removePayment: (id: string) => Promise<void>;
     costs: OperationalCost[];
-    addCost: (item: OperationalCost) => Promise<void>;
+    addCost: (item: Omit<OperationalCost, 'id'>) => Promise<void>;
     updateCost: (id: string, updates: Partial<OperationalCost>) => Promise<void>;
     removeCost: (id: string) => Promise<void>;
     quotes: Quote[];
-    addQuote: (item: Quote) => Promise<void>;
+    addQuote: (item: Omit<Quote, 'id'>) => Promise<void>;
     updateQuote: (id: string, updates: Partial<Quote>) => Promise<void>;
     removeQuote: (id: string) => Promise<void>;
     invoices: Invoice[];
-    addInvoice: (item: Invoice) => Promise<void>;
+    addInvoice: (item: Omit<Invoice, 'id'>) => Promise<void>;
     updateInvoice: (id: string, updates: Partial<Invoice>) => Promise<void>;
     removeInvoice: (id: string) => Promise<void>;
     parents: Parent[];
@@ -95,7 +102,7 @@ const FinanceView = ({
     costs, addCost, updateCost, removeCost,
     quotes, addQuote, updateQuote, removeQuote,
     invoices, addInvoice, updateInvoice, removeInvoice,
-    parents, workshops, locations
+    parents, workshops, locations, suppliers
 }: FinanceViewProps) => {
     const [activeTab, setActiveTab] = useState<FinanceTab>('payments');
     
@@ -117,17 +124,56 @@ const FinanceView = ({
     const locationMap = useMemo(() => locations.reduce((acc, l) => ({...acc, [l.id]: l}), {} as Record<string, Location>), [locations]);
 
     const paymentMethodOptions = [
+        { value: 'unspecified', label: 'Non specificato' },
         { value: 'cash', label: 'Contanti' },
         { value: 'transfer', label: 'Bonifico' },
         { value: 'card', label: 'Carta' },
     ];
+    
+    const costOverviewData = useMemo(() => {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        const currentQuarter = Math.floor(currentMonth / 3);
+
+        const totalMonth = costs
+            .filter(c => { const d = new Date(c.date); return d.getFullYear() === currentYear && d.getMonth() === currentMonth; })
+            .reduce((sum, c) => sum + c.amount, 0);
+
+        const totalQuarter = costs
+            .filter(c => { const d = new Date(c.date); return d.getFullYear() === currentYear && Math.floor(d.getMonth() / 3) === currentQuarter; })
+            .reduce((sum, c) => sum + c.amount, 0);
+            
+        const totalYear = costs
+            .filter(c => new Date(c.date).getFullYear() === currentYear)
+            .reduce((sum, c) => sum + c.amount, 0);
+
+        const costsByType = costs.reduce((acc, cost) => {
+            const key = `${cost.category} > ${cost.subCategory}`;
+            if (!acc[key]) {
+                acc[key] = { total: 0, count: 0, amounts: [] };
+            }
+            acc[key].total += cost.amount;
+            acc[key].count += 1;
+            acc[key].amounts.push(cost.amount);
+            return acc;
+        }, {} as Record<string, { total: number, count: number, amounts: number[] }>);
+        
+        const top5ByTotal = Object.entries(costsByType)
+            .sort(([, a], [, b]) => b.total - a.total)
+            .slice(0, 5)
+            .map(([name, data]) => ({ name, value: data.total }));
+
+        return { totalMonth, totalQuarter, totalYear, top5ByTotal };
+    }, [costs]);
 
     const getPaymentMethodLabel = (method?: PaymentMethod): string => {
-        if (!method) return '';
+        if (!method) return 'Non specificato';
         switch (method) {
             case 'cash': return 'Contanti';
             case 'transfer': return 'Bonifico';
             case 'card': return 'Carta';
+            case 'unspecified': return 'Non specificato';
             default: return '';
         }
     };
@@ -149,30 +195,19 @@ const FinanceView = ({
 
     useEffect(() => {
         if (editingItem) {
-            let initialData = {};
-            switch (activeTab) {
-                case 'payments':
-                    initialData = { ...(editingItem as Payment) };
-                    break;
-                case 'costs':
-                    const cost = editingItem as OperationalCost;
-                    initialData = {
-                        ...cost,
-                        costType: cost.costType || 'general',
-                    };
-                    break;
-                case 'quotes':
-                     initialData = { ...(editingItem as Quote) };
-                    break;
-                case 'invoices':
-                    initialData = { ...(editingItem as Invoice) };
-                    break;
-            }
+            let initialData = { ...editingItem };
             setFormData(initialData);
         } else {
-            setFormData({}); // Clear form when modal closes or switches to new
+             // Set defaults for new items
+            const defaults: Record<string, any> = {
+                payments: { paymentDate: new Date().toISOString().substring(0, 10), method: 'unspecified' },
+                costs: { date: new Date().toISOString().substring(0, 10), method: 'unspecified', category: Object.keys(costCategories)[0] },
+                quotes: { date: new Date().toISOString().substring(0, 10), status: 'sent' },
+                invoices: { issueDate: new Date().toISOString().substring(0, 10), method: 'unspecified' },
+            };
+            setFormData(defaults[activeTab] || {});
         }
-    }, [editingItem, activeTab, isNewItemModalOpen]);
+    }, [editingItem, isNewItemModalOpen, activeTab]);
 
     const closeModal = () => {
         setIsNewItemModalOpen(false);
@@ -364,21 +399,17 @@ const FinanceView = ({
         switch (activeTab) {
             case 'payments':
                 if (!formData.parentId) newErrors.parentId = 'È obbligatorio selezionare un cliente.';
+                if (!formData.workshopId) newErrors.workshopId = 'È obbligatorio selezionare un workshop.';
                 if (!formData.amount || parseFloat(formData.amount) <= 0) newErrors.amount = "L'importo deve essere un numero positivo.";
                 if (!formData.paymentDate) newErrors.paymentDate = 'La data è obbligatoria.';
                 if (!formData.method) newErrors.method = 'Il metodo di pagamento è obbligatorio.';
                 break;
             case 'costs':
-                const costType = formData.costType || 'general';
-                if (costType === 'fuel') {
-                    if (!formData.locationId) newErrors.locationId = 'Il luogo è obbligatorio.';
-                    if (!formData.distanceKm || parseFloat(formData.distanceKm) <= 0) newErrors.distanceKm = 'La distanza deve essere un numero positivo.';
-                    if (!formData.fuelCostPerKm || parseFloat(formData.fuelCostPerKm) <= 0) newErrors.fuelCostPerKm = 'Il costo al km deve essere un numero positivo.';
-                } else {
-                    if (!formData.description?.trim()) newErrors.description = 'La descrizione è obbligatoria.';
-                    if (!formData.amount || parseFloat(formData.amount) <= 0) newErrors.amount = "L'importo deve essere un numero positivo.";
-                }
+                if (!formData.category) newErrors.category = 'La categoria è obbligatoria.';
+                if (!formData.subCategory) newErrors.subCategory = 'La sottocategoria è obbligatoria.';
+                if (!formData.amount || parseFloat(formData.amount) <= 0) newErrors.amount = "L'importo deve essere un numero positivo.";
                 if (!formData.date) newErrors.date = 'La data è obbligatoria.';
+                if (!formData.method) newErrors.method = 'Il metodo di pagamento è obbligatorio.';
                 break;
             case 'quotes':
                 if (!formData.parentId && !formData.potentialClient) newErrors.client = 'È obbligatorio selezionare o inserire un cliente.';
@@ -403,18 +434,10 @@ const FinanceView = ({
         e.preventDefault();
         if (validate()) {
             const dataToSave: Record<string, any> = { ...formData, amount: parseFloat(formData.amount || '0') };
-    
-            if (activeTab === 'costs' && (dataToSave.costType || 'general') === 'fuel') {
-                const distance = parseFloat(dataToSave.distanceKm) || 0;
-                const costPerKm = parseFloat(dataToSave.fuelCostPerKm) || 0;
-                dataToSave.amount = distance * 2 * costPerKm;
-                const locationName = locationMap[dataToSave.locationId]?.name || 'N/D';
-                dataToSave.description = `Carburante per ${locationName} (${distance}km A/R)`;
-            }
-    
+            
             if (editingItem) {
                 const id = editingItem.id;
-                const updates = { ...editingItem, ...dataToSave };
+                const updates = { ...dataToSave };
                 delete (updates as Partial<FinanceItem>).id;
     
                 switch (activeTab) {
@@ -425,12 +448,11 @@ const FinanceView = ({
                 }
                 alert(`Elemento "${activeTab.slice(0, -1)}" aggiornato!`);
             } else {
-                const baseItem = { id: `item_${Date.now()}`, ...dataToSave };
                 switch (activeTab) {
-                    case 'payments': await addPayment(baseItem as Payment); break;
-                    case 'costs': await addCost(baseItem as OperationalCost); break;
-                    case 'quotes': await addQuote(baseItem as Quote); break;
-                    case 'invoices': await addInvoice(baseItem as Invoice); break;
+                    case 'payments': await addPayment(dataToSave as Omit<Payment, 'id'>); break;
+                    case 'costs': await addCost(dataToSave as Omit<OperationalCost, 'id'>); break;
+                    case 'quotes': await addQuote(dataToSave as Omit<Quote, 'id'>); break;
+                    case 'invoices': await addInvoice(dataToSave as Omit<Invoice, 'id'>); break;
                 }
                 alert(`Nuovo elemento "${activeTab.slice(0, -1)}" salvato!`);
             }
@@ -438,23 +460,28 @@ const FinanceView = ({
         }
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { id, value } = e.target;
+        
         const newFormData = { ...formData, [id]: value };
 
-        if (id === 'costType') {
-            // Reset fields when switching type
-            if (value === 'fuel') {
-                newFormData.description = '';
-                newFormData.amount = 0;
-            } else {
-                delete newFormData.locationId;
-                delete newFormData.distanceKm;
-                delete newFormData.fuelCostPerKm;
-            }
+        if (id === 'category') {
+             // Reset subcategory when category changes
+            newFormData.subCategory = costCategories[value]?.[0] || '';
         }
     
         setFormData(newFormData);
+    };
+    
+     const handleMultiSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const { id, options } = e.target;
+        const value: string[] = [];
+        for (let i = 0, l = options.length; i < l; i++) {
+            if (options[i].selected) {
+                value.push(options[i].value);
+            }
+        }
+        setFormData({ ...formData, [id]: value });
     };
 
     const handlePotentialClientChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -499,50 +526,57 @@ const FinanceView = ({
         );
 
         const parentOptions = parents.map(p => ({ value: p.id, label: getParentDisplayName(p) }));
+        const workshopOptions = workshops.map(w => ({ value: w.id, label: w.name }));
+        const locationOptions = locations.map(l => ({ value: l.id, label: l.name }));
+        const categoryOptions = Object.keys(costCategories).map(c => ({ value: c, label: c }));
         
         switch (activeTab) {
             case 'payments': return (
                 <form id={formId} onSubmit={handleSave} className="space-y-4" noValidate>
                     <Select id="parentId" label="Cliente" options={parentOptions} placeholder="Seleziona un cliente" value={formData.parentId || ''} onChange={handleChange} error={errors.parentId} required />
-                    <Input id="amount" label="Importo" type="number" step="0.01" value={formData.amount || ''} onChange={handleChange} error={errors.amount} required />
+                    <Select id="workshopId" label="Workshop" options={workshopOptions} placeholder="Seleziona un workshop" value={formData.workshopId || ''} onChange={handleChange} error={errors.workshopId} required />
+                    <Input id="amount" label="Importo" type="number" step="0.01" value={formData.amount || ''} onChange={handleChange} error={errors.amount} required autoComplete="off" />
                     <Select id="method" label="Metodo di Pagamento" options={paymentMethodOptions} value={formData.method || ''} onChange={handleChange} error={errors.method} required />
-                    <Input id="paymentDate" label="Data Pagamento" type="date" value={formData.paymentDate || new Date().toISOString().substring(0, 10)} onChange={handleChange} error={errors.paymentDate} required />
+                    <Input id="paymentDate" label="Data Pagamento" type="date" value={formData.paymentDate || ''} onChange={handleChange} error={errors.paymentDate} required autoComplete="off" />
                     {commonButtons}
                 </form>
             );
             case 'costs': 
-                const costType = formData.costType || 'general';
-                const distance = parseFloat(formData.distanceKm) || 0;
-                const costPerKm = parseFloat(formData.fuelCostPerKm) || 0;
-                const calculatedAmount = (distance * 2 * costPerKm).toFixed(2);
-                
-                const locationOptions = locations.map(l => ({ value: l.id, label: l.name }));
-                const workshopOptions = workshops.map(w => ({ value: w.id, label: w.name }));
+                const subCategoryOptions = formData.category ? costCategories[formData.category].map(sc => ({ value: sc, label: sc })) : [];
 
                 return (
                     <form id={formId} onSubmit={handleSave} className="space-y-4" noValidate>
-                        <Select id="costType" label="Tipo di Costo" options={[{value: 'general', label: 'Generico'}, {value: 'fuel', label: 'Carburante'}]} value={costType} onChange={handleChange} />
+                        <Select id="category" label="Categoria Costo" options={categoryOptions} value={formData.category || ''} onChange={handleChange} error={errors.category} required />
+                        <Select id="subCategory" label="Sottocategoria Costo" options={subCategoryOptions} value={formData.subCategory || ''} onChange={handleChange} error={errors.subCategory} required />
                         
-                        {costType === 'fuel' ? (
-                            <>
-                                <Select id="locationId" label="Luogo di destinazione" options={locationOptions} placeholder="Seleziona un luogo" value={formData.locationId || ''} onChange={handleChange} error={errors.locationId} required />
-                                <Input id="distanceKm" label="Distanza (solo andata, in km)" type="number" step="0.1" value={formData.distanceKm || ''} onChange={handleChange} error={errors.distanceKm} required />
-                                <Input id="fuelCostPerKm" label="Costo carburante al km (€)" type="number" step="0.01" value={formData.fuelCostPerKm || ''} onChange={handleChange} error={errors.fuelCostPerKm} required />
-                                <div className="p-3 bg-white/30 rounded-md text-center">
-                                    <p className="text-sm text-testo-input/90">Costo totale calcolato (A/R):</p>
-                                    <p className="text-xl font-bold text-bottone-salvataggio">€{calculatedAmount}</p>
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <Input id="description" label="Descrizione" type="text" value={formData.description || ''} onChange={handleChange} error={errors.description} required />
-                                <Input id="amount" label="Importo" type="number" step="0.01" value={formData.amount || ''} onChange={handleChange} error={errors.amount} required />
-                            </>
+                        {formData.category === 'WORKSHOP' && (
+                          <div>
+                            <label htmlFor="workshopIds" className="block text-sm font-medium text-testo-input mb-1">Workshop di riferimento</label>
+                            <select
+                                id="workshopIds"
+                                multiple
+                                value={formData.workshopIds || []}
+                                onChange={handleMultiSelectChange}
+                                className="block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-azione focus:ring-bottone-azione sm:text-sm h-24"
+                            >
+                                {workshopOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                            </select>
+                          </div>
+                        )}
+                        
+                        {formData.subCategory === 'Allestimenti' && (
+                            <Select id="locationId" label="Sede" options={locationOptions} placeholder="Seleziona una sede" value={formData.locationId || ''} onChange={handleChange} />
                         )}
 
-                        <Select id="workshopId" label="Workshop (Opzionale)" options={workshopOptions} placeholder="Nessun workshop specifico" value={formData.workshopId || ''} onChange={handleChange} error={errors.workshopId} />
-                        <Input id="date" label="Data" type="date" value={formData.date || new Date().toISOString().substring(0, 10)} onChange={handleChange} error={errors.date} required />
-                        <Select id="method" label="Metodo di Pagamento (Opzionale)" options={paymentMethodOptions} placeholder="Non specificato" value={formData.method || ''} onChange={handleChange} />
+                        <Input id="amount" label="Importo" type="number" step="0.01" value={formData.amount || ''} onChange={handleChange} error={errors.amount} required autoComplete="off" />
+                        <Input id="date" label="Data" type="date" value={formData.date || ''} onChange={handleChange} error={errors.date} required autoComplete="off" />
+                        <Select id="method" label="Metodo di Pagamento" options={paymentMethodOptions} value={formData.method || ''} onChange={handleChange} error={errors.method} required />
+
+                        <div>
+                            <label htmlFor="description" className="block text-sm font-medium text-testo-input mb-1">Descrizione (opzionale)</label>
+                            <textarea id="description" value={formData.description || ''} onChange={handleChange} rows={3} className="block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-azione focus:ring-bottone-azione sm:text-sm" />
+                        </div>
+
                         {commonButtons}
                     </form>
                 );
@@ -591,9 +625,9 @@ const FinanceView = ({
                          {errors.client && <p className="mt-1 text-sm text-red-600">{errors.client}</p>}
                     </div>
 
-                    <Input id="description" label="Descrizione" type="text" value={formData.description || ''} onChange={handleChange} error={errors.description} required />
-                    <Input id="amount" label="Importo" type="number" step="0.01" value={formData.amount || ''} onChange={handleChange} error={errors.amount} required />
-                    <Input id="date" label="Data Preventivo" type="date" value={formData.date || new Date().toISOString().substring(0, 10)} onChange={handleChange} error={errors.date} required />
+                    <Input id="description" label="Descrizione" type="text" value={formData.description || ''} onChange={handleChange} error={errors.description} required autoComplete="off" />
+                    <Input id="amount" label="Importo" type="number" step="0.01" value={formData.amount || ''} onChange={handleChange} error={errors.amount} required autoComplete="off" />
+                    <Input id="date" label="Data Preventivo" type="date" value={formData.date || ''} onChange={handleChange} error={errors.date} required autoComplete="off" />
                     <Select id="status" label="Stato" options={[{value: 'sent', label: 'Inviato'}, {value: 'approved', label: 'Approvato'}, {value: 'rejected', label: 'Rifiutato'}]} value={formData.status || 'sent'} onChange={handleChange} error={errors.status} required />
                     <Select id="method" label="Metodo di Pagamento (Opzionale)" options={paymentMethodOptions} placeholder="Non specificato" value={formData.method || ''} onChange={handleChange} error={errors.method} />
                     {commonButtons}
@@ -602,10 +636,10 @@ const FinanceView = ({
             case 'invoices': return (
                  <form id={formId} onSubmit={handleSave} className="space-y-4" noValidate>
                     <Select id="parentId" label="Cliente" options={parentOptions} placeholder="Seleziona un cliente" value={formData.parentId || ''} onChange={handleChange} error={errors.parentId} required />
-                    <Input id="amount" label="Importo" type="number" step="0.01" value={formData.amount || ''} onChange={handleChange} error={errors.amount} required />
-                    <Input id="sdiNumber" label="Numero SDI" type="text" value={formData.sdiNumber || ''} onChange={handleChange} error={errors.sdiNumber} required />
+                    <Input id="amount" label="Importo" type="number" step="0.01" value={formData.amount || ''} onChange={handleChange} error={errors.amount} required autoComplete="off" />
+                    <Input id="sdiNumber" label="Numero SDI" type="text" value={formData.sdiNumber || ''} onChange={handleChange} error={errors.sdiNumber} required autoComplete="off" />
                     <Select id="method" label="Metodo di Pagamento" options={paymentMethodOptions} value={formData.method || ''} onChange={handleChange} error={errors.method} required />
-                    <Input id="issueDate" label="Data Emissione" type="date" value={formData.issueDate || new Date().toISOString().substring(0, 10)} onChange={handleChange} error={errors.issueDate} required />
+                    <Input id="issueDate" label="Data Emissione" type="date" value={formData.issueDate || ''} onChange={handleChange} error={errors.issueDate} required autoComplete="off" />
                     {commonButtons}
                 </form>
             );
@@ -616,16 +650,10 @@ const FinanceView = ({
     const renderContent = () => {
         
         switch (activeTab) {
-            case 'payments': return <List<Payment> items={payments} renderItem={p => `Pagamento di €${p.amount.toFixed(2)} da ${parentMap[p.parentId] ? getParentDisplayName(parentMap[p.parentId]) : 'Sconosciuto'} (${getPaymentMethodLabel(p.method)})`} onEdit={handleEditClick} onDelete={handleDeleteClick} />;
+            case 'payments': return <List<Payment> items={payments} renderItem={p => `Pagamento di €${p.amount.toFixed(2)} da ${parentMap[p.parentId] ? getParentDisplayName(parentMap[p.parentId]) : 'Sconosciuto'} per "${workshopMap[p.workshopId]?.name || 'N/D'}" (${getPaymentMethodLabel(p.method)})`} onEdit={handleEditClick} onDelete={handleDeleteClick} />;
             case 'costs': return <List<OperationalCost> 
                 items={costs} 
-                renderItem={c => {
-                    if (c.costType === 'fuel' && c.locationId) {
-                        const locationName = locationMap[c.locationId]?.name || 'N/D';
-                        return `Carburante per ${locationName} (${c.distanceKm}km x 2) - €${c.amount.toFixed(2)}`;
-                    }
-                    return `${c.description} - €${c.amount.toFixed(2)}${c.workshopId ? ` (${workshopMap[c.workshopId]?.name || ''})` : ''}`
-                }} 
+                renderItem={c => `${c.category} > ${c.subCategory}: ${c.description || ''} - €${c.amount.toFixed(2)}`} 
                 onEdit={handleEditClick}
                 onDelete={handleDeleteClick}
             />;
@@ -656,6 +684,33 @@ const FinanceView = ({
     return (
         <div className="space-y-6">
             <h2 className="text-xl font-semibold text-testo-input">Gestione Finanziaria</h2>
+            
+            <Card>
+                <div className="p-4 border-b border-black/10 font-semibold text-testo-input">Panoramica Costi</div>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 className="font-medium text-testo-input mb-2">Totali Periodo</h4>
+                        <div className="space-y-2 text-sm">
+                            <div className="flex justify-between p-2 bg-white/30 rounded-md"><span>Questo Mese:</span><span className="font-bold">€{costOverviewData.totalMonth.toFixed(2)}</span></div>
+                            <div className="flex justify-between p-2 bg-white/30 rounded-md"><span>Questo Trimestre:</span><span className="font-bold">€{costOverviewData.totalQuarter.toFixed(2)}</span></div>
+                            <div className="flex justify-between p-2 bg-white/30 rounded-md"><span>Questo Anno:</span><span className="font-bold">€{costOverviewData.totalYear.toFixed(2)}</span></div>
+                        </div>
+                    </div>
+                     <div>
+                        <h4 className="font-medium text-testo-input mb-2">Top 5 Categorie di Costo (per Valore)</h4>
+                        <ul className="space-y-1 text-sm">
+                            {costOverviewData.top5ByTotal.map(item => (
+                                <li key={item.name} className="flex justify-between p-2 bg-white/30 rounded-md">
+                                    <span className="truncate pr-2">{item.name}</span>
+                                    <span className="font-bold whitespace-nowrap">€{item.value.toFixed(2)}</span>
+                                </li>
+                            ))}
+                             {costOverviewData.top5ByTotal.length === 0 && <p className="text-center text-testo-input/80 py-4">Nessun costo registrato.</p>}
+                        </ul>
+                    </div>
+                </CardContent>
+            </Card>
+
             <Card>
                 <div className="p-4 border-b border-black/10">
                     <div className="flex space-x-2">
@@ -701,7 +756,8 @@ const FinanceView = ({
                             { value: 'persona giuridica', label: 'Persona Giuridica' }
                         ]}
                         value={potentialClientFormData.clientType || 'persona fisica'}
-                        onChange={e => {
+                        // FIX: Added explicit type for event parameter 'e' to resolve TypeScript error.
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                             const newType = e.target.value as 'persona fisica' | 'persona giuridica';
                             setPotentialClientFormData({ clientType: newType });
                             setPotentialClientErrors({});
@@ -711,24 +767,24 @@ const FinanceView = ({
 
                     {potentialClientFormData.clientType === 'persona giuridica' ? (
                         <>
-                            <Input id="companyName" label="Ragione Sociale" type="text" value={potentialClientFormData.companyName || ''} onChange={handlePotentialClientChange} error={potentialClientErrors.companyName} required />
-                            <Input id="vatNumber" label="Partita IVA" type="text" value={potentialClientFormData.vatNumber || ''} onChange={handlePotentialClientChange} error={potentialClientErrors.vatNumber} required />
+                            <Input id="companyName" label="Ragione Sociale" type="text" value={potentialClientFormData.companyName || ''} onChange={handlePotentialClientChange} error={potentialClientErrors.companyName} required autoComplete="organization" />
+                            <Input id="vatNumber" label="Partita IVA" type="text" value={potentialClientFormData.vatNumber || ''} onChange={handlePotentialClientChange} error={potentialClientErrors.vatNumber} required autoComplete="off" />
                         </>
                     ) : (
                         <>
-                            <Input id="name" label="Nome" type="text" value={potentialClientFormData.name || ''} onChange={handlePotentialClientChange} error={potentialClientErrors.name} required />
-                            <Input id="surname" label="Cognome" type="text" value={potentialClientFormData.surname || ''} onChange={handlePotentialClientChange} error={potentialClientErrors.surname} required />
-                            <Input id="taxCode" label="Codice Fiscale" type="text" value={potentialClientFormData.taxCode || ''} onChange={handlePotentialClientChange} />
+                            <Input id="name" label="Nome" type="text" value={potentialClientFormData.name || ''} onChange={handlePotentialClientChange} error={potentialClientErrors.name} required autoComplete="given-name" />
+                            <Input id="surname" label="Cognome" type="text" value={potentialClientFormData.surname || ''} onChange={handlePotentialClientChange} error={potentialClientErrors.surname} required autoComplete="family-name" />
+                            <Input id="taxCode" label="Codice Fiscale" type="text" value={potentialClientFormData.taxCode || ''} onChange={handlePotentialClientChange} autoComplete="off" />
                         </>
                     )}
 
-                    <Input id="email" label="Email" type="email" value={potentialClientFormData.email || ''} onChange={handlePotentialClientChange} error={potentialClientErrors.email} required />
-                    <Input id="phone" label="Telefono" type="tel" value={potentialClientFormData.phone || ''} onChange={handlePotentialClientChange} />
-                    <Input id="address" label="Indirizzo" type="text" value={potentialClientFormData.address || ''} onChange={handlePotentialClientChange} />
+                    <Input id="email" label="Email" type="email" value={potentialClientFormData.email || ''} onChange={handlePotentialClientChange} error={potentialClientErrors.email} required autoComplete="email" />
+                    <Input id="phone" label="Telefono" type="tel" value={potentialClientFormData.phone || ''} onChange={handlePotentialClientChange} autoComplete="tel" />
+                    <Input id="address" label="Indirizzo" type="text" value={potentialClientFormData.address || ''} onChange={handlePotentialClientChange} autoComplete="street-address" />
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <Input id="zipCode" label="CAP" type="text" value={potentialClientFormData.zipCode || ''} onChange={handlePotentialClientChange} />
-                        <Input id="city" label="Città" type="text" value={potentialClientFormData.city || ''} onChange={handlePotentialClientChange} />
-                        <Input id="province" label="Provincia" type="text" value={potentialClientFormData.province || ''} onChange={handlePotentialClientChange} />
+                        <Input id="zipCode" label="CAP" type="text" value={potentialClientFormData.zipCode || ''} onChange={handlePotentialClientChange} autoComplete="postal-code" />
+                        <Input id="city" label="Città" type="text" value={potentialClientFormData.city || ''} onChange={handlePotentialClientChange} autoComplete="address-level2" />
+                        <Input id="province" label="Provincia" type="text" value={potentialClientFormData.province || ''} onChange={handlePotentialClientChange} autoComplete="address-level1" />
                     </div>
                     
                     <div className="flex justify-end space-x-3 pt-4">

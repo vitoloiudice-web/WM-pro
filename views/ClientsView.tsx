@@ -69,19 +69,21 @@ const StatusBadge = ({ status }: { status: Parent['status'] }) => {
 
 interface ClientsViewProps {
   parents: Parent[];
-  addParent: (parent: Parent) => Promise<void>;
+  // FIX: Corrected prop types to align with `useFirestore.addItem` which expects objects without an ID.
+  addParent: (parent: Omit<Parent, 'id'>) => Promise<void>;
   updateParent: (id: string, updates: Partial<Parent>) => Promise<void>;
   removeParent: (id: string) => Promise<void>;
   children: Child[];
-  addChild: (child: Child) => Promise<void>;
+  addChild: (child: Omit<Child, 'id'>) => Promise<void>;
   updateChild: (id: string, updates: Partial<Child>) => Promise<void>;
   removeChild: (id: string) => Promise<void>;
   workshops: Workshop[];
   registrations: Registration[];
-  addRegistration: (registration: Registration) => Promise<void>;
+  addRegistration: (registration: Omit<Registration, 'id'>) => Promise<void>;
   removeRegistration: (id: string) => Promise<void>;
   payments: Payment[];
-  addPayment: (payment: Payment) => Promise<void>;
+  addPayment: (payment: Omit<Payment, 'id'>) => Promise<void>;
+  updatePayment: (id: string, updates: Partial<Payment>) => Promise<void>;
   locations: Location[];
 }
 
@@ -90,7 +92,7 @@ const ClientsView = ({
     children, addChild, updateChild, removeChild,
     workshops, 
     registrations, addRegistration, removeRegistration,
-    payments, addPayment, 
+    payments, addPayment, updatePayment,
     locations 
 }: ClientsViewProps) => {
   // Filters State
@@ -119,8 +121,8 @@ const ClientsView = ({
   const [deletingRegistrationId, setDeletingRegistrationId] = useState<string | null>(null);
   
   // Payment state
-  const [paymentModalState, setPaymentModalState] = useState<{ registration: Registration, workshop: Workshop, child: Child, parent: Parent } | null>(null);
-  const [paymentFormData, setPaymentFormData] = useState<{method?: PaymentMethod; paymentDate?: string; amount?: number}>({});
+  const [paymentModalState, setPaymentModalState] = useState<{ mode: 'new', data: { registration: Registration, workshop: Workshop, child: Child, parent: Parent } } | { mode: 'edit', data: { payment: Payment } } | null>(null);
+  const [paymentFormData, setPaymentFormData] = useState<Partial<Payment>>({});
   const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({});
   
   const isParentModalOpen = isNewClientModalOpen || !!editingClient;
@@ -230,14 +232,20 @@ const ClientsView = ({
   }, [childModalState]);
   
   useEffect(() => {
-    if(paymentModalState){
-        setPaymentFormData({
-            amount: paymentModalState.workshop.pricePerChild,
-            paymentDate: new Date().toISOString().substring(0, 10),
-            method: 'cash'
-        })
+    if (paymentModalState?.mode === 'new') {
+      setPaymentFormData({
+        paymentDate: new Date().toISOString().substring(0, 10),
+        method: 'cash'
+      });
+    } else if (paymentModalState?.mode === 'edit') {
+      const { payment } = paymentModalState.data;
+      setPaymentFormData({
+        amount: payment.amount,
+        paymentDate: payment.paymentDate,
+        method: payment.method
+      });
     }
-  }, [paymentModalState])
+  }, [paymentModalState]);
 
   // --- Parent CRUD ---
   const handleParentFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -288,36 +296,27 @@ const ClientsView = ({
 
     if (Object.keys(newErrors).length === 0) {
       // --- FIX START: Build a clean object for Firestore ---
-      const dataToSave: any = {
+      const dataToSave: Omit<Parent, 'id'> = {
         clientType: parentFormData.clientType || 'persona fisica',
         status: parentFormData.status || 'attivo',
-        email: parentFormData.email,
+        email: parentFormData.email!,
         phone: parentFormData.phone || '',
         address: parentFormData.address || '',
         zipCode: parentFormData.zipCode || '',
         city: parentFormData.city || '',
         province: parentFormData.province || '',
+         ...(parentFormData.clientType === 'persona fisica'
+            ? { name: parentFormData.name, surname: parentFormData.surname, taxCode: parentFormData.taxCode }
+            : { companyName: parentFormData.companyName, vatNumber: parentFormData.vatNumber }),
       };
-
-      if (dataToSave.clientType === 'persona fisica') {
-        dataToSave.name = parentFormData.name;
-        dataToSave.surname = parentFormData.surname;
-        dataToSave.taxCode = parentFormData.taxCode;
-      } else {
-        dataToSave.companyName = parentFormData.companyName;
-        dataToSave.vatNumber = parentFormData.vatNumber;
-      }
       // --- FIX END ---
 
       if (editingClient) {
         await updateParent(editingClient.id, dataToSave);
         alert('Cliente aggiornato!');
       } else {
-        const newParent = { 
-            id: `p_${Date.now()}`, 
-            ...dataToSave,
-        } as Parent;
-        await addParent(newParent);
+        // FIX: Pass the object without a manual ID. Firestore will generate it.
+        await addParent(dataToSave);
         alert('Nuovo cliente salvato!');
       }
       closeParentModal();
@@ -374,7 +373,8 @@ const ClientsView = ({
             await updateChild(childModalState.child.id, newChildData);
             alert('Dati del figlio aggiornati!');
         } else if (childModalState?.mode === 'new') {
-            const newChild: Child = { id: `c_${Date.now()}`, parentId: childModalState.parentId, ...newChildData };
+            // FIX: Pass the object without a manual ID. Firestore will generate it.
+            const newChild: Omit<Child, 'id'> = { parentId: childModalState.parentId, ...newChildData };
             await addChild(newChild);
             alert('Nuovo figlio salvato!');
         }
@@ -431,8 +431,8 @@ const ClientsView = ({
 
     if (Object.keys(newErrors).length === 0 && childId && workshopIds) {
         for (const workshopId of workshopIds) {
-            const newRegistration: Registration = {
-                id: `r_${Date.now()}_${workshopId}`,
+            // FIX: Pass the object without a manual ID. Firestore will generate it.
+            const newRegistration: Omit<Registration, 'id'> = {
                 childId: childId,
                 workshopId: workshopId,
                 registrationDate: new Date().toISOString().split('T')[0]
@@ -466,16 +466,28 @@ const ClientsView = ({
     
     setPaymentErrors(newErrors);
     if(Object.keys(newErrors).length === 0 && paymentModalState){
-        const newPayment: Payment = {
-            id: `pay_${Date.now()}`,
-            parentId: paymentModalState.parent.id,
-            workshopId: paymentModalState.workshop.id,
-            amount: paymentFormData.amount!,
-            paymentDate: paymentFormData.paymentDate!,
-            method: paymentFormData.method!
-        };
-        await addPayment(newPayment);
-        alert('Pagamento registrato!');
+        if (paymentModalState.mode === 'new') {
+            const { parent, workshop } = paymentModalState.data;
+            const newPayment: Omit<Payment, 'id'> = {
+                parentId: parent.id,
+                workshopId: workshop.id,
+                amount: paymentFormData.amount!,
+                paymentDate: paymentFormData.paymentDate!,
+                method: paymentFormData.method!
+            };
+            await addPayment(newPayment);
+            alert('Pagamento registrato!');
+        } else if (paymentModalState.mode === 'edit') {
+            const { payment } = paymentModalState.data;
+            const updatedData: Partial<Payment> = {
+                amount: paymentFormData.amount,
+                paymentDate: paymentFormData.paymentDate,
+                method: paymentFormData.method
+            };
+            await updatePayment(payment.id, updatedData);
+            alert('Pagamento aggiornato!');
+        }
+        
         closePaymentModal();
     }
   };
@@ -501,6 +513,7 @@ const ClientsView = ({
               label="Cerca cliente o figlio"
               placeholder="Nome, cognome, ragione sociale..."
               value={searchTerm}
+              autoComplete="off"
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   console.log('[DEBUG] ClientsView: Search term changed:', e.currentTarget.value);
                   setSearchTerm(e.currentTarget.value);
@@ -653,9 +666,14 @@ const ClientsView = ({
                                                     </div>
                                                     <div className="flex items-center space-x-2">
                                                         {payment ? (
-                                                        <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">Pagato</span>
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">Pagato</span>
+                                                            <button onClick={() => setPaymentModalState({ mode: 'edit', data: { payment } })} className="p-1 text-testo-input/80 hover:text-bottone-azione" aria-label="Modifica Pagamento">
+                                                                <PencilIcon className="h-4 w-4"/>
+                                                            </button>
+                                                        </div>
                                                         ) : (
-                                                        <button onClick={() => workshop && child && setPaymentModalState({ registration: reg, workshop, child, parent })} className="text-xs font-semibold text-bottone-azione bg-bottone-azione/20 px-2 py-1 rounded-full hover:bg-bottone-azione/40">
+                                                        <button onClick={() => workshop && child && setPaymentModalState({ mode: 'new', data: { registration: reg, workshop, child, parent } })} className="text-xs font-semibold text-bottone-azione bg-bottone-azione/20 px-2 py-1 rounded-full hover:bg-bottone-azione/40">
                                                             Registra Pagamento
                                                         </button>
                                                         )}
@@ -690,23 +708,23 @@ const ClientsView = ({
             </div>
             {parentFormData.clientType === 'persona giuridica' ? (
               <>
-                <Input id="companyName" label="Ragione Sociale" type="text" value={parentFormData.companyName || ''} onChange={handleParentFormChange} error={parentErrors.companyName} required />
-                <Input id="vatNumber" label="Partita IVA" type="text" value={parentFormData.vatNumber || ''} onChange={handleParentFormChange} error={parentErrors.vatNumber} required />
+                <Input id="companyName" label="Ragione Sociale" type="text" value={parentFormData.companyName || ''} onChange={handleParentFormChange} error={parentErrors.companyName} required autoComplete="organization" />
+                <Input id="vatNumber" label="Partita IVA" type="text" value={parentFormData.vatNumber || ''} onChange={handleParentFormChange} error={parentErrors.vatNumber} required autoComplete="off" />
               </>
             ) : (
               <>
-                <Input id="name" label="Nome" type="text" value={parentFormData.name || ''} onChange={handleParentFormChange} error={parentErrors.name} required />
-                <Input id="surname" label="Cognome" type="text" value={parentFormData.surname || ''} onChange={handleParentFormChange} error={parentErrors.surname} required />
-                <Input id="taxCode" label="Codice Fiscale" type="text" value={parentFormData.taxCode || ''} onChange={handleParentFormChange} error={parentErrors.taxCode} required />
+                <Input id="name" label="Nome" type="text" value={parentFormData.name || ''} onChange={handleParentFormChange} error={parentErrors.name} required autoComplete="given-name" />
+                <Input id="surname" label="Cognome" type="text" value={parentFormData.surname || ''} onChange={handleParentFormChange} error={parentErrors.surname} required autoComplete="family-name" />
+                <Input id="taxCode" label="Codice Fiscale" type="text" value={parentFormData.taxCode || ''} onChange={handleParentFormChange} error={parentErrors.taxCode} required autoComplete="off" />
               </>
             )}
-            <Input id="email" label="Email" type="email" value={parentFormData.email || ''} onChange={handleParentFormChange} error={parentErrors.email} required />
-            <Input id="phone" label="Telefono" type="tel" value={parentFormData.phone || ''} onChange={handleParentFormChange} />
-            <Input id="address" label="Indirizzo" type="text" value={parentFormData.address || ''} onChange={handleParentFormChange} />
+            <Input id="email" label="Email" type="email" value={parentFormData.email || ''} onChange={handleParentFormChange} error={parentErrors.email} required autoComplete="email" />
+            <Input id="phone" label="Telefono" type="tel" value={parentFormData.phone || ''} onChange={handleParentFormChange} autoComplete="tel" />
+            <Input id="address" label="Indirizzo" type="text" value={parentFormData.address || ''} onChange={handleParentFormChange} autoComplete="street-address" />
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Input id="zipCode" label="CAP" type="text" value={parentFormData.zipCode || ''} onChange={handleParentFormChange} />
-                <Input id="city" label="Città" type="text" value={parentFormData.city || ''} onChange={handleParentFormChange} />
-                <Input id="province" label="Provincia" type="text" value={parentFormData.province || ''} onChange={handleParentFormChange} />
+                <Input id="zipCode" label="CAP" type="text" value={parentFormData.zipCode || ''} onChange={handleParentFormChange} autoComplete="postal-code" />
+                <Input id="city" label="Città" type="text" value={parentFormData.city || ''} onChange={handleParentFormChange} autoComplete="address-level2" />
+                <Input id="province" label="Provincia" type="text" value={parentFormData.province || ''} onChange={handleParentFormChange} autoComplete="address-level1" />
             </div>
             <div className="flex justify-end space-x-3 pt-4">
               <button type="button" onClick={closeParentModal} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
@@ -718,12 +736,12 @@ const ClientsView = ({
       <Modal isOpen={isChildModalOpen} onClose={closeChildModal} title={childModalState?.mode === 'edit' ? 'Modifica Figlio' : 'Nuovo Figlio'}>
           <form id="child-form" onSubmit={handleSaveChild} className="space-y-4" noValidate>
               {/* FIX: Explicitly typed the event object to resolve potential "property 'value' does not exist on type 'unknown'" error. */}
-              <Input id="name" label="Nome" type="text" value={childFormData.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setChildFormData({...childFormData, name: e.target.value})} error={childErrors.name} required />
+              <Input id="name" label="Nome" type="text" value={childFormData.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setChildFormData({...childFormData, name: e.target.value})} error={childErrors.name} required autoComplete="off" />
               <div className="grid grid-cols-2 gap-4">
                   {/* FIX: Explicitly typed the event object to resolve potential "property 'value' does not exist on type 'unknown'" error. */}
-                  <Input id="ageYears" label="Anni" type="number" value={childFormData.ageYears} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setChildFormData({...childFormData, ageYears: e.target.value})} error={childErrors.ageYears} />
+                  <Input id="ageYears" label="Anni" type="number" value={childFormData.ageYears} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setChildFormData({...childFormData, ageYears: e.target.value})} error={childErrors.ageYears} autoComplete="off" />
                   {/* FIX: Explicitly typed the event object to resolve potential "property 'value' does not exist on type 'unknown'" error. */}
-                  <Input id="ageMonths" label="Mesi" type="number" value={childFormData.ageMonths} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setChildFormData({...childFormData, ageMonths: e.target.value})} />
+                  <Input id="ageMonths" label="Mesi" type="number" value={childFormData.ageMonths} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setChildFormData({...childFormData, ageMonths: e.target.value})} autoComplete="off" />
               </div>
                <div className="flex justify-end space-x-3 pt-4">
                   <button type="button" onClick={closeChildModal} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
@@ -768,15 +786,24 @@ const ClientsView = ({
           </form>
       </Modal>
       
-       <Modal isOpen={!!paymentModalState} onClose={closePaymentModal} title={`Pagamento per ${paymentModalState?.child.name}`}>
+       <Modal 
+        isOpen={!!paymentModalState} 
+        onClose={closePaymentModal} 
+        title={paymentModalState?.mode === 'edit' ? 'Modifica Pagamento' : `Pagamento per ${paymentModalState?.data.child.name}`}>
           <form id="payment-form" onSubmit={handleSavePayment} className="space-y-4" noValidate>
-              <Input id="amount" label="Importo" type="number" step="0.01" value={paymentFormData.amount || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentFormData({...paymentFormData, amount: parseFloat(e.target.value)})} error={paymentErrors.amount} required />
-              <Input id="paymentDate" label="Data Pagamento" type="date" value={paymentFormData.paymentDate || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentFormData({...paymentFormData, paymentDate: e.target.value})} error={paymentErrors.paymentDate} required />
-              {/* FIX: Explicitly typed the event object to resolve the "property 'value' does not exist on type 'unknown'" error. */}
-              <Select id="method" label="Metodo" options={[{value: 'cash', label: 'Contanti'}, {value: 'transfer', label: 'Bonifico'}, {value: 'card', label: 'Carta'}]} value={paymentFormData.method || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPaymentFormData({...paymentFormData, method: e.currentTarget.value as PaymentMethod})} error={paymentErrors.method} required/>
+              {paymentModalState?.mode === 'edit' && (
+                <p className="text-sm text-testo-input/90">Stai modificando il pagamento per il workshop: <span className="font-semibold">{workshopMap[paymentModalState.data.payment.workshopId]?.name}</span></p>
+              )}
+              {/* FIX: Changed e.target.value to e.currentTarget.value for safer event handling. */}
+              <Input id="amount" label="Importo" type="number" step="0.01" value={paymentFormData.amount || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentFormData({...paymentFormData, amount: parseFloat(e.currentTarget.value)})} error={paymentErrors.amount} required autoComplete="off" />
+              {/* FIX: Changed e.target.value to e.currentTarget.value for safer event handling. */}
+              <Input id="paymentDate" label="Data Pagamento" type="date" value={paymentFormData.paymentDate || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentFormData({...paymentFormData, paymentDate: e.currentTarget.value})} error={paymentErrors.paymentDate} required autoComplete="off" />
+              {/* FIX: Explicitly typed the event parameter 'e' to resolve the "Property 'value' does not exist on type 'unknown'" error. */}
+              {/* FIX: Changed e.target.value to e.currentTarget.value for safer event handling. */}
+              <Select id="method" label="Metodo" options={[{value: 'cash', label: 'Contanti'}, {value: 'transfer', label: 'Bonifico'}, {value: 'card', label: 'Carta'}, {value: 'unspecified', label: 'Non Specificato'}]} value={paymentFormData.method || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPaymentFormData({...paymentFormData, method: e.currentTarget.value as PaymentMethod})} error={paymentErrors.method} required/>
                <div className="flex justify-end space-x-3 pt-4">
                   <button type="button" onClick={closePaymentModal} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
-                  <button type="submit" form="payment-form" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Registra Pagamento</button>
+                  <button type="submit" form="payment-form" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Salva Pagamento</button>
               </div>
           </form>
       </Modal>

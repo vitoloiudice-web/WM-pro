@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Card, { CardContent } from '../components/Card';
 import { PlusIcon, PencilIcon, TrashIcon } from '../components/icons/HeroIcons';
@@ -217,7 +216,7 @@ const LogisticsView = ({
         return (
             <Modal isOpen={!!locationModalState} onClose={closeLocationModal} title={title}>
                  <form id="location-form" onSubmit={handleSaveLocation} className="space-y-4" noValidate>
-                    <Input id="name" label="Nome" value={locationFormData.name || ''} onChange={e => setLocationFormData({ ...locationFormData, name: e.target.value })} error={locationErrors.name} required />
+                    <Input id="name" label="Nome" value={locationFormData.name || ''} onChange={e => setLocationFormData({ ...locationFormData, name: e.target.value })} error={locationErrors.name} required autoComplete="off" />
                     <Input 
                         id="shortName" 
                         label="Nome Breve (max 4)" 
@@ -228,17 +227,18 @@ const LogisticsView = ({
                         }} 
                         maxLength={4}
                         placeholder="Auto-generato"
+                        autoComplete="off"
                     />
-                    <Input id="address" label="Indirizzo" value={locationFormData.address || ''} onChange={e => setLocationFormData({ ...locationFormData, address: e.target.value })} error={locationErrors.address} required />
+                    <Input id="address" label="Indirizzo" value={locationFormData.address || ''} onChange={e => setLocationFormData({ ...locationFormData, address: e.target.value })} error={locationErrors.address} required autoComplete="street-address" />
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <Input id="zipCode" label="CAP" value={locationFormData.zipCode || ''} onChange={e => setLocationFormData({ ...locationFormData, zipCode: e.target.value })} />
-                        <Input id="city" label="Città" value={locationFormData.city || ''} onChange={e => setLocationFormData({ ...locationFormData, city: e.target.value })} />
-                        <Input id="province" label="Prov" value={locationFormData.province || ''} onChange={e => setLocationFormData({ ...locationFormData, province: e.target.value })} />
+                        <Input id="zipCode" label="CAP" value={locationFormData.zipCode || ''} onChange={e => setLocationFormData({ ...locationFormData, zipCode: e.target.value })} autoComplete="postal-code" />
+                        <Input id="city" label="Città" value={locationFormData.city || ''} onChange={e => setLocationFormData({ ...locationFormData, city: e.target.value })} autoComplete="address-level2" />
+                        <Input id="province" label="Prov" value={locationFormData.province || ''} onChange={e => setLocationFormData({ ...locationFormData, province: e.target.value })} autoComplete="address-level1" />
                     </div>
                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <Input id="capacity" label="Max People" type="number" value={locationFormData.capacity || ''} onChange={e => setLocationFormData({ ...locationFormData, capacity: Number(e.target.value) })} error={locationErrors.capacity} required />
-                        <Input id="rentalCost" label="Nolo (€)" type="number" step="0.01" value={locationFormData.rentalCost || ''} onChange={e => setLocationFormData({ ...locationFormData, rentalCost: Number(e.target.value) })} />
-                        <Input id="distanceKm" label="Distanza (km)" type="number" step="0.1" value={locationFormData.distanceKm || ''} onChange={e => setLocationFormData({ ...locationFormData, distanceKm: Number(e.target.value) })} />
+                        <Input id="capacity" label="Max People" type="number" value={locationFormData.capacity || ''} onChange={e => setLocationFormData({ ...locationFormData, capacity: Number(e.target.value) })} error={locationErrors.capacity} required autoComplete="off" />
+                        <Input id="rentalCost" label="Nolo (€)" type="number" step="0.01" value={locationFormData.rentalCost || ''} onChange={e => setLocationFormData({ ...locationFormData, rentalCost: Number(e.target.value) })} autoComplete="off" />
+                        <Input id="distanceKm" label="Distanza (km)" type="number" step="0.1" value={locationFormData.distanceKm || ''} onChange={e => setLocationFormData({ ...locationFormData, distanceKm: Number(e.target.value) })} autoComplete="off" />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-testo-input mb-2">Colore Etichetta</label>
@@ -273,11 +273,11 @@ const LogisticsView = ({
                 <form id="supplier-form" onSubmit={handleSave} className="space-y-6" noValidate>
                     {/* Supplier Details */}
                     <fieldset className="space-y-4 border-b border-black/10 pb-6">
-                         <Input id="name" label="Nome Fornitore" value={supplierFormData.name || ''} onChange={e => setSupplierFormData({ ...supplierFormData, name: e.target.value })} error={supplierErrors.name} required />
-                         <Input id="vatNumber" label="P.IVA / C.F." value={supplierFormData.vatNumber || ''} onChange={e => setSupplierFormData({ ...supplierFormData, vatNumber: e.target.value })} />
-                         <Input id="email" label="Email" type="email" value={supplierFormData.email || ''} onChange={e => setSupplierFormData({ ...supplierFormData, email: e.target.value })} />
-                         <Input id="phone" label="Telefono" type="tel" value={supplierFormData.phone || ''} onChange={e => setSupplierFormData({ ...supplierFormData, phone: e.target.value })} />
-                         <Input id="contact" label="Referente" value={supplierFormData.contact || ''} onChange={e => setSupplierFormData({ ...supplierFormData, contact: e.target.value })} />
+                         <Input id="name" label="Nome Fornitore" value={supplierFormData.name || ''} onChange={e => setSupplierFormData({ ...supplierFormData, name: e.target.value })} error={supplierErrors.name} required autoComplete="organization" />
+                         <Input id="vatNumber" label="P.IVA / C.F." value={supplierFormData.vatNumber || ''} onChange={e => setSupplierFormData({ ...supplierFormData, vatNumber: e.target.value })} autoComplete="off" />
+                         <Input id="email" label="Email" type="email" value={supplierFormData.email || ''} onChange={e => setSupplierFormData({ ...supplierFormData, email: e.target.value })} autoComplete="email" />
+                         <Input id="phone" label="Telefono" type="tel" value={supplierFormData.phone || ''} onChange={e => setSupplierFormData({ ...supplierFormData, phone: e.target.value })} autoComplete="tel" />
+                         <Input id="contact" label="Referente" value={supplierFormData.contact || ''} onChange={e => setSupplierFormData({ ...supplierFormData, contact: e.target.value })} autoComplete="name" />
                     </fieldset>
                     
                     {/* Locations Management */}

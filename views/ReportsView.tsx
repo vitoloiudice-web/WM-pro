@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 // FIX: Updated imports to remove file extensions
 import Card, { CardContent, CardHeader } from '../components/Card';
@@ -618,9 +619,12 @@ export const ReportsView = ({ payments, costs, workshops, suppliers, locations, 
             }
 
             case 'costs-per-workshop': {
+// FIX: Correctly iterate over workshopIds array on OperationalCost type.
                 const costsByWs = costs.reduce((acc, cost) => {
-                    if (cost.workshopId) {
-                        acc[cost.workshopId] = (acc[cost.workshopId] || 0) + cost.amount;
+                    if (cost.workshopIds && cost.workshopIds.length > 0) {
+                        cost.workshopIds.forEach(wsId => {
+                            acc[wsId] = (acc[wsId] || 0) + cost.amount;
+                        });
                     }
                     return acc;
                 }, {} as Record<string, number>);
@@ -640,9 +644,12 @@ export const ReportsView = ({ payments, costs, workshops, suppliers, locations, 
                     return acc;
                 }, {} as Record<string, number>);
     
+// FIX: Correctly iterate over workshopIds array on OperationalCost type.
                 const costsByWsForProfit = costs.reduce((acc, cost) => {
-                    if (cost.workshopId) {
-                        acc[cost.workshopId] = (acc[cost.workshopId] || 0) + cost.amount;
+                    if (cost.workshopIds && cost.workshopIds.length > 0) {
+                        cost.workshopIds.forEach(wsId => {
+                            acc[wsId] = (acc[wsId] || 0) + cost.amount;
+                        });
                     }
                     return acc;
                 }, {} as Record<string, number>);
