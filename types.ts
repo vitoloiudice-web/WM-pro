@@ -56,9 +56,13 @@ export interface Supplier {
 
 export interface Location {
   id: string;
-  name: string;
-  address: string;
-  capacity: number;
+  name: string; // nome completo sede
+  shortName: string; // nome breve sede
+  address: string; // indirizzo sede
+  zipCode: string; // cap sede
+  province: string; // provincia sede
+  capacity: number; // capienza massima
+  rentalCost: number; // costo nolo in €
   supplierId?: string;
 }
 

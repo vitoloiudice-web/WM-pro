@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Card, { CardContent } from '../components/Card.tsx';
-import { PlusIcon, BuildingOffice2Icon, PencilIcon, TrashIcon, LocationMarkerIcon, UserCircleIcon, EnvelopeIcon, PhoneIcon, UsersIcon } from '../components/icons/HeroIcons.tsx';
+import { PlusIcon, BuildingOffice2Icon, PencilIcon, TrashIcon, LocationMarkerIcon } from '../components/icons/HeroIcons.tsx';
 import type { Supplier, Location } from '../types.ts';
 import Modal from '../components/Modal.tsx';
 import { ConfirmModal } from '../components/ConfirmModal.tsx';
@@ -8,10 +8,16 @@ import Input from '../components/Input.tsx';
 
 // Initial empty forms
 const emptySupplierForm: Partial<Supplier> = { name: '', vatNumber: '', address: '', zipCode: '', city: '', province: '', contactPerson: '', email: '', phone: '' };
-const emptyLocationForm: Partial<Location> = { name: '', address: '', capacity: 0 };
+const emptyLocationForm: Partial<Location> = { name: '', shortName: '', address: '', zipCode: '', province: '', capacity: 0, rentalCost: 0 };
 
 const getSupplierDisplayName = (supplier: Supplier): string => {
     return supplier.name || 'Fornitore senza nome';
+};
+
+const generateShortName = (fullName: string): string => {
+    if (!fullName) return '';
+    const consonants = fullName.replace(/[^bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]/g, '');
+    return consonants.slice(0, 4).toUpperCase();
 };
 
 interface LogisticsViewProps {
@@ -142,21 +148,47 @@ const LogisticsView = ({
         setLocationFormData(emptyLocationForm);
     };
 
+    const handleLocationFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { id, value } = e.target;
+        setLocationFormData(prev => {
+            const newState = { ...prev, [id]: value };
+            if (id === 'name') {
+                newState.shortName = generateShortName(value);
+            }
+            if (id === 'shortName') {
+                newState.shortName = value.slice(0, 4).toUpperCase();
+            }
+            return newState;
+        });
+    };
+    
     const handleSaveLocation = async (e: React.FormEvent) => {
         e.preventDefault();
         const newErrors: Record<string, string> = {};
-        if (!locationFormData.name?.trim()) newErrors.name = 'Il nome della sede è obbligatorio.';
+        if (!locationFormData.name?.trim()) newErrors.name = 'Il nome completo è obbligatorio.';
+        if (!locationFormData.shortName?.trim()) {
+            newErrors.shortName = 'Il nome breve è obbligatorio.';
+        } else if (locationFormData.shortName.length > 4) {
+             newErrors.shortName = 'Massimo 4 caratteri.';
+        }
         if (!locationFormData.address?.trim()) newErrors.address = "L'indirizzo è obbligatorio.";
         if (!locationFormData.capacity || Number(locationFormData.capacity) <= 0) {
             newErrors.capacity = 'La capienza deve essere un numero positivo.';
         }
+        if (locationFormData.rentalCost === undefined || Number(locationFormData.rentalCost) < 0) {
+            newErrors.rentalCost = 'Il costo non può essere negativo.';
+        }
+        
         setLocationErrors(newErrors);
 
         if (Object.keys(newErrors).length === 0) {
-            const dataToSave = {
+             const dataToSave = {
                 ...locationFormData,
-                capacity: Number(locationFormData.capacity)
+                capacity: Number(locationFormData.capacity || 0),
+                rentalCost: Number(locationFormData.rentalCost || 0),
+                shortName: locationFormData.shortName?.toUpperCase()
             };
+
 
             if (locationModalState?.mode === 'edit') {
                 await updateLocation(locationModalState.location.id, dataToSave);
@@ -166,8 +198,12 @@ const LogisticsView = ({
                     id: `loc_${Date.now()}`,
                     supplierId: locationModalState.supplierId,
                     name: dataToSave.name!,
+                    shortName: dataToSave.shortName!,
                     address: dataToSave.address!,
+                    zipCode: dataToSave.zipCode || '',
+                    province: dataToSave.province || '',
                     capacity: dataToSave.capacity!,
+                    rentalCost: dataToSave.rentalCost!,
                 };
                 await addLocation(newLocation);
                 alert('Nuova sede salvata!');
@@ -266,8 +302,9 @@ const LogisticsView = ({
                                                         <div className="flex items-center space-x-3">
                                                             <LocationMarkerIcon className="h-5 w-5 text-testo-input/70 flex-shrink-0" />
                                                             <div>
-                                                                <p className="font-medium text-testo-input">{loc.name}</p>
-                                                                <p className="text-xs text-testo-input/80">{loc.address} - Capienza: {loc.capacity}</p>
+                                                                <p className="font-medium text-testo-input">{loc.name} ({loc.shortName})</p>
+                                                                <p className="text-xs text-testo-input/80">{loc.address}, {loc.zipCode} {loc.province}</p>
+                                                                <p className="text-xs text-testo-input/80">Capienza: {loc.capacity} - Nolo: €{(loc.rentalCost || 0).toFixed(2)}</p>
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center space-x-1">
@@ -310,9 +347,17 @@ const LogisticsView = ({
 
             <Modal isOpen={isLocationModalOpen} onClose={closeLocationModal} title={locationModalState?.mode === 'edit' ? 'Modifica Sede' : 'Nuova Sede'}>
                 <form id="location-form" onSubmit={handleSaveLocation} className="space-y-4" noValidate>
-                    <Input id="name" label="Nome Sede" type="text" value={locationFormData.name || ''} onChange={e => setLocationFormData({ ...locationFormData, name: e.target.value })} error={locationErrors.name} required />
-                    <Input id="address" label="Indirizzo Completo" type="text" value={locationFormData.address || ''} onChange={e => setLocationFormData({ ...locationFormData, address: e.target.value })} error={locationErrors.address} required />
-                    <Input id="capacity" label="Capienza Massima" type="number" value={locationFormData.capacity || ''} onChange={e => setLocationFormData({ ...locationFormData, capacity: Number(e.target.value) })} error={locationErrors.capacity} required />
+                    <Input id="name" label="Nome Completo Sede" type="text" value={locationFormData.name || ''} onChange={handleLocationFormChange} error={locationErrors.name} required />
+                    <Input id="shortName" label="Nome Breve Sede (max 4)" type="text" value={locationFormData.shortName || ''} onChange={handleLocationFormChange} error={locationErrors.shortName} required maxLength={4} />
+                    <Input id="address" label="Indirizzo" type="text" value={locationFormData.address || ''} onChange={handleLocationFormChange} error={locationErrors.address} required />
+                     <div className="grid grid-cols-2 gap-4">
+                        <Input id="zipCode" label="CAP" type="text" value={locationFormData.zipCode || ''} onChange={handleLocationFormChange} />
+                        <Input id="province" label="Prov" type="text" value={locationFormData.province || ''} onChange={handleLocationFormChange} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input id="capacity" label="Capienza Massima (Max People)" type="number" value={locationFormData.capacity || ''} onChange={handleLocationFormChange} error={locationErrors.capacity} required />
+                        <Input id="rentalCost" label="Costo Nolo (€)" type="number" step="0.01" value={locationFormData.rentalCost || ''} onChange={handleLocationFormChange} error={locationErrors.rentalCost} required />
+                    </div>
                     
                     <div className="flex justify-end space-x-3 pt-4">
                         <button type="button" onClick={closeLocationModal} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
