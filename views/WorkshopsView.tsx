@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import Card, { CardContent } from '../components/Card.tsx';
+// FIX: Updated imports to remove file extensions
+import Card, { CardContent } from '../components/Card';
 import { 
     ChevronLeftIcon, 
     ChevronRightIcon, 
@@ -12,13 +13,13 @@ import {
     TrashIcon,
     PlusIcon,
     ClockIcon
-} from '../components/icons/HeroIcons.tsx';
-import type { Workshop, Location, Registration, Child, Parent, WorkshopType } from '../types.ts';
-import Modal from '../components/Modal.tsx';
+} from '../components/icons/HeroIcons';
+import type { Workshop, Location, Registration, Child, Parent, WorkshopType } from '../types';
+import Modal from '../components/Modal';
 // FIX: Changed import to be a named import as ConfirmModal does not have a default export.
-import { ConfirmModal } from '../components/ConfirmModal.tsx';
-import Input from '../components/Input.tsx';
-import Select from '../components/Select.tsx';
+import { ConfirmModal } from '../components/ConfirmModal';
+import Input from '../components/Input';
+import Select from '../components/Select';
 
 type ModalState = 
     | { mode: 'view'; workshop: Workshop }
@@ -372,7 +373,7 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                         </div>
                     </div>
                     <div className="mt-6 pt-4 border-t border-black/10 flex justify-end items-center space-x-3">
-                        <button type="button" onClick={() => setModalState({ mode: 'edit', workshop })} className="px-4 py-2 bg-bottone-azione text-testo-input rounded-md hover:opacity-90 flex items-center space-x-2"><PencilIcon className="h-4 w-4" /><span>Modifica</span></button>
+                        <button type="button" onClick={() => setModalState({ mode: 'edit', workshop })} className="px-4 py-2 bg-bottone-azione text-white rounded-md hover:opacity-90 flex items-center space-x-2"><PencilIcon className="h-4 w-4" /><span>Modifica</span></button>
                         <button type="button" onClick={() => setDeletingWorkshopId(workshop.id)} className="px-4 py-2 bg-bottone-eliminazione text-white rounded-md hover:opacity-90 flex items-center space-x-2"><TrashIcon className="h-4 w-4"/><span>Elimina</span></button>
                     </div>
                  </>
@@ -509,7 +510,7 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                     return (
                         <div 
                             key={index} 
-                            className={`relative min-h-[100px] p-2 group ${isCurrentMonth ? 'bg-cards-giallo/80 cursor-pointer hover:bg-white/30' : 'bg-cards-giallo/40'}`}
+                            className={`relative min-h-[100px] p-2 group ${isCurrentMonth ? 'bg-white cursor-pointer hover:bg-gray-100' : 'bg-gray-50'}`}
                             onClick={() => isCurrentMonth && handleDayClick(dateKey)}
                         >
                             <span className={`font-medium ${isCurrentMonth ? 'text-testo-input' : 'text-testo-input/60'}`}>{day.getDate()}</span>

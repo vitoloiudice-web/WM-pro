@@ -1,15 +1,17 @@
+
 import React, { useState, useEffect } from 'react';
-import { useCollection, useDocument } from './hooks/useFirestore.ts';
-import BottomNav from './components/BottomNav.tsx';
-import Sidebar from './components/Sidebar.tsx';
-import DashboardView from './views/DashboardView.tsx';
-import WorkshopsView from './views/WorkshopsView.tsx';
-import ClientsView from './views/ClientsView.tsx';
-import FinanceView from './views/FinanceView.tsx';
-import LogisticsView from './views/LogisticsView.tsx';
-import ReportsView from './views/ReportsView.tsx';
-import type { View, Workshop, Parent, Child, Payment, OperationalCost, Quote, Invoice, Supplier, Location, Registration, CompanyProfile } from './types.ts';
-import { MOCK_COMPANY_PROFILE } from './data.ts';
+// FIX: Updated imports to remove file extensions
+import { useCollection, useDocument } from './hooks/useFirestore';
+import BottomNav from './components/BottomNav';
+import Sidebar from './components/Sidebar';
+import DashboardView from './views/DashboardView';
+import WorkshopsView from './views/WorkshopsView';
+import ClientsView from './views/ClientsView';
+import FinanceView from './views/FinanceView';
+import LogisticsView from './views/LogisticsView';
+import ReportsView from './views/ReportsView';
+import type { View, Workshop, Parent, Child, Payment, OperationalCost, Quote, Invoice, Supplier, Location, Registration, CompanyProfile } from './types';
+import { MOCK_COMPANY_PROFILE } from './data';
 
 const App = () => {
   const [currentView, setCurrentView] = useState<View>('dashboard');

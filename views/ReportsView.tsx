@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import Card, { CardContent, CardHeader } from '../components/Card.tsx';
-import { DocumentDownloadIcon, CurrencyDollarIcon, UsersIcon, ChartPieIcon } from '../components/icons/HeroIcons.tsx';
-import type { Payment, OperationalCost, Workshop, Supplier, Location, Registration, Quote, PaymentMethod } from '../types.ts';
+// FIX: Updated imports to remove file extensions
+import Card, { CardContent, CardHeader } from '../components/Card';
+import { DocumentDownloadIcon, CurrencyDollarIcon, UsersIcon, ChartPieIcon } from '../components/icons/HeroIcons';
+import type { Payment, OperationalCost, Workshop, Supplier, Location, Registration, Quote, PaymentMethod } from '../types';
 
 declare const Chart: any; // Using Chart.js from CDN
 
@@ -79,7 +80,7 @@ const ChartCard = ({ title, chartRef, chartHeight = 'h-64' }: { title: string; c
     <Card>
         <CardHeader>{title}</CardHeader>
         <CardContent>
-            <div className={`relative ${chartHeight}`}>
+            <div className={`relative ${chartHeight} bg-white p-2 rounded-lg`}>
                 <canvas ref={chartRef}></canvas>
             </div>
         </CardContent>
@@ -730,7 +731,7 @@ const ReportsView = ({ payments, costs, workshops, suppliers, locations, registr
                     <button 
                         onClick={generateReport}
                         disabled={!reportType}
-                        className="w-full sm:w-auto px-4 py-2 bg-bottone-azione text-testo-input font-semibold rounded-md shadow-sm hover:opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed self-end"
+                        className="w-full sm:w-auto px-4 py-2 bg-bottone-azione text-white font-semibold rounded-md shadow-sm hover:opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed self-end"
                     >
                         Genera
                     </button>
@@ -763,7 +764,7 @@ const ReportsView = ({ payments, costs, workshops, suppliers, locations, registr
                         <Card>
                             <CardHeader>Visualizzazione Grafica</CardHeader>
                             <CardContent>
-                                <div className="relative h-96">
+                                <div className="relative h-96 bg-white p-2 rounded-lg">
                                     <canvas ref={detailedChartRef}></canvas>
                                 </div>
                             </CardContent>

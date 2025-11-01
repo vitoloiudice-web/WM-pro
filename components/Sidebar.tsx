@@ -1,6 +1,7 @@
 import React from 'react';
-import type { View } from '../types.ts';
-import { navItems, NavItemConfig } from './navigation.ts';
+// FIX: Updated imports to remove file extensions
+import type { View } from '../types';
+import { navItems, NavItemConfig } from './navigation';
 
 interface SidebarProps {
   currentView: View;

@@ -1,148 +1,150 @@
-export type View = 'dashboard' | 'workshops' | 'clients' | 'finance' | 'logistics' | 'reports';
+// This file defines all the shared data structures for the application.
 
-export type PaymentMethod = 'cash' | 'transfer' | 'card';
-
-export interface CompanyProfile {
-  companyName: string;
-  vatNumber: string;
-  address: string;
-  email: string;
-  phone: string;
-  taxRegime: string; // For legal notes on invoices/quotes
-}
-
-export interface Parent {
-  id: string;
-  clientType: 'persona fisica' | 'persona giuridica';
-  status: 'attivo' | 'sospeso' | 'cessato' | 'prospect';
-  
-  // For 'persona fisica'
-  name?: string;
-  surname?: string;
-  taxCode?: string; // Codice Fiscale
-  
-  // For 'persona giuridica'
-  companyName?: string;
-  vatNumber?: string; // Partita IVA
-
-  // Common fields
-  email: string;
-  phone: string;
-  address?: string;
-  zipCode?: string; // CAP
-  city?: string;
-  province?: string;
-}
-
-export interface Child {
-  id: string;
-  parentId: string;
-  name:string;
-  birthDate: string; // YYY-MM-DD
-}
-
-export interface Supplier {
-  id: string;
-  name: string;
-  vatNumber: string; // Partita IVA
-  contactPerson?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  zipCode?: string; // CAP
-  city?: string;
-  province?: string;
-}
-
-export interface Location {
-  id: string;
-  name: string; // nome completo sede
-  shortName: string; // nome breve sede
-  address: string; // indirizzo sede
-  zipCode: string; // cap sede
-  province: string; // provincia sede
-  capacity: number; // capienza massima
-  rentalCost: number; // costo nolo in €
-  supplierId?: string;
-}
+export type View = 'dashboard' | 'workshops' | 'clients' | 'finance' | 'reports' | 'logistics';
 
 export type WorkshopType = 'OpenDay' | 'Evento' | '1 Mese' | '2 Mesi' | '3 Mesi' | 'Scolastico' | 'Campus';
 
+export type ParentStatus = 'attivo' | 'sospeso' | 'cessato' | 'prospect';
+
+export type ClientType = 'persona fisica' | 'persona giuridica';
+
+export type PaymentMethod = 'cash' | 'transfer' | 'card';
+
+export type QuoteStatus = 'sent' | 'approved' | 'rejected';
+
+export type CostType = 'general' | 'fuel';
+
+export interface CompanyProfile {
+    companyName: string;
+    vatNumber: string;
+    address: string;
+    email: string;
+    phone: string;
+    taxRegime: string;
+}
+
 export interface Workshop {
-  id: string;
-  name: string;
-  type: WorkshopType;
-  locationId: string;
-  startDate: string; // YYYY-MM-DD
-  endDate: string; // YYYY-MM-DD
-  pricePerChild: number;
-  dayOfWeek: 'Lunedì' | 'Martedì' | 'Mercoledì' | 'Giovedì' | 'Venerdì' | 'Sabato' | 'Domenica';
-  startTime: string; // HH:MM
-  endTime: string; // HH:MM
+    id: string;
+    name: string;
+    type: WorkshopType;
+    locationId: string;
+    startDate: string; // ISO date string e.g., '2024-01-01'
+    endDate: string;   // ISO date string
+    dayOfWeek: 'Lunedì' | 'Martedì' | 'Mercoledì' | 'Giovedì' | 'Venerdì' | 'Sabato' | 'Domenica';
+    startTime: string; // e.g., '10:00'
+    endTime: string;   // e.g., '12:00'
+    pricePerChild: number;
+}
+
+export interface Parent {
+    id: string;
+    clientType: ClientType;
+    status: ParentStatus;
+    name?: string;
+    surname?: string;
+    taxCode?: string;
+    companyName?: string;
+    vatNumber?: string;
+    email: string;
+    phone?: string;
+    address?: string;
+    zipCode?: string;
+    city?: string;
+    province?: string;
+}
+
+export interface Child {
+    id: string;
+    parentId: string;
+    name: string;
+    birthDate: string; // ISO date string
 }
 
 export interface Registration {
-  id: string;
-  workshopId: string;
-  childId: string;
-  registrationDate: string; // YYYY-MM-DD
+    id: string;
+    childId: string;
+    workshopId: string;
+    registrationDate: string; // ISO date string
 }
 
 export interface Payment {
-  id: string;
-  parentId: string;
-  workshopId: string;
-  amount: number;
-  paymentDate: string; // YYYY-MM-DD
-  method: PaymentMethod;
+    id: string;
+    parentId: string;
+    workshopId: string;
+    amount: number;
+    paymentDate: string; // ISO date string
+    method: PaymentMethod;
 }
 
 export interface OperationalCost {
-  id: string;
-  supplierId?: string;
-  description: string;
-  amount: number;
-  date: string; // YYYY-MM-DD
-  workshopId?: string; // Optional link to a workshop
-  costType?: 'general' | 'fuel';
-  locationId?: string;
-  distanceKm?: number;
-  fuelCostPerKm?: number;
-  method?: PaymentMethod;
+    id: string;
+    description: string;
+    amount: number;
+    date: string; // ISO date string
+    supplierId?: string;
+    workshopId?: string;
+    method?: PaymentMethod;
+    // For fuel costs
+    costType?: CostType;
+    locationId?: string;
+    distanceKm?: number;
+    fuelCostPerKm?: number;
 }
 
 export interface ClientDetails {
-  clientType: 'persona fisica' | 'persona giuridica';
-  name?: string;
-  surname?: string;
-  taxCode?: string;
-  companyName?: string;
-  vatNumber?: string;
-  email: string;
-  phone?: string;
-  address?: string;
-  zipCode?: string;
-  city?: string;
-  province?: string;
+    clientType: ClientType;
+    name?: string;
+    surname?: string;
+    taxCode?: string;
+    companyName?: string;
+    vatNumber?: string;
+    email: string;
+    phone?: string;
+    address?: string;
+    zipCode?: string;
+    city?: string;
+    province?: string;
 }
 
 export interface Quote {
-  id: string;
-  parentId?: string;
-  potentialClient?: ClientDetails;
-  description: string;
-  amount: number;
-  date: string; // YYYY-MM-DD
-  status: 'sent' | 'approved' | 'rejected';
-  method?: PaymentMethod;
+    id: string;
+    parentId?: string;
+    potentialClient?: ClientDetails;
+    description: string;
+    amount: number;
+    date: string; // ISO date string
+    status: QuoteStatus;
+    method?: PaymentMethod;
 }
 
 export interface Invoice {
-  id: string;
-  parentId: string;
-  workshopId: string;
-  amount: number;
-  issueDate: string; // YYYY-MM-DD
-  sdiNumber: string; // Numero SDI
-  method: PaymentMethod;
+    id: string;
+    parentId: string;
+    amount: number;
+    sdiNumber: string;
+    issueDate: string; // ISO date string
+    method: PaymentMethod;
+}
+
+export interface Supplier {
+    id: string;
+    name: string;
+    vatNumber?: string;
+    contact?: string;
+    email?: string;
+    phone?: string;
+}
+
+export interface Location {
+    id: string;
+    name: string;
+    address: string;
+    capacity: number;
+    // Fields from previous requests that seem to be missing
+    shortName?: string;
+    zipCode?: string;
+    city?: string;
+    province?: string;
+    rentalCost?: number;
+    color?: string; // This is essential for the current request
 }

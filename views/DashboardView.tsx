@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import Card, { CardContent, CardHeader } from '../components/Card.tsx';
-import { ArrowUpRightIcon, UsersIcon, CurrencyDollarIcon, CalendarDaysIcon, Cog6ToothIcon, CheckCircleIcon, ExclamationCircleIcon } from '../components/icons/HeroIcons.tsx';
-import Modal from '../components/Modal.tsx';
-import Input from '../components/Input.tsx';
-import Select from '../components/Select.tsx';
-import type { View, Workshop, Parent, Payment, Registration, Location, CompanyProfile } from '../types.ts';
+// FIX: Updated imports to remove file extensions
+import Card, { CardContent, CardHeader } from '../components/Card';
+import { ArrowUpRightIcon, UsersIcon, CurrencyDollarIcon, CalendarDaysIcon, Cog6ToothIcon, CheckCircleIcon, ExclamationCircleIcon } from '../components/icons/HeroIcons';
+import Modal from '../components/Modal';
+import Input from '../components/Input';
+import Select from '../components/Select';
+import type { View, Workshop, Parent, Payment, Registration, Location, CompanyProfile } from '../types';
 
 type ModalType = 'none' | 'newClient' | 'newWorkshop' | 'newPayment' | 'newCost' | 'settings';
 
@@ -410,7 +411,7 @@ const DashboardView = ({
                 <div className="col-span-2 sm:col-span-3">
                     <button
                         onClick={() => openModal('settings')}
-                        className="w-full flex items-center justify-between p-4 bg-white/40 hover:bg-white/60 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-bottone-azione text-left"
+                        className="w-full flex items-center justify-between p-4 bg-white/40 hover:bg-white/60 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-bottone-azione text-left"
                     >
                         <div>
                             <span className="font-semibold text-testo-input">Configura Profilo Azienda</span>
@@ -467,7 +468,7 @@ const StatCard: React.FC<{ title: string; value: string | number; icon: React.Re
 const QuickLinkButton: React.FC<{ label: string; onClick: () => void; icon: React.ReactNode }> = ({ label, onClick, icon }) => (
   <button 
     onClick={onClick}
-    className="w-full flex items-center justify-between p-4 bg-white/40 hover:bg-white/60 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-bottone-azione"
+    className="w-full flex items-center justify-between p-4 bg-white/40 hover:bg-white/60 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-bottone-azione"
   >
     <span className="font-semibold text-testo-input text-left">{label}</span>
     <div className="text-testo-input/80 flex-shrink-0">{icon}</div>

@@ -1,6 +1,7 @@
 import React from 'react';
-import type { View } from '../types.ts';
-import { HomeIcon, AcademicCapIcon, UsersIcon, CurrencyDollarIcon, WrenchScrewdriverIcon, ChartPieIcon } from './icons/HeroIcons.tsx';
+// FIX: Updated imports to remove file extensions
+import type { View } from '../types';
+import { HomeIcon, AcademicCapIcon, UsersIcon, CurrencyDollarIcon, WrenchScrewdriverIcon, ChartPieIcon } from './icons/HeroIcons';
 
 export interface NavItemConfig {
   view: View;

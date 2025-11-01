@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import Card, { CardContent } from '../components/Card.tsx';
-import { PlusIcon, UserCircleIcon, PencilIcon, TrashIcon, CreditCardIcon } from '../components/icons/HeroIcons.tsx';
-import type { Parent, Child, Workshop, Registration, Payment, Location, PaymentMethod } from '../types.ts';
-import Modal from '../components/Modal.tsx';
+// FIX: Updated imports to remove file extensions
+import Card, { CardContent } from '../components/Card';
+import { PlusIcon, UserCircleIcon, PencilIcon, TrashIcon, CreditCardIcon } from '../components/icons/HeroIcons';
+import type { Parent, Child, Workshop, Registration, Payment, Location, PaymentMethod } from '../types';
+import Modal from '../components/Modal';
 // FIX: Changed import to be a named import as ConfirmModal does not have a default export.
-import { ConfirmModal } from '../components/ConfirmModal.tsx';
-import Input from '../components/Input.tsx';
-import Select from '../components/Select.tsx';
+import { ConfirmModal } from '../components/ConfirmModal';
+import Input from '../components/Input';
+import Select from '../components/Select';
 
 const parentStatusOptions = [
     { value: 'attivo', label: 'Attivo' },
@@ -456,7 +457,7 @@ const ClientsView = ({
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-testo-input">Anagrafica Clienti</h2>
-        <button onClick={() => setIsNewClientModalOpen(true)} className="bg-bottone-azione text-testo-input px-4 py-2 rounded-lg shadow hover:opacity-90 flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bottone-azione">
+        <button onClick={() => setIsNewClientModalOpen(true)} className="bg-bottone-azione text-white px-4 py-2 rounded-full shadow hover:opacity-90 flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bottone-azione">
           <PlusIcon /><span>Nuovo Cliente</span>
         </button>
       </div>
@@ -493,13 +494,13 @@ const ClientsView = ({
             <div className="flex space-x-2">
               <button 
                 onClick={() => setSortOrder('asc')} 
-                className={`px-3 py-1.5 text-sm rounded-md ${sortOrder === 'asc' ? 'bg-bottone-azione text-testo-input' : 'bg-gray-300 text-black'}`}
+                className={`px-3 py-1.5 text-sm rounded-md ${sortOrder === 'asc' ? 'bg-bottone-azione text-white' : 'bg-gray-300 text-black'}`}
               >
                 A-Z
               </button>
               <button 
                 onClick={() => setSortOrder('desc')}
-                className={`px-3 py-1.5 text-sm rounded-md ${sortOrder === 'desc' ? 'bg-bottone-azione text-testo-input' : 'bg-gray-300 text-black'}`}
+                className={`px-3 py-1.5 text-sm rounded-md ${sortOrder === 'desc' ? 'bg-bottone-azione text-white' : 'bg-gray-300 text-black'}`}
               >
                 Z-A
               </button>
@@ -513,6 +514,19 @@ const ClientsView = ({
           const parentChildren = children.filter(c => c.parentId === parent.id);
           const parentRegistrations = registrations.filter(r => parentChildren.some(c => c.id === r.childId));
           
+          const registrationsByChild = useMemo(() => {
+                return parentRegistrations.reduce((acc, reg) => {
+                    const child = childMap[reg.childId];
+                    if (child) {
+                        if (!acc[child.id]) {
+                            acc[child.id] = [];
+                        }
+                        acc[child.id].push(reg);
+                    }
+                    return acc;
+                }, {} as Record<string, Registration[]>);
+            }, [parentRegistrations, childMap]);
+
           return (
             <div key={parent.id}>
               <Card>
@@ -571,32 +585,59 @@ const ClientsView = ({
                         <PlusIcon className="h-4 w-4" /><span>Iscrivi</span>
                       </button>
                     </div>
-                    {parentRegistrations.length > 0 ? (
-                      <ul className="space-y-2">
-                        {parentRegistrations.map(reg => {
-                          const workshop = workshopMap[reg.workshopId];
-                          const child = childMap[reg.childId];
-                          const payment = paymentMap.get(`${parent.id}_${reg.workshopId}`);
-                          return (
-                            <li key={reg.id} className="flex justify-between items-center p-2 bg-white/30 rounded-md">
-                              <div>
-                                <p className="font-medium text-testo-input">{workshop?.name || 'Workshop non trovato'}</p>
-                                <p className="text-xs text-testo-input/80">Bambino: {child?.name || 'N/D'}</p>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                {payment ? (
-                                  <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">Pagato</span>
-                                ) : (
-                                  <button onClick={() => workshop && child && setPaymentModalState({ registration: reg, workshop, child, parent })} className="text-xs font-semibold text-bottone-azione bg-bottone-azione/20 px-2 py-1 rounded-full hover:bg-bottone-azione/40">
-                                    Registra Pagamento
-                                  </button>
-                                )}
-                                <button onClick={() => setDeletingRegistrationId(reg.id)} className="p-1 text-testo-input/80 hover:text-bottone-eliminazione"><TrashIcon className="h-4 w-4"/></button>
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
+                    {Object.keys(registrationsByChild).length > 0 ? (
+                        <ul className="space-y-3">
+                            {Object.entries(registrationsByChild).map(([childId, childRegs]) => {
+                                const child = childMap[childId];
+                                const uniqueLocationColors = [...new Set(
+                                    childRegs
+                                        .map(reg => workshopMap[reg.workshopId])
+                                        .filter(Boolean)
+                                        .map(ws => locationMap[ws.locationId])
+                                        .filter(Boolean)
+                                        .map(loc => loc.color)
+                                        .filter(Boolean)
+                                )];
+
+                                return (
+                                    <li key={childId} className="bg-white/30 rounded-md flex overflow-hidden">
+                                        <div className="flex">
+                                            {uniqueLocationColors.map((color, index) => (
+                                                <div key={index} className="w-2" style={{ backgroundColor: color }}></div>
+                                            ))}
+                                            {uniqueLocationColors.length === 0 && <div className="w-2 bg-gray-300"></div>}
+                                        </div>
+                                        
+                                        <div className="p-3 flex-grow">
+                                            <p className="font-bold text-testo-input">{child?.name || 'Figlio non trovato'}</p>
+                                            <ul className="mt-2 space-y-2">
+                                            {childRegs.map(reg => {
+                                                const workshop = workshopMap[reg.workshopId];
+                                                const payment = paymentMap.get(`${parent.id}_${reg.workshopId}`);
+                                                return (
+                                                <li key={reg.id} className="flex justify-between items-center text-sm">
+                                                    <div>
+                                                        <p className="font-medium text-testo-input">{workshop?.name || 'Workshop non trovato'}</p>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        {payment ? (
+                                                        <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">Pagato</span>
+                                                        ) : (
+                                                        <button onClick={() => workshop && child && setPaymentModalState({ registration: reg, workshop, child, parent })} className="text-xs font-semibold text-bottone-azione bg-bottone-azione/20 px-2 py-1 rounded-full hover:bg-bottone-azione/40">
+                                                            Registra Pagamento
+                                                        </button>
+                                                        )}
+                                                        <button onClick={() => setDeletingRegistrationId(reg.id)} className="p-1 text-testo-input/80 hover:text-bottone-eliminazione"><TrashIcon className="h-4 w-4"/></button>
+                                                    </div>
+                                                </li>
+                                                );
+                                            })}
+                                            </ul>
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
                     ) : <p className="text-sm text-testo-input/80 italic">Nessuna iscrizione attiva.</p>}
                   </div>
 
@@ -657,7 +698,8 @@ const ClientsView = ({
 
       <Modal isOpen={!!registrationModalState} onClose={closeRegistrationModal} title="Nuova Iscrizione">
           <form id="registration-form" onSubmit={handleSaveRegistration} className="space-y-4" noValidate>
-              <Select id="childId" label="Figlio da Iscrivere" value={registrationFormData.childId || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRegistrationFormData({...registrationFormData, childId: e.target.value})} options={(children.filter(c => c.parentId === registrationModalState?.parent.id) || []).map(c => ({value: c.id, label: c.name}))} error={registrationErrors.childId} required placeholder="Seleziona un figlio" />
+              {/* FIX: Add type assertion to `children` to resolve '.map' on 'unknown' error */}
+              <Select id="childId" label="Figlio da Iscrivere" value={registrationFormData.childId || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRegistrationFormData({...registrationFormData, childId: e.target.value})} options={((children as Child[]).filter(c => c.parentId === registrationModalState?.parent.id) || []).map(c => ({value: c.id, label: c.name}))} error={registrationErrors.childId} required placeholder="Seleziona un figlio" />
               <div>
                   <label htmlFor="workshopIds" className="block text-sm font-medium text-testo-input mb-1">
                     Workshop (seleziona uno o più)
@@ -672,7 +714,8 @@ const ClientsView = ({
                     }}
                     className={`block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-azione focus:ring-bottone-azione sm:text-sm h-32 ${registrationErrors.workshopIds ? 'border-red-500 text-red-900 focus:border-red-500 focus:ring-red-500' : ''}`}
                   >
-                     {workshops.filter(ws => new Date(ws.startDate) >= new Date(todayStr)).map(ws => (
+                     {/* FIX: Add type assertion to `workshops` to resolve '.map' on 'unknown' error */}
+                     {(workshops as Workshop[]).filter(ws => new Date(ws.startDate) >= new Date(todayStr)).map(ws => (
                         <option key={ws.id} value={ws.id}>
                             {`${ws.name} (${new Date(ws.startDate).toLocaleDateString('it-IT')})`}
                         </option>
@@ -691,8 +734,8 @@ const ClientsView = ({
           <form id="payment-form" onSubmit={handleSavePayment} className="space-y-4" noValidate>
               <Input id="amount" label="Importo" type="number" step="0.01" value={paymentFormData.amount || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentFormData({...paymentFormData, amount: parseFloat(e.target.value)})} error={paymentErrors.amount} required />
               <Input id="paymentDate" label="Data Pagamento" type="date" value={paymentFormData.paymentDate || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentFormData({...paymentFormData, paymentDate: e.target.value})} error={paymentErrors.paymentDate} required />
-              {/* FIX: The TypeScript compiler was having trouble inferring the type of `e.target` within the `onChange` handler. Casting `e.target` to `any` resolves the "property 'value' does not exist on type 'unknown'" error, allowing access to the `value` property. */}
-              <Select id="method" label="Metodo" options={[{value: 'cash', label: 'Contanti'}, {value: 'transfer', label: 'Bonifico'}, {value: 'card', label: 'Carta'}]} value={paymentFormData.method || ''} onChange={(e) => setPaymentFormData({...paymentFormData, method: (e.target as any).value as PaymentMethod})} error={paymentErrors.method} required/>
+              {/* FIX: Explicitly typing the event parameter `e` resolves the TypeScript error where `e.target.value` was not accessible. Add an extra assertion to fix the 'unknown' type issue. */}
+              <Select id="method" label="Metodo" options={[{value: 'cash', label: 'Contanti'}, {value: 'transfer', label: 'Bonifico'}, {value: 'card', label: 'Carta'}]} value={paymentFormData.method || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPaymentFormData({...paymentFormData, method: (e.target as HTMLSelectElement).value as PaymentMethod})} error={paymentErrors.method} required/>
                <div className="flex justify-end space-x-3 pt-4">
                   <button type="button" onClick={closePaymentModal} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
                   <button type="submit" form="payment-form" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Registra Pagamento</button>

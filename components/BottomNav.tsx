@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { View } from '../types.ts';
-import { navItems } from './navigation.ts';
+// FIX: Updated imports to remove file extensions
+import type { View } from '../types';
+import { navItems } from './navigation';
 
 interface BottomNavProps {
   currentView: View;

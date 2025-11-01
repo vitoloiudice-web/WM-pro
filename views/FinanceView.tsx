@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import Card, { CardContent } from '../components/Card.tsx';
-import { PlusIcon, PencilIcon, TrashIcon, DocumentArrowDownIcon } from '../components/icons/HeroIcons.tsx';
-import Modal from '../components/Modal.tsx';
+// FIX: Updated imports to remove file extensions
+import Card, { CardContent } from '../components/Card';
+import { PlusIcon, PencilIcon, TrashIcon, DocumentArrowDownIcon } from '../components/icons/HeroIcons';
+import Modal from '../components/Modal';
 // FIX: Changed import to be a named import as ConfirmModal does not have a default export.
-import { ConfirmModal } from '../components/ConfirmModal.tsx';
-import Input from '../components/Input.tsx';
-import Select from '../components/Select.tsx';
-import type { Payment, OperationalCost, Quote, Invoice, PaymentMethod, Parent, Workshop, Location, Supplier, CompanyProfile, ClientDetails } from '../types.ts';
+import { ConfirmModal } from '../components/ConfirmModal';
+import Input from '../components/Input';
+import Select from '../components/Select';
+import type { Payment, OperationalCost, Quote, Invoice, PaymentMethod, Parent, Workshop, Location, Supplier, CompanyProfile, ClientDetails } from '../types';
 
 declare const jspdf: any;
 
@@ -54,7 +55,7 @@ const TabButton = ({ label, isActive, onClick }: TabButtonProps) => (
     <button
         onClick={onClick}
         className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-            isActive ? 'bg-bottone-azione text-testo-input' : 'text-testo-input/90 hover:bg-white/30'
+            isActive ? 'bg-bottone-azione text-white' : 'text-testo-input/90 hover:bg-white/30'
         }`}
     >
         {label}
@@ -668,7 +669,7 @@ const FinanceView = ({
                         <h3 className="font-semibold text-testo-input capitalize">{activeTab.replace('_', ' ')}</h3>
                          <button 
                             onClick={handleAddNewClick}
-                            className="bg-bottone-azione text-testo-input px-3 py-1.5 rounded-md shadow hover:opacity-90 flex items-center space-x-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bottone-azione"
+                            className="bg-bottone-azione text-white px-3 py-1.5 rounded-full shadow hover:opacity-90 flex items-center space-x-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bottone-azione"
                           >
                             <PlusIcon className="h-4 w-4" />
                             <span>Aggiungi</span>

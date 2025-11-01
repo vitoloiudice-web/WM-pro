@@ -1,4 +1,5 @@
-import type { CompanyProfile } from './types.ts';
+// FIX: Updated import to remove file extension
+import type { CompanyProfile } from './types';
 
 export const MOCK_COMPANY_PROFILE: CompanyProfile = {
     companyName: 'Il Tuo Nome / Nome Attività',
