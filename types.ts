@@ -1,17 +1,8 @@
+// FIX: Created file to define types and resolve "file not a module" errors.
 
-// This file defines all the shared data structures for the application.
+import { DocumentReference } from 'firebase/firestore';
 
 export type View = 'dashboard' | 'workshops' | 'clients' | 'finance' | 'reports' | 'logistics' | 'campagne' | 'impostazioni';
-
-export type WorkshopType = 'OpenDay' | 'Evento' | '1 Mese' | '2 Mesi' | '3 Mesi' | 'Scolastico' | 'Campus';
-
-export type ParentStatus = 'attivo' | 'sospeso' | 'cessato' | 'prospect';
-
-export type ClientType = 'persona fisica' | 'persona giuridica';
-
-export type PaymentMethod = 'cash' | 'transfer' | 'card' | 'unspecified';
-
-export type QuoteStatus = 'sent' | 'approved' | 'rejected';
 
 export interface CompanyProfile {
     companyName: string;
@@ -24,113 +15,96 @@ export interface CompanyProfile {
 
 export interface Workshop {
     id: string;
-    code: string;
     name: string;
-    type: WorkshopType;
+    description: string;
+    date: string; // ISO string
     locationId: string;
-    startDate: string; // ISO date string e.g., '2024-01-01'
-    endDate: string;   // ISO date string
-    dayOfWeek: 'Lunedì' | 'Martedì' | 'Mercoledì' | 'Giovedì' | 'Venerdì' | 'Sabato' | 'Domenica';
-    startTime: string; // e.g., '10:00'
-    endTime: string;   // e.g., '12:00'
-    durationInMonths?: number;
+    maxParticipants: number;
+    price: number;
 }
 
 export interface Parent {
     id: string;
-    clientType: ClientType;
-    status: ParentStatus;
-    name?: string;
-    surname?: string;
-    taxCode?: string;
-    companyName?: string;
-    vatNumber?: string;
+    name: string;
+    surname: string;
     email: string;
-    phone?: string;
-    address?: string;
+    phone: string;
+    address: string;
     zipCode?: string;
     city?: string;
     province?: string;
+    clientType: 'persona fisica' | 'persona giuridica';
+    companyName?: string;
+    vatNumber?: string;
+    sdiCode?: string;
+    pec?: string;
+    status: 'attivo' | 'sospeso' | 'prospect' | 'archiviato';
 }
 
 export interface Child {
     id: string;
     parentId: string;
     name: string;
-    birthDate: string; // ISO date string
+    surname: string;
+    birthDate: string; // ISO string
+    notes?: string;
 }
 
 export interface Registration {
     id: string;
     childId: string;
     workshopId: string;
-    registrationDate: string; // ISO date string
+    registrationDate: string; // ISO string
+    status: 'confermata' | 'in attesa' | 'annullata';
 }
 
 export interface Payment {
-    id: string;
+    id:string;
     parentId: string;
-    workshopId: string;
     amount: number;
-    paymentDate: string; // ISO date string
-    method: PaymentMethod;
+    paymentDate: string; // ISO string
+    method: 'bonifico' | 'contanti' | 'carta';
+    relatedInvoiceId?: string;
+    description: string;
 }
 
 export interface OperationalCost {
-    id:string;
-    description?: string;
+    id: string;
+    description: string;
     amount: number;
-    date: string; // ISO date string
+    date: string; // ISO string
     supplierId?: string;
-    workshopIds?: string[];
-    method: PaymentMethod;
-    category: string;
-    subCategory: string;
-    locationId?: string;
-}
-
-export interface ClientDetails {
-    clientType: ClientType;
-    name?: string;
-    surname?: string;
-    taxCode?: string;
-    companyName?: string;
-    vatNumber?: string;
-    email: string;
-    phone?: string;
-    address?: string;
-    zipCode?: string;
-    city?: string;
-    province?: string;
+    category: 'materiali' | 'affitto' | 'stipendi' | 'marketing' | 'altro';
 }
 
 export interface Quote {
     id: string;
-    parentId?: string;
-    potentialClient?: ClientDetails;
-    description: string;
-    amount: number;
-    date: string; // ISO date string
-    status: QuoteStatus;
-    method?: PaymentMethod;
+    parentId: string;
+    quoteNumber: string;
+    quoteDate: string; // ISO string
+    items: { description: string; quantity: number; unitPrice: number }[];
+    total: number;
+    status: 'inviato' | 'accettato' | 'rifiutato';
 }
 
 export interface Invoice {
     id: string;
     parentId: string;
-    amount: number;
-    sdiNumber: string;
-    issueDate: string; // ISO date string
-    method: PaymentMethod;
+    invoiceNumber: string;
+    invoiceDate: string; // ISO string
+    dueDate: string; // ISO string
+    items: { description: string; quantity: number; unitPrice: number }[];
+    total: number;
+    status: 'emessa' | 'pagata' | 'scaduta';
 }
 
 export interface Supplier {
     id: string;
     name: string;
     vatNumber?: string;
-    contact?: string;
     email?: string;
     phone?: string;
+    contact?: string;
 }
 
 export interface Location {
@@ -143,31 +117,30 @@ export interface Location {
     city?: string;
     province?: string;
     capacity: number;
+    color?: string;
     rentalCost?: number;
     distanceKm?: number;
-    color?: string;
 }
 
-// New types for Campaigns, Settings, and Debugging
 export interface Campaign {
     id: string;
     name: string;
     type: 'sollecito' | 'sviluppo';
     subject: string;
-    body: string; // Template with placeholders like {NOME_CLIENTE}
-    targetStatus?: ParentStatus[];
+    body: string;
+    targetStatus?: Array<'prospect' | 'sospeso'>;
 }
 
 export interface ReminderSetting {
     id: string;
     name: string;
-    preWarningDays: number; // e.g., 7 days before
-    cadence: number; // e.g., repeat every 3 days
+    preWarningDays: number;
+    cadence: number;
     enabled: boolean;
 }
 
 export interface ErrorLog {
-    timestamp: string;
+    timestamp: string; // ISO string
     error: string;
     componentStack: string | null;
 }

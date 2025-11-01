@@ -260,10 +260,12 @@ const SettingsView = ({
                             {parents.map(p => <option key={p.id} value={p.id}>{p.clientType === 'persona giuridica' ? p.companyName : `${p.name} ${p.surname}`}</option>)}
                         </select>
                     </div>
-                    <Select id="useTemplate" label="Corpo del Messaggio" options={[{value: 'template', label: 'Usa Modello Campagna'}, {value: 'free', label: 'Testo Libero'}]} value={messageData.useTemplate} onChange={e => setMessageData({...messageData, useTemplate: e.target.value})} />
+                    {/* FIX: Explicitly typed the event parameter 'e' to resolve the "Property 'value' does not exist on type 'unknown'" error. */}
+                    <Select id="useTemplate" label="Corpo del Messaggio" options={[{value: 'template', label: 'Usa Modello Campagna'}, {value: 'free', label: 'Testo Libero'}]} value={messageData.useTemplate} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setMessageData({...messageData, useTemplate: e.target.value})} />
                     
                     {messageData.useTemplate === 'template' ? (
-                        <Select id="campaignId" label="Modello" options={campaigns.map(c => ({value: c.id, label: `(${c.type}) ${c.name}`}))} value={messageData.campaignId} onChange={e => setMessageData({...messageData, campaignId: e.target.value})} />
+                        // FIX: Explicitly typed the event parameter 'e' to resolve the "Property 'value' does not exist on type 'unknown'" error.
+                        <Select id="campaignId" label="Modello" options={campaigns.map(c => ({value: c.id, label: `(${c.type}) ${c.name}`}))} value={messageData.campaignId} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setMessageData({...messageData, campaignId: e.target.value})} />
                     ) : (
                         <>
                             <Input id="subject" label="Oggetto" value={messageData.subject} onChange={e => setMessageData({...messageData, subject: e.target.value})} />
