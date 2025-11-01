@@ -1,4 +1,3 @@
-// FIX: Created file to define the component and resolve "file not a module" error.
 import React from 'react';
 import type { Payment, OperationalCost, Workshop, Supplier, Location, Registration, Quote } from '../types';
 
@@ -12,12 +11,11 @@ interface ReportsViewProps {
     quotes: Quote[];
 }
 
-export const ReportsView = ({ payments, costs }: ReportsViewProps) => {
+export const ReportsView = (props: ReportsViewProps) => {
     return (
         <div>
             <h1 className="text-xl font-semibold text-testo-input">Reports</h1>
-            <p>Payments to report: {payments.length}</p>
-            <p>Costs to report: {costs.length}</p>
+            <p className="mt-2 text-sm text-testo-input/80">View your reports here.</p>
         </div>
     );
 };
