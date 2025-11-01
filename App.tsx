@@ -134,13 +134,13 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-sfondo-grigio">
       <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
       <BottomNav currentView={currentView} setCurrentView={setCurrentView} />
       <div className="md:pl-64 flex flex-col">
-        <header className="hidden md:block bg-white shadow-sm sticky top-0 z-10">
+        <header className="hidden md:block bg-cards-giallo shadow-sm sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Workshop Manager Pro</h1>
+            <h1 className="text-2xl font-bold text-testo-input tracking-tight">Workshop Manager Pro</h1>
           </div>
         </header>
         <main className="flex-grow pt-20 md:pt-0 pb-8">

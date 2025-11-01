@@ -13,6 +13,31 @@
       font-family: 'Inter', sans-serif;
     }
   </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'sfondo-grigio': '#b8c2bb',
+            'navbar-blu': '#030238',
+            'icone-celeste': '#a8d5ff',
+            'cards-giallo': '#f1ff59',
+            'bottone-navbar': '#0866ff',
+            'bottone-corpo': '#c20202',
+            'testo-input': '#171616',
+            'status-attivo-bg': '#a5fc9d',
+            'status-attivo-text': '#0d8c01',
+            'status-sospeso-bg': '#ffde82',
+            'status-sospeso-text': '#e3a802',
+            'status-cessato-bg': '#ff9191',
+            'status-cessato-text': '#cc0202',
+            'status-prospect-bg': '#cbe7f7',
+            'status-prospect-text': '#6ac7fc',
+          }
+        }
+      }
+    }
+  </script>
 <script type="importmap">
 {
   "imports": {
@@ -28,7 +53,7 @@
 </script>
 <link rel="stylesheet" href="/index.css">
 </head>
-<body class="bg-gray-100 text-slate-800">
+<body class="bg-sfondo-grigio text-testo-input">
   <div id="root"></div>
   <div id="modal-root"></div>
   <script type="module" src="/index.tsx"></script>

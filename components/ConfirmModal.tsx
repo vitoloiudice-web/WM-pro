@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
+import { XIcon } from './icons/HeroIcons.tsx';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -9,7 +10,7 @@ interface ConfirmModalProps {
   children?: React.ReactNode;
 }
 
-const ConfirmModal = ({ isOpen, onClose, onConfirm, title, children }: ConfirmModalProps) => {
+export const ConfirmModal = ({ isOpen, onClose, onConfirm, title, children }: ConfirmModalProps) => {
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -25,54 +26,57 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, children }: ConfirmMo
   if (!isOpen) return null;
 
   const modalContent = (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4"
       aria-modal="true"
-      role="alertdialog"
+      role="dialog"
     >
-      <div 
+      <div
         className="fixed inset-0"
         onClick={onClose}
         aria-hidden="true"
       ></div>
       <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md z-50 animate-fade-in-up">
-        <div className="p-6">
-          <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-          <div className="mt-2 text-sm text-slate-600">
-            {children}
-          </div>
-        </div>
-        <div className="bg-slate-50 px-6 py-4 rounded-b-lg flex justify-end space-x-3">
+        <div className="flex justify-between items-center p-4 border-b border-slate-200">
+          <h3 className="text-lg font-semibold text-testo-input">{title}</h3>
           <button
-            type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-md hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="text-testo-input/70 hover:text-testo-input p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-bottone-corpo"
+            aria-label="Close"
+          >
+            <XIcon className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="p-6 text-sm text-testo-input/90">
+          {children}
+        </div>
+        <div className="flex justify-end items-center p-4 bg-slate-50 border-t border-slate-200 rounded-b-lg space-x-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400 text-sm font-medium"
           >
             Annulla
           </button>
           <button
-            type="button"
             onClick={onConfirm}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
           >
-            Conferma Eliminazione
+            Conferma
           </button>
         </div>
+        <style>{`
+            @keyframes fade-in-up {
+              from { opacity: 0; transform: translateY(20px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+            .animate-fade-in-up {
+              animation: fade-in-up 0.3s ease-out forwards;
+            }
+        `}</style>
       </div>
-      <style>{`
-        @keyframes fade-in-up {
-          from { opacity: 0; transform: translateY(20px) scale(0.95); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .animate-fade-in-up {
-          animation: fade-in-up 0.2s ease-out forwards;
-        }
-      `}</style>
     </div>
   );
 
   const modalRoot = document.getElementById('modal-root');
   return modalRoot ? ReactDOM.createPortal(modalContent, modalRoot) : null;
 };
-
-export default ConfirmModal;

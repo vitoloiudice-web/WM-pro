@@ -203,8 +203,8 @@ const DashboardView = ({
     
     const commonButtons = (
        <div className="flex justify-end space-x-3 pt-4">
-          <button type="button" onClick={() => setActiveModal('none')} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button>
-          <button type="submit" form={formId} className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salva</button>
+          <button type="button" onClick={() => setActiveModal('none')} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
+          <button type="submit" form={formId} className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Salva</button>
         </div>
     );
 
@@ -213,7 +213,7 @@ const DashboardView = ({
         title = 'Profilo Azienda';
         content = (
           <form id={formId} onSubmit={handleSaveSettings} className="space-y-4" noValidate>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-testo-input/90">
               Queste informazioni verranno utilizzate per generare preventivi e fatture.
             </p>
             <Input id="companyName" label="Nome Attività" type="text" value={settingsFormData.companyName || ''} onChange={handleSettingsChange} required />
@@ -222,7 +222,7 @@ const DashboardView = ({
             <Input id="email" label="Email" type="email" value={settingsFormData.email || ''} onChange={handleSettingsChange} required />
             <Input id="phone" label="Telefono" type="tel" value={settingsFormData.phone || ''} onChange={handleSettingsChange} />
             <div>
-                <label htmlFor="taxRegime" className="block text-sm font-medium text-slate-700 mb-1">
+                <label htmlFor="taxRegime" className="block text-sm font-medium text-testo-input mb-1">
                     Note Fiscali / Regime
                 </label>
                 <textarea
@@ -230,7 +230,7 @@ const DashboardView = ({
                     value={settingsFormData.taxRegime || ''}
                     onChange={handleSettingsChange}
                     rows={4}
-                    className="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-corpo focus:ring-bottone-corpo sm:text-sm"
                     placeholder="Es: Operazione in regime forfettario..."
                 />
             </div>
@@ -349,8 +349,8 @@ const DashboardView = ({
         case 'connecting':
         default:
             return (
-                <div className="flex items-center space-x-2 text-slate-500 animate-pulse">
-                     <svg className="animate-spin h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <div className="flex items-center space-x-2 text-testo-input/80 animate-pulse">
+                     <svg className="animate-spin h-5 w-5 text-testo-input/70" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -373,7 +373,7 @@ const DashboardView = ({
         }
       `}</style>
       <div className="flex flex-col sm:flex-row justify-between sm:items-center space-y-2 sm:space-y-0">
-        <h2 className="text-xl font-semibold text-slate-700">Panoramica</h2>
+        <h2 className="text-xl font-semibold text-testo-input">Panoramica</h2>
         <StatusIndicator />
       </div>
       
@@ -410,12 +410,12 @@ const DashboardView = ({
                 <div className="col-span-2 sm:col-span-3">
                     <button
                         onClick={() => openModal('settings')}
-                        className="w-full flex items-center justify-between p-4 bg-slate-100 hover:bg-indigo-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 text-left"
+                        className="w-full flex items-center justify-between p-4 bg-white/40 hover:bg-white/60 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-bottone-corpo text-left"
                     >
                         <div>
-                            <span className="font-semibold text-slate-700">Configura Profilo Azienda</span>
+                            <span className="font-semibold text-testo-input">Configura Profilo Azienda</span>
                         </div>
-                        <div className="text-slate-500 flex-shrink-0">
+                        <div className="text-testo-input/80 flex-shrink-0">
                             <Cog6ToothIcon />
                         </div>
                     </button>
@@ -429,16 +429,16 @@ const DashboardView = ({
           <>
             <CardHeader>Prossimo Workshop: "{nextWorkshop.name}"</CardHeader>
             <CardContent>
-              <p className="text-slate-600"><span className="font-medium">Data:</span> {new Date(nextWorkshop.startDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-              <p className="text-slate-600"><span className="font-medium">Luogo:</span> {locationMap[nextWorkshop.locationId]?.name || 'N/D'}</p>
-              <p className="text-slate-600"><span className="font-medium">Iscritti:</span> {registrationsByWorkshop[nextWorkshop.id] || 0} / {locationMap[nextWorkshop.locationId]?.capacity || 'N/A'}</p>
+              <p className="text-testo-input/90"><span className="font-medium">Data:</span> {new Date(nextWorkshop.startDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+              <p className="text-testo-input/90"><span className="font-medium">Luogo:</span> {locationMap[nextWorkshop.locationId]?.name || 'N/D'}</p>
+              <p className="text-testo-input/90"><span className="font-medium">Iscritti:</span> {registrationsByWorkshop[nextWorkshop.id] || 0} / {locationMap[nextWorkshop.locationId]?.capacity || 'N/A'}</p>
             </CardContent>
           </>
         ) : (
           <>
             <CardHeader>Nessun Workshop in Programma</CardHeader>
             <CardContent>
-              <p className="text-slate-500">Non ci sono workshop futuri al momento. Creane uno dalla sezione Workshop!</p>
+              <p className="text-testo-input/80">Non ci sono workshop futuri al momento. Creane uno dalla sezione Workshop!</p>
             </CardContent>
           </>
         )}
@@ -452,12 +452,12 @@ const StatCard: React.FC<{ title: string; value: string | number; icon: React.Re
   <Card onClick={onClick}>
     <CardContent>
       <div className="flex items-center space-x-4">
-        <div className="flex-shrink-0 bg-indigo-100 p-3 rounded-full text-indigo-600">
+        <div className="flex-shrink-0 bg-bottone-corpo/10 p-3 rounded-full text-bottone-corpo">
           {icon}
         </div>
         <div>
-          <p className="text-sm font-medium text-slate-500 truncate">{title}</p>
-          <p className="text-2xl font-bold text-slate-900">{value}</p>
+          <p className="text-sm font-medium text-testo-input/80 truncate">{title}</p>
+          <p className="text-2xl font-bold text-testo-input">{value}</p>
         </div>
       </div>
     </CardContent>
@@ -467,10 +467,10 @@ const StatCard: React.FC<{ title: string; value: string | number; icon: React.Re
 const QuickLinkButton: React.FC<{ label: string; onClick: () => void; icon: React.ReactNode }> = ({ label, onClick, icon }) => (
   <button 
     onClick={onClick}
-    className="w-full flex items-center justify-between p-4 bg-slate-100 hover:bg-indigo-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    className="w-full flex items-center justify-between p-4 bg-white/40 hover:bg-white/60 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-bottone-corpo"
   >
-    <span className="font-semibold text-slate-700 text-left">{label}</span>
-    <div className="text-slate-500 flex-shrink-0">{icon}</div>
+    <span className="font-semibold text-testo-input text-left">{label}</span>
+    <div className="text-testo-input/80 flex-shrink-0">{icon}</div>
   </button>
 );
 

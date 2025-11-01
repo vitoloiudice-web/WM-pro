@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Card, { CardContent, CardFooter } from '../components/Card.tsx';
 import { PlusIcon, BuildingOffice2Icon, CreditCardIcon, UserCircleIcon, EnvelopeIcon, PhoneIcon, PencilIcon, TrashIcon, LocationMarkerIcon, UsersIcon } from '../components/icons/HeroIcons.tsx';
 import Modal from '../components/Modal.tsx';
-import ConfirmModal from '../components/ConfirmModal.tsx';
+// FIX: Changed import to be a named import as ConfirmModal does not have a default export.
+import { ConfirmModal } from '../components/ConfirmModal.tsx';
 import Input from '../components/Input.tsx';
 import Select from '../components/Select.tsx';
 import type { Supplier, Location } from '../types.ts';
@@ -30,7 +31,7 @@ const TabButton = ({ label, isActive, onClick }: TabButtonProps) => (
     <button
         onClick={onClick}
         className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-            isActive ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-200'
+            isActive ? 'bg-bottone-corpo text-white' : 'text-testo-input/90 hover:bg-white/30'
         }`}
     >
         {label}
@@ -44,8 +45,8 @@ interface DetailRowProps {
 }
 
 const DetailRow = ({ icon, label, value }: DetailRowProps) => (
-    <div className="flex items-start space-x-3 text-slate-700 text-sm">
-        <span className="text-slate-400 mt-0.5">{icon}</span>
+    <div className="flex items-start space-x-3 text-testo-input text-sm">
+        <span className="text-testo-input/70 mt-0.5">{icon}</span>
         <div>
             <span className="font-medium">{label}:</span>{' '}
             <span>{value}</span>
@@ -64,11 +65,11 @@ const SupplierCard = ({supplier, onEdit, onDelete}: SupplierCardProps) => (
         <CardContent>
              <div className="flex justify-between items-start">
                 <div className="flex items-center space-x-4 mb-4">
-                    <div className="bg-slate-200 p-3 rounded-full">
-                        <BuildingOffice2Icon className="text-slate-500 h-8 w-8"/>
+                    <div className="bg-white/40 p-3 rounded-full">
+                        <BuildingOffice2Icon className="text-testo-input/80 h-8 w-8"/>
                     </div>
                     <div>
-                        <h4 className="font-bold text-lg text-slate-800">{supplier.name}</h4>
+                        <h4 className="font-bold text-lg text-testo-input">{supplier.name}</h4>
                     </div>
                 </div>
             </div>
@@ -82,10 +83,10 @@ const SupplierCard = ({supplier, onEdit, onDelete}: SupplierCardProps) => (
         </CardContent>
         <CardFooter>
             <div className="flex justify-end items-center space-x-2">
-                <button onClick={onEdit} className="p-2 text-slate-500 hover:text-indigo-600 rounded-full hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="Modifica fornitore">
+                <button onClick={onEdit} className="p-2 text-testo-input/80 hover:text-bottone-corpo rounded-full hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-bottone-corpo" aria-label="Modifica fornitore">
                     <PencilIcon className="h-5 w-5"/>
                 </button>
-                <button onClick={onDelete} className="p-2 text-slate-500 hover:text-red-600 rounded-full hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500" aria-label="Elimina fornitore">
+                <button onClick={onDelete} className="p-2 text-testo-input/80 hover:text-red-600 rounded-full hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500" aria-label="Elimina fornitore">
                     <TrashIcon className="h-5 w-5"/>
                 </button>
             </div>
@@ -106,12 +107,12 @@ const LocationCard = ({location, supplierName, onEdit, onDelete}: LocationCardPr
         <CardContent>
              <div className="flex justify-between items-start">
                 <div className="flex items-center space-x-4 mb-4">
-                    <div className="bg-slate-200 p-3 rounded-full">
-                        <LocationMarkerIcon className="text-slate-500 h-8 w-8"/>
+                    <div className="bg-white/40 p-3 rounded-full">
+                        <LocationMarkerIcon className="text-testo-input/80 h-8 w-8"/>
                     </div>
                     <div>
-                        <h4 className="font-bold text-lg text-slate-800">{location.name}</h4>
-                         <p className="text-sm text-slate-500">{location.address}</p>
+                        <h4 className="font-bold text-lg text-testo-input">{location.name}</h4>
+                         <p className="text-sm text-testo-input/80">{location.address}</p>
                     </div>
                 </div>
             </div>
@@ -124,10 +125,10 @@ const LocationCard = ({location, supplierName, onEdit, onDelete}: LocationCardPr
         </CardContent>
         <CardFooter>
             <div className="flex justify-end items-center space-x-2">
-                <button onClick={onEdit} className="p-2 text-slate-500 hover:text-indigo-600 rounded-full hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="Modifica luogo">
+                <button onClick={onEdit} className="p-2 text-testo-input/80 hover:text-bottone-corpo rounded-full hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-bottone-corpo" aria-label="Modifica luogo">
                     <PencilIcon className="h-5 w-5"/>
                 </button>
-                <button onClick={onDelete} className="p-2 text-slate-500 hover:text-red-600 rounded-full hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500" aria-label="Elimina luogo">
+                <button onClick={onDelete} className="p-2 text-testo-input/80 hover:text-red-600 rounded-full hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500" aria-label="Elimina luogo">
                     <TrashIcon className="h-5 w-5"/>
                 </button>
             </div>
@@ -261,8 +262,8 @@ const LogisticsView = ({
         const formId = `form-${activeTab}`;
         const commonButtons = (
            <div className="flex justify-end space-x-3 pt-4">
-              <button type="button" onClick={closeModal} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button>
-              <button type="submit" form={formId} className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salva</button>
+              <button type="button" onClick={closeModal} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
+              <button type="submit" form={formId} className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Salva</button>
             </div>
         );
 
@@ -348,9 +349,9 @@ const LogisticsView = ({
 
     return (
         <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-slate-700">Gestione Logistica</h2>
+            <h2 className="text-xl font-semibold text-testo-input">Gestione Logistica</h2>
             <Card>
-                <div className="p-4 border-b border-slate-200">
+                <div className="p-4 border-b border-black/10">
                     <div className="flex space-x-2">
                         <TabButton label="Fornitori" isActive={activeTab === 'suppliers'} onClick={() => setActiveTab('suppliers')} />
                         <TabButton label="Luoghi" isActive={activeTab === 'locations'} onClick={() => setActiveTab('locations')} />
@@ -358,10 +359,10 @@ const LogisticsView = ({
                 </div>
                 <CardContent>
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-semibold text-slate-800 capitalize">{activeTab === 'suppliers' ? 'Fornitori' : 'Luoghi'}</h3>
+                        <h3 className="font-semibold text-testo-input capitalize">{activeTab === 'suppliers' ? 'Fornitori' : 'Luoghi'}</h3>
                          <button 
                             onClick={handleAddNewClick}
-                            className="bg-indigo-600 text-white px-3 py-1.5 rounded-md shadow hover:bg-indigo-700 flex items-center space-x-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            className="bg-bottone-corpo text-white px-3 py-1.5 rounded-md shadow hover:opacity-90 flex items-center space-x-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bottone-corpo"
                           >
                             <PlusIcon className="h-4 w-4" />
                             <span>Aggiungi</span>

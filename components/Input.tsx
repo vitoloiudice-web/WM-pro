@@ -9,13 +9,13 @@ type InputProps = React.ComponentPropsWithoutRef<'input'> & {
 const Input = ({ label, id, error, ...props }: InputProps) => {
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-slate-700 mb-1">
-        {label}
+      <label htmlFor={id} className="block text-sm font-medium text-testo-input mb-1">
+        {label}{props.required && <span className="text-red-500">*</span>}
       </label>
       <input
         id={id}
         {...props}
-        className={`block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
+        className={`block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-corpo focus:ring-bottone-corpo sm:text-sm ${
           error ? 'border-red-500 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500' : ''
         }`}
         aria-invalid={!!error}

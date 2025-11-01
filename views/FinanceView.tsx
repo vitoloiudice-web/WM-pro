@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Card, { CardContent } from '../components/Card.tsx';
 import { PlusIcon, PencilIcon, TrashIcon, DocumentArrowDownIcon } from '../components/icons/HeroIcons.tsx';
 import Modal from '../components/Modal.tsx';
-import ConfirmModal from '../components/ConfirmModal.tsx';
+// FIX: Changed import to be a named import as ConfirmModal does not have a default export.
+import { ConfirmModal } from '../components/ConfirmModal.tsx';
 import Input from '../components/Input.tsx';
 import Select from '../components/Select.tsx';
 import type { Payment, OperationalCost, Quote, Invoice, PaymentMethod, Parent, Workshop, Location, Supplier, CompanyProfile, ClientDetails } from '../types.ts';
@@ -53,7 +54,7 @@ const TabButton = ({ label, isActive, onClick }: TabButtonProps) => (
     <button
         onClick={onClick}
         className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-            isActive ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-200'
+            isActive ? 'bg-bottone-corpo text-white' : 'text-testo-input/90 hover:bg-white/30'
         }`}
     >
         {label}
@@ -72,14 +73,14 @@ const FinanceListItem = ({onEdit, onDelete, onDownload, children}: FinanceListIt
       <span className="truncate pr-4">{children}</span>
       <div className="flex items-center space-x-2 transition-opacity">
         {onDownload && (
-          <button onClick={onDownload} className="p-1 text-slate-500 hover:text-indigo-600 rounded-full hover:bg-slate-200" aria-label="Scarica PDF">
+          <button onClick={onDownload} className="p-1 text-testo-input/80 hover:text-bottone-corpo rounded-full hover:bg-white/50" aria-label="Scarica PDF">
             <DocumentArrowDownIcon className="h-4 w-4"/>
           </button>
         )}
-        <button onClick={onEdit} className="p-1 text-slate-500 hover:text-indigo-600 rounded-full hover:bg-slate-200" aria-label="Modifica">
+        <button onClick={onEdit} className="p-1 text-testo-input/80 hover:text-bottone-corpo rounded-full hover:bg-white/50" aria-label="Modifica">
           <PencilIcon className="h-4 w-4"/>
         </button>
-        <button onClick={onDelete} className="p-1 text-slate-500 hover:text-red-600 rounded-full hover:bg-slate-200" aria-label="Elimina">
+        <button onClick={onDelete} className="p-1 text-testo-input/80 hover:text-red-600 rounded-full hover:bg-white/50" aria-label="Elimina">
           <TrashIcon className="h-4 w-4"/>
         </button>
       </div>
@@ -490,8 +491,8 @@ const FinanceView = ({
         const formId = `form-${activeTab}`;
         const commonButtons = (
            <div className="flex justify-end space-x-3 pt-4">
-              <button type="button" onClick={closeModal} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button>
-              <button type="submit" form={formId} className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salva</button>
+              <button type="button" onClick={closeModal} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
+              <button type="submit" form={formId} className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Salva</button>
             </div>
         );
 
@@ -525,9 +526,9 @@ const FinanceView = ({
                                 <Select id="locationId" label="Luogo di destinazione" options={locationOptions} placeholder="Seleziona un luogo" value={formData.locationId || ''} onChange={handleChange} error={errors.locationId} required />
                                 <Input id="distanceKm" label="Distanza (solo andata, in km)" type="number" step="0.1" value={formData.distanceKm || ''} onChange={handleChange} error={errors.distanceKm} required />
                                 <Input id="fuelCostPerKm" label="Costo carburante al km (€)" type="number" step="0.01" value={formData.fuelCostPerKm || ''} onChange={handleChange} error={errors.fuelCostPerKm} required />
-                                <div className="p-3 bg-slate-100 rounded-md text-center">
-                                    <p className="text-sm text-slate-600">Costo totale calcolato (A/R):</p>
-                                    <p className="text-xl font-bold text-indigo-600">€{calculatedAmount}</p>
+                                <div className="p-3 bg-white/30 rounded-md text-center">
+                                    <p className="text-sm text-testo-input/90">Costo totale calcolato (A/R):</p>
+                                    <p className="text-xl font-bold text-bottone-corpo">€{calculatedAmount}</p>
                                 </div>
                             </>
                         ) : (
@@ -546,16 +547,16 @@ const FinanceView = ({
             case 'quotes': return (
                 <form id={formId} onSubmit={handleSave} className="space-y-4" noValidate>
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Cliente</label>
+                        <label className="block text-sm font-medium text-testo-input mb-1">Cliente</label>
                         {formData.potentialClient ? (
-                             <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-md">
-                                <span className="font-semibold text-indigo-800">
+                             <div className="flex items-center justify-between p-3 bg-bottone-corpo/10 rounded-md">
+                                <span className="font-semibold text-bottone-corpo">
                                     {formData.potentialClient.clientType === 'persona giuridica' 
                                         ? formData.potentialClient.companyName 
                                         : `${formData.potentialClient.name || ''} ${formData.potentialClient.surname || ''}`.trim()
                                     }
                                 </span>
-                                <button type="button" onClick={() => setFormData(prev => ({...prev, potentialClient: undefined}))} className="text-sm text-slate-500 hover:text-slate-700">Cambia</button>
+                                <button type="button" onClick={() => setFormData(prev => ({...prev, potentialClient: undefined}))} className="text-sm text-testo-input/80 hover:text-testo-input">Cambia</button>
                             </div>
                         ) : (
                             <div className="flex items-center space-x-2">
@@ -578,7 +579,7 @@ const FinanceView = ({
                                         setPotentialClientErrors({});
                                         setIsPotentialClientModalOpen(true);
                                     }}
-                                    className="px-3 py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 text-sm font-medium whitespace-nowrap self-end"
+                                    className="px-3 py-2 bg-white/30 text-testo-input rounded-md hover:bg-white/50 text-sm font-medium whitespace-nowrap self-end"
                                     style={{ height: '38px' }}
                                 >
                                     + Nuovo
@@ -611,10 +612,9 @@ const FinanceView = ({
     };
     
     const renderContent = () => {
-        const listProps = { onEdit: handleEditClick, onDelete: handleDeleteClick };
         
         switch (activeTab) {
-            case 'payments': return <List<Payment> items={payments} renderItem={p => `Pagamento di €${p.amount.toFixed(2)} da ${parentMap[p.parentId] ? getParentDisplayName(parentMap[p.parentId]) : 'Sconosciuto'} (${getPaymentMethodLabel(p.method)})`} {...listProps} />;
+            case 'payments': return <List<Payment> items={payments} renderItem={p => `Pagamento di €${p.amount.toFixed(2)} da ${parentMap[p.parentId] ? getParentDisplayName(parentMap[p.parentId]) : 'Sconosciuto'} (${getPaymentMethodLabel(p.method)})`} onEdit={handleEditClick} onDelete={handleDeleteClick} />;
             case 'costs': return <List<OperationalCost> 
                 items={costs} 
                 renderItem={c => {
@@ -624,19 +624,17 @@ const FinanceView = ({
                     }
                     return `${c.description} - €${c.amount.toFixed(2)}${c.workshopId ? ` (${workshopMap[c.workshopId]?.name || ''})` : ''}`
                 }} 
-                {...listProps} 
+                onEdit={handleEditClick}
+                onDelete={handleDeleteClick}
             />;
-            case 'quotes': return <List<Quote> items={quotes} renderItem={q => `${getQuoteClientDisplayName(q)}: ${q.description} - €${q.amount.toFixed(2)} (${q.status})`} onDownload={handleGeneratePdf} {...listProps} />;
-            // FIX: The self-closing tag was causing a TypeScript inference error in some environments.
-            // Expanding it to a multi-line format makes the props explicit and resolves the issue.
+            case 'quotes': return <List<Quote> items={quotes} renderItem={q => `${getQuoteClientDisplayName(q)}: ${q.description} - €${q.amount.toFixed(2)} (${q.status})`} onDownload={handleGeneratePdf} onEdit={handleEditClick} onDelete={handleDeleteClick} />;
             case 'invoices':
-                // FIX: The self-closing tag was causing a TypeScript inference error in some environments.
-                // Expanding it to a multi-line format makes the props explicit and resolves the issue.
                 return (
                     <List<Invoice>
                         items={invoices}
                         renderItem={i => `Fattura a ${parentMap[i.parentId] ? getParentDisplayName(parentMap[i.parentId]) : 'Sconosciuto'} - €${i.amount.toFixed(2)} (${getPaymentMethodLabel(i.method)}, SDI: ${i.sdiNumber})`}
-                        {...listProps}
+                        onEdit={handleEditClick}
+                        onDelete={handleDeleteClick}
                     />
                 );
             default: return null;
@@ -655,9 +653,9 @@ const FinanceView = ({
     
     return (
         <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-slate-700">Gestione Finanziaria</h2>
+            <h2 className="text-xl font-semibold text-testo-input">Gestione Finanziaria</h2>
             <Card>
-                <div className="p-4 border-b border-slate-200">
+                <div className="p-4 border-b border-black/10">
                     <div className="flex space-x-2">
                         <TabButton label="Pagamenti" isActive={activeTab === 'payments'} onClick={() => setActiveTab('payments')} />
                         <TabButton label="Costi" isActive={activeTab === 'costs'} onClick={() => setActiveTab('costs')} />
@@ -667,10 +665,10 @@ const FinanceView = ({
                 </div>
                 <CardContent>
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-semibold text-slate-800 capitalize">{activeTab.replace('_', ' ')}</h3>
+                        <h3 className="font-semibold text-testo-input capitalize">{activeTab.replace('_', ' ')}</h3>
                          <button 
                             onClick={handleAddNewClick}
-                            className="bg-indigo-600 text-white px-3 py-1.5 rounded-md shadow hover:bg-indigo-700 flex items-center space-x-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            className="bg-bottone-corpo text-white px-3 py-1.5 rounded-md shadow hover:opacity-90 flex items-center space-x-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bottone-corpo"
                           >
                             <PlusIcon className="h-4 w-4" />
                             <span>Aggiungi</span>
@@ -732,8 +730,8 @@ const FinanceView = ({
                     </div>
                     
                     <div className="flex justify-end space-x-3 pt-4">
-                        <button type="button" onClick={() => setIsPotentialClientModalOpen(false)} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button>
-                        <button type="submit" form="potential-client-form" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Aggiungi Cliente</button>
+                        <button type="button" onClick={() => setIsPotentialClientModalOpen(false)} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
+                        <button type="submit" form="potential-client-form" className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Aggiungi Cliente</button>
                     </div>
                 </form>
             </Modal>
@@ -747,18 +745,18 @@ const List = <T extends {id: string}>({ items, renderItem, onEdit, onDelete, onD
         {items.map((item) => (
             <li 
                 key={item.id}
-                className="p-3 bg-slate-100 rounded-md text-sm text-slate-700 flex justify-between items-center"
+                className="p-3 bg-white/30 rounded-md text-sm text-testo-input flex justify-between items-center"
             >
                 <FinanceListItem 
                     onEdit={() => onEdit(item)}
                     onDelete={() => onDelete(item.id)}
-                    {...(onDownload && { onDownload: () => onDownload(item) })}
+                    onDownload={onDownload ? () => onDownload(item) : undefined}
                 >
                     {renderItem(item)}
                 </FinanceListItem>
             </li>
         ))}
-        {items.length === 0 && <p className="text-center text-slate-500 py-4">Nessun elemento da visualizzare.</p>}
+        {items.length === 0 && <p className="text-center text-testo-input/80 py-4">Nessun elemento da visualizzare.</p>}
     </ul>
 );
 

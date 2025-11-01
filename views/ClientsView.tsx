@@ -3,7 +3,8 @@ import Card, { CardContent } from '../components/Card.tsx';
 import { PlusIcon, UserCircleIcon, PencilIcon, TrashIcon, CreditCardIcon } from '../components/icons/HeroIcons.tsx';
 import type { Parent, Child, Workshop, Registration, Payment, Location, PaymentMethod } from '../types.ts';
 import Modal from '../components/Modal.tsx';
-import ConfirmModal from '../components/ConfirmModal.tsx';
+// FIX: Changed import to be a named import as ConfirmModal does not have a default export.
+import { ConfirmModal } from '../components/ConfirmModal.tsx';
 import Input from '../components/Input.tsx';
 import Select from '../components/Select.tsx';
 
@@ -46,10 +47,10 @@ const getParentDisplayName = (parent: Parent): string => {
 
 const StatusBadge = ({ status }: { status: Parent['status'] }) => {
     const statusStyles: Record<Parent['status'], string> = {
-        attivo: 'bg-green-100 text-green-800',
-        sospeso: 'bg-yellow-100 text-yellow-800',
-        cessato: 'bg-red-100 text-red-800',
-        prospect: 'bg-blue-100 text-blue-800'
+        attivo: 'bg-status-attivo-bg text-status-attivo-text',
+        sospeso: 'bg-status-sospeso-bg text-status-sospeso-text',
+        cessato: 'bg-status-cessato-bg text-status-cessato-text',
+        prospect: 'bg-status-prospect-bg text-status-prospect-text'
     };
     const statusLabels: Record<Parent['status'], string> = {
         attivo: 'Attivo',
@@ -94,6 +95,7 @@ const ClientsView = ({
   // Filters State
   const [searchTerm, setSearchTerm] = useState('');
   const [filterWorkshopId, setFilterWorkshopId] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Parent state
@@ -158,6 +160,10 @@ const ClientsView = ({
         });
     }
     
+    if (filterStatus) {
+        filtered = filtered.filter(parent => parent.status === filterStatus);
+    }
+    
     filtered.sort((a, b) => {
         const nameA = getParentDisplayName(a).toLowerCase();
         const nameB = getParentDisplayName(b).toLowerCase();
@@ -167,7 +173,7 @@ const ClientsView = ({
     });
 
     return filtered;
-  }, [parents, children, registrations, searchTerm, filterWorkshopId, sortOrder]);
+  }, [parents, children, registrations, searchTerm, filterWorkshopId, sortOrder, filterStatus]);
 
 
   // Effects for modals
@@ -449,15 +455,15 @@ const ClientsView = ({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-slate-700">Anagrafica Clienti</h2>
-        <button onClick={() => setIsNewClientModalOpen(true)} className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-700 flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        <h2 className="text-xl font-semibold text-testo-input">Anagrafica Clienti</h2>
+        <button onClick={() => setIsNewClientModalOpen(true)} className="bg-bottone-corpo text-white px-4 py-2 rounded-lg shadow hover:opacity-90 flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bottone-corpo">
           <PlusIcon /><span>Nuovo Cliente</span>
         </button>
       </div>
 
        <Card>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
               id="search"
               label="Cerca cliente o figlio"
@@ -473,19 +479,27 @@ const ClientsView = ({
               options={workshops.map(ws => ({ value: ws.id, label: ws.name }))}
               placeholder="Tutti i workshop"
             />
+             <Select
+              id="filterStatus"
+              label="Filtra per stato"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              options={parentStatusOptions}
+              placeholder="Tutti gli stati"
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Ordina per</label>
+            <label className="block text-sm font-medium text-testo-input mb-1">Ordina per</label>
             <div className="flex space-x-2">
               <button 
                 onClick={() => setSortOrder('asc')} 
-                className={`px-3 py-1.5 text-sm rounded-md ${sortOrder === 'asc' ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-700'}`}
+                className={`px-3 py-1.5 text-sm rounded-md ${sortOrder === 'asc' ? 'bg-bottone-corpo text-white' : 'bg-gray-300 text-black'}`}
               >
                 A-Z
               </button>
               <button 
                 onClick={() => setSortOrder('desc')}
-                className={`px-3 py-1.5 text-sm rounded-md ${sortOrder === 'desc' ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-700'}`}
+                className={`px-3 py-1.5 text-sm rounded-md ${sortOrder === 'desc' ? 'bg-bottone-corpo text-white' : 'bg-gray-300 text-black'}`}
               >
                 Z-A
               </button>
@@ -505,55 +519,55 @@ const ClientsView = ({
                 <CardContent>
                   <div className="flex justify-between items-start">
                     <div className="flex items-center space-x-4">
-                      <div className="bg-slate-200 p-3 rounded-full"><UserCircleIcon className="text-slate-500 h-8 w-8"/></div>
+                      <div className="bg-white/40 p-3 rounded-full"><UserCircleIcon className="text-testo-input/80 h-8 w-8"/></div>
                       <div>
-                        <h4 className="font-bold text-lg text-slate-800 flex items-center">
+                        <h4 className="font-bold text-lg text-testo-input flex items-center">
                             {getParentDisplayName(parent)}
                             <StatusBadge status={parent.status} />
                         </h4>
-                        <p className="text-sm text-slate-500">{parent.email}</p>
+                        <p className="text-sm text-testo-input/80">{parent.email}</p>
                         {parent.address && (
-                          <p className="text-sm text-slate-500 mt-1">{`${parent.address}, ${parent.zipCode} ${parent.city} (${parent.province})`}</p>
+                          <p className="text-sm text-testo-input/80 mt-1">{`${parent.address}, ${parent.zipCode} ${parent.city} (${parent.province})`}</p>
                         )}
                       </div>
                     </div>
                      <div className="flex items-center space-x-2">
-                        <button onClick={() => setEditingClient(parent)} className="p-2 text-slate-500 hover:text-indigo-600 rounded-full hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="Modifica cliente"><PencilIcon className="h-5 w-5"/></button>
-                        <button onClick={() => setDeletingClientId(parent.id)} className="p-2 text-slate-500 hover:text-red-600 rounded-full hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500" aria-label="Elimina cliente"><TrashIcon className="h-5 w-5"/></button>
+                        <button onClick={() => setEditingClient(parent)} className="p-2 text-testo-input/80 hover:text-bottone-corpo rounded-full hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-bottone-corpo" aria-label="Modifica cliente"><PencilIcon className="h-5 w-5"/></button>
+                        <button onClick={() => setDeletingClientId(parent.id)} className="p-2 text-testo-input/80 hover:text-red-600 rounded-full hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500" aria-label="Elimina cliente"><TrashIcon className="h-5 w-5"/></button>
                     </div>
                   </div>
 
                   {/* Children section */}
-                  <div className="mt-4 pt-4 border-t border-slate-200">
+                  <div className="mt-4 pt-4 border-t border-black/10">
                     <div className="flex justify-between items-center mb-2">
-                      <h5 className="font-semibold text-slate-700">Figli</h5>
-                      <button onClick={() => setChildModalState({ mode: 'new', parentId: parent.id })} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center space-x-1">
+                      <h5 className="font-semibold text-testo-input">Figli</h5>
+                      <button onClick={() => setChildModalState({ mode: 'new', parentId: parent.id })} className="text-sm text-bottone-corpo hover:opacity-80 font-medium flex items-center space-x-1">
                         <PlusIcon className="h-4 w-4" /><span>Aggiungi</span>
                       </button>
                     </div>
                     {parentChildren.length > 0 ? (
                       <ul className="space-y-2">
                         {parentChildren.map(child => (
-                          <li key={child.id} className="flex justify-between items-center p-2 bg-slate-50 rounded-md">
+                          <li key={child.id} className="flex justify-between items-center p-2 bg-white/30 rounded-md">
                             <div>
-                                <p className="font-medium text-slate-800">{child.name}</p>
-                                <p className="text-xs text-slate-500">Età: {calculateAge(child.birthDate)}</p>
+                                <p className="font-medium text-testo-input">{child.name}</p>
+                                <p className="text-xs text-testo-input/80">Età: {calculateAge(child.birthDate)}</p>
                             </div>
                             <div className="flex items-center space-x-1">
-                                <button onClick={() => setChildModalState({ mode: 'edit', child })} className="p-1 text-slate-500 hover:text-indigo-600"><PencilIcon className="h-4 w-4"/></button>
-                                <button onClick={() => setDeletingChildId(child.id)} className="p-1 text-slate-500 hover:text-red-600"><TrashIcon className="h-4 w-4"/></button>
+                                <button onClick={() => setChildModalState({ mode: 'edit', child })} className="p-1 text-testo-input/80 hover:text-bottone-corpo"><PencilIcon className="h-4 w-4"/></button>
+                                <button onClick={() => setDeletingChildId(child.id)} className="p-1 text-testo-input/80 hover:text-red-600"><TrashIcon className="h-4 w-4"/></button>
                             </div>
                           </li>
                         ))}
                       </ul>
-                    ) : <p className="text-sm text-slate-500 italic">Nessun figlio registrato.</p>}
+                    ) : <p className="text-sm text-testo-input/80 italic">Nessun figlio registrato.</p>}
                   </div>
 
                   {/* Registrations section */}
-                  <div className="mt-4 pt-4 border-t border-slate-200">
+                  <div className="mt-4 pt-4 border-t border-black/10">
                     <div className="flex justify-between items-center mb-2">
-                      <h5 className="font-semibold text-slate-700">Iscrizioni ai Workshop</h5>
-                      <button onClick={() => setRegistrationModalState({ parent })} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center space-x-1">
+                      <h5 className="font-semibold text-testo-input">Iscrizioni ai Workshop</h5>
+                      <button onClick={() => setRegistrationModalState({ parent })} className="text-sm text-bottone-corpo hover:opacity-80 font-medium flex items-center space-x-1">
                         <PlusIcon className="h-4 w-4" /><span>Iscrivi</span>
                       </button>
                     </div>
@@ -564,26 +578,26 @@ const ClientsView = ({
                           const child = childMap[reg.childId];
                           const payment = paymentMap.get(`${parent.id}_${reg.workshopId}`);
                           return (
-                            <li key={reg.id} className="flex justify-between items-center p-2 bg-slate-50 rounded-md">
+                            <li key={reg.id} className="flex justify-between items-center p-2 bg-white/30 rounded-md">
                               <div>
-                                <p className="font-medium text-slate-800">{workshop?.name || 'Workshop non trovato'}</p>
-                                <p className="text-xs text-slate-500">Bambino: {child?.name || 'N/D'}</p>
+                                <p className="font-medium text-testo-input">{workshop?.name || 'Workshop non trovato'}</p>
+                                <p className="text-xs text-testo-input/80">Bambino: {child?.name || 'N/D'}</p>
                               </div>
                               <div className="flex items-center space-x-2">
                                 {payment ? (
                                   <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">Pagato</span>
                                 ) : (
-                                  <button onClick={() => workshop && child && setPaymentModalState({ registration: reg, workshop, child, parent })} className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded-full hover:bg-blue-200">
+                                  <button onClick={() => workshop && child && setPaymentModalState({ registration: reg, workshop, child, parent })} className="text-xs font-semibold text-bottone-corpo bg-bottone-corpo/10 px-2 py-1 rounded-full hover:bg-bottone-corpo/20">
                                     Registra Pagamento
                                   </button>
                                 )}
-                                <button onClick={() => setDeletingRegistrationId(reg.id)} className="p-1 text-slate-500 hover:text-red-600"><TrashIcon className="h-4 w-4"/></button>
+                                <button onClick={() => setDeletingRegistrationId(reg.id)} className="p-1 text-testo-input/80 hover:text-red-600"><TrashIcon className="h-4 w-4"/></button>
                               </div>
                             </li>
                           );
                         })}
                       </ul>
-                    ) : <p className="text-sm text-slate-500 italic">Nessuna iscrizione attiva.</p>}
+                    ) : <p className="text-sm text-testo-input/80 italic">Nessuna iscrizione attiva.</p>}
                   </div>
 
                 </CardContent>
@@ -621,8 +635,8 @@ const ClientsView = ({
                 <Input id="province" label="Provincia" type="text" value={parentFormData.province || ''} onChange={handleParentFormChange} />
             </div>
             <div className="flex justify-end space-x-3 pt-4">
-              <button type="button" onClick={closeParentModal} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button>
-              <button type="submit" form="parent-form" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salva</button>
+              <button type="button" onClick={closeParentModal} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
+              <button type="submit" form="parent-form" className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Salva</button>
             </div>
         </form>
       </Modal>
@@ -635,8 +649,8 @@ const ClientsView = ({
                   <Input id="ageMonths" label="Mesi" type="number" value={childFormData.ageMonths} onChange={e => setChildFormData({...childFormData, ageMonths: e.target.value})} />
               </div>
                <div className="flex justify-end space-x-3 pt-4">
-                  <button type="button" onClick={closeChildModal} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button>
-                  <button type="submit" form="child-form" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salva</button>
+                  <button type="button" onClick={closeChildModal} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
+                  <button type="submit" form="child-form" className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Salva</button>
               </div>
           </form>
       </Modal>
@@ -645,7 +659,7 @@ const ClientsView = ({
           <form id="registration-form" onSubmit={handleSaveRegistration} className="space-y-4" noValidate>
               <Select id="childId" label="Figlio da Iscrivere" value={registrationFormData.childId || ''} onChange={e => setRegistrationFormData({...registrationFormData, childId: e.target.value})} options={(children.filter(c => c.parentId === registrationModalState?.parent.id) || []).map(c => ({value: c.id, label: c.name}))} error={registrationErrors.childId} required placeholder="Seleziona un figlio" />
               <div>
-                  <label htmlFor="workshopIds" className="block text-sm font-medium text-slate-700 mb-1">
+                  <label htmlFor="workshopIds" className="block text-sm font-medium text-testo-input mb-1">
                     Workshop (seleziona uno o più)
                   </label>
                   <select 
@@ -656,7 +670,7 @@ const ClientsView = ({
                       const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
                       setRegistrationFormData({...registrationFormData, workshopIds: selectedIds});
                     }}
-                    className={`block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-32 ${registrationErrors.workshopIds ? 'border-red-500 text-red-900 focus:border-red-500 focus:ring-red-500' : ''}`}
+                    className={`block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-corpo focus:ring-bottone-corpo sm:text-sm h-32 ${registrationErrors.workshopIds ? 'border-red-500 text-red-900 focus:border-red-500 focus:ring-red-500' : ''}`}
                   >
                      {workshops.filter(ws => new Date(ws.startDate) >= new Date(todayStr)).map(ws => (
                         <option key={ws.id} value={ws.id}>
@@ -667,23 +681,20 @@ const ClientsView = ({
                   {registrationErrors.workshopIds && <p className="mt-1 text-sm text-red-600">{registrationErrors.workshopIds}</p>}
               </div>
                <div className="flex justify-end space-x-3 pt-4">
-                  <button type="button" onClick={closeRegistrationModal} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button>
-                  <button type="submit" form="registration-form" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salva Iscrizione</button>
+                  <button type="button" onClick={closeRegistrationModal} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
+                  <button type="submit" form="registration-form" className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Salva Iscrizione</button>
               </div>
           </form>
       </Modal>
       
        <Modal isOpen={!!paymentModalState} onClose={closePaymentModal} title={`Pagamento per ${paymentModalState?.child.name}`}>
           <form id="payment-form" onSubmit={handleSavePayment} className="space-y-4" noValidate>
-{/* FIX: Explicitly type event `e` to resolve TS inference error */}
               <Input id="amount" label="Importo" type="number" step="0.01" value={paymentFormData.amount || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentFormData({...paymentFormData, amount: parseFloat(e.target.value)})} error={paymentErrors.amount} required />
-{/* FIX: Explicitly type event `e` to resolve TS inference error */}
               <Input id="paymentDate" label="Data Pagamento" type="date" value={paymentFormData.paymentDate || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentFormData({...paymentFormData, paymentDate: e.target.value})} error={paymentErrors.paymentDate} required />
-{/* FIX: Explicitly type event `e` to resolve TS inference error */}
               <Select id="method" label="Metodo" options={[{value: 'cash', label: 'Contanti'}, {value: 'transfer', label: 'Bonifico'}, {value: 'card', label: 'Carta'}]} value={paymentFormData.method || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPaymentFormData({...paymentFormData, method: e.target.value as PaymentMethod})} error={paymentErrors.method} required/>
                <div className="flex justify-end space-x-3 pt-4">
-                  <button type="button" onClick={closePaymentModal} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button>
-                  <button type="submit" form="payment-form" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Registra Pagamento</button>
+                  <button type="button" onClick={closePaymentModal} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
+                  <button type="submit" form="payment-form" className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Registra Pagamento</button>
               </div>
           </form>
       </Modal>

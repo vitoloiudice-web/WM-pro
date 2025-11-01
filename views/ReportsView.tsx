@@ -38,13 +38,13 @@ const reportOptions: { value: ReportType; label: string }[] = [
 // Helper to generate colors for charts
 const generateChartColors = (numColors: number) => {
     const colors = [
-        'rgba(75, 192, 192, 0.6)',
-        'rgba(255, 159, 64, 0.6)',
-        'rgba(255, 205, 86, 0.6)',
-        'rgba(255, 99, 132, 0.6)',
-        'rgba(54, 162, 235, 0.6)',
-        'rgba(153, 102, 255, 0.6)',
-        'rgba(201, 203, 207, 0.6)'
+        'rgba(194, 2, 2, 0.6)',    // bottone-corpo
+        'rgba(8, 102, 255, 0.6)',  // bottone-navbar
+        'rgba(227, 168, 2, 0.6)',  // status-sospeso-text
+        'rgba(13, 140, 1, 0.6)',   // status-attivo-text
+        'rgba(3, 2, 56, 0.6)',     // navbar-blu
+        'rgba(106, 199, 252, 0.6)',// status-prospect-text
+        'rgba(128, 128, 128, 0.6)' // neutral grey
     ];
     const borderColors = colors.map(c => c.replace('0.6', '1'));
     
@@ -63,12 +63,12 @@ const KPICard = ({ title, value, icon }: { title: string; value: string; icon: R
   <Card>
     <CardContent>
       <div className="flex items-center space-x-4">
-        <div className="flex-shrink-0 bg-indigo-100 p-3 rounded-full text-indigo-600">
+        <div className="flex-shrink-0 bg-bottone-corpo/10 p-3 rounded-full text-bottone-corpo">
           {icon}
         </div>
         <div>
-          <p className="text-sm font-medium text-slate-500 truncate">{title}</p>
-          <p className="text-2xl font-bold text-slate-900">{value}</p>
+          <p className="text-sm font-medium text-testo-input/80 truncate">{title}</p>
+          <p className="text-2xl font-bold text-testo-input">{value}</p>
         </div>
       </div>
     </CardContent>
@@ -709,12 +709,12 @@ const ReportsView = ({ payments, costs, workshops, suppliers, locations, registr
 
     return (
         <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-slate-700">Reportistica Avanzata</h2>
+            <h2 className="text-xl font-semibold text-testo-input">Reportistica Avanzata</h2>
             <Card>
                 <CardHeader>Genera Report Dettagliato</CardHeader>
                 <CardContent className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-4 sm:space-y-0">
                     <div className="flex-grow">
-                        <label htmlFor="report-type" className="block text-sm font-medium text-slate-700 mb-1">Tipo di Report</label>
+                        <label htmlFor="report-type" className="block text-sm font-medium text-testo-input mb-1">Tipo di Report</label>
                         <select
                             id="report-type"
                             value={reportType}
@@ -722,7 +722,7 @@ const ReportsView = ({ payments, costs, workshops, suppliers, locations, registr
                                 setReportType(e.target.value as ReportType);
                                 setReportData(null); // Reset report data on new selection
                             }}
-                            className="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                            className="block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-corpo focus:ring-bottone-corpo"
                         >
                             {reportOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                         </select>
@@ -730,7 +730,7 @@ const ReportsView = ({ payments, costs, workshops, suppliers, locations, registr
                     <button 
                         onClick={generateReport}
                         disabled={!reportType}
-                        className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-700 disabled:bg-slate-400 disabled:cursor-not-allowed self-end"
+                        className="w-full sm:w-auto px-4 py-2 bg-bottone-corpo text-white font-semibold rounded-md shadow-sm hover:opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed self-end"
                     >
                         Genera
                     </button>
@@ -773,7 +773,7 @@ const ReportsView = ({ payments, costs, workshops, suppliers, locations, registr
                     {reportData && (
                          <Card>
                             <CardHeader actions={
-                                <button onClick={exportToCsv} className="flex items-center space-x-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                                <button onClick={exportToCsv} className="flex items-center space-x-2 text-sm text-bottone-corpo hover:opacity-80 font-medium">
                                     <DocumentDownloadIcon />
                                     <span>Esporta CSV</span>
                                 </button>
@@ -783,23 +783,23 @@ const ReportsView = ({ payments, costs, workshops, suppliers, locations, registr
                             <CardContent>
                                 {reportData.rows.length > 0 ? (
                                     <div className="overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-slate-200">
-                                            <thead className="bg-slate-50">
+                                        <table className="min-w-full divide-y divide-black/10">
+                                            <thead className="bg-white/30">
                                                 <tr>
-                                                    {reportData.headers.map(h => <th key={h} className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{h}</th>)}
+                                                    {reportData.headers.map(h => <th key={h} className="px-6 py-3 text-left text-xs font-medium text-testo-input/80 uppercase tracking-wider">{h}</th>)}
                                                 </tr>
                                             </thead>
-                                            <tbody className="bg-white divide-y divide-slate-200">
+                                            <tbody className="bg-cards-giallo divide-y divide-black/10">
                                                 {reportData.rows.map((row, idx) => (
-                                                    <tr key={idx} className={row['Descrizione'] === 'Utile Netto (EBITDA)' || row[reportData.headers[0]].toString().toLowerCase().includes('totale') ? 'bg-slate-50 font-bold' : ''}>
-                                                        {reportData.headers.map(h => <td key={h} className="px-6 py-4 whitespace-nowrap text-sm text-slate-700">{row[h]}</td>)}
+                                                    <tr key={idx} className={row['Descrizione'] === 'Utile Netto (EBITDA)' || row[reportData.headers[0]].toString().toLowerCase().includes('totale') ? 'bg-white/30 font-bold' : ''}>
+                                                        {reportData.headers.map(h => <td key={h} className="px-6 py-4 whitespace-nowrap text-sm text-testo-input">{row[h]}</td>)}
                                                     </tr>
                                                 ))}
                                             </tbody>
                                         </table>
                                     </div>
                                 ) : (
-                                    <p className="text-center text-slate-500 py-4">Nessun dato da visualizzare per questo report.</p>
+                                    <p className="text-center text-testo-input/80 py-4">Nessun dato da visualizzare per questo report.</p>
                                 )}
                             </CardContent>
                         </Card>

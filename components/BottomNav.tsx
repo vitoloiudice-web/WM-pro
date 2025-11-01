@@ -18,10 +18,10 @@ const NavItem = ({ label, icon, isActive, onClick }: NavItemProps) => (
   <button
     onClick={onClick}
     className={`relative flex flex-col items-center justify-center gap-1 px-2 py-2 transition-colors duration-200 ease-in-out
-      focus:outline-none focus-visible:bg-slate-700 rounded-md min-w-[60px]
+      focus:outline-none focus-visible:bg-white/10 rounded-md min-w-[60px]
       ${isActive 
         ? 'text-white' 
-        : 'text-slate-300 hover:text-white'
+        : 'text-icone-celeste hover:text-white'
       }`}
     aria-current={isActive ? 'page' : undefined}
   >
@@ -29,7 +29,7 @@ const NavItem = ({ label, icon, isActive, onClick }: NavItemProps) => (
     <span className="text-xs font-medium tracking-tight">{label}</span>
     {/* Active indicator bar */}
     <div
-      className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-1 rounded-full bg-indigo-500 transition-all duration-300 ease-out
+      className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-1 rounded-full bg-bottone-navbar transition-all duration-300 ease-out
         ${isActive ? 'w-8' : 'w-0'}
       `}
     />
@@ -60,7 +60,7 @@ const BottomNav = ({ currentView, setCurrentView }: BottomNavProps) => {
   }, []);
 
   return (
-    <header className={`fixed top-0 left-0 right-0 bg-slate-800 border-b border-slate-700 shadow-lg md:hidden z-40
+    <header className={`fixed top-0 left-0 right-0 bg-navbar-blu border-b border-white/10 shadow-lg md:hidden z-40
       transition-transform duration-300 ease-in-out
       ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}
     >

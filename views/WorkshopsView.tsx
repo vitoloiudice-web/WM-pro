@@ -15,7 +15,8 @@ import {
 } from '../components/icons/HeroIcons.tsx';
 import type { Workshop, Location, Registration, Child, Parent, WorkshopType } from '../types.ts';
 import Modal from '../components/Modal.tsx';
-import ConfirmModal from '../components/ConfirmModal.tsx';
+// FIX: Changed import to be a named import as ConfirmModal does not have a default export.
+import { ConfirmModal } from '../components/ConfirmModal.tsx';
 import Input from '../components/Input.tsx';
 import Select from '../components/Select.tsx';
 
@@ -72,11 +73,11 @@ const daysOfWeekOptions = [
 ];
 
 const DetailItem = ({icon, label, value}: DetailItemProps) => (
-    <div className="flex items-start space-x-3 text-slate-700">
-        <span className="text-indigo-500 mt-1 h-5 w-5">{icon}</span>
+    <div className="flex items-start space-x-3 text-testo-input">
+        <span className="text-bottone-corpo mt-1 h-5 w-5">{icon}</span>
         <div>
-            <p className="text-xs font-medium text-slate-500">{label}</p>
-            <p className="font-semibold text-slate-800">{value}</p>
+            <p className="text-xs font-medium text-testo-input/80">{label}</p>
+            <p className="font-semibold text-testo-input">{value}</p>
         </div>
     </div>
 );
@@ -337,7 +338,7 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
             return (
                  <>
                     <div className="space-y-4 text-sm">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-2 p-4 bg-slate-50 rounded-lg">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-2 p-4 bg-white/30 rounded-lg">
                             <DetailItem icon={<CalendarDaysIcon />} label="Tipo" value={workshop.type} />
                             <DetailItem icon={<CalendarDaysIcon />} label="Date" value={`${new Date(workshop.startDate).toLocaleDateString('it-IT')} - ${new Date(workshop.endDate).toLocaleDateString('it-IT')}`} />
                             <DetailItem icon={<ClockIcon />} label="Orario" value={`${workshop.dayOfWeek}, ${workshop.startTime} - ${workshop.endTime}`} />
@@ -346,7 +347,7 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                         </div>
                         
                         <div className="pt-2">
-                            <h4 className="font-semibold text-slate-800 mb-2">
+                            <h4 className="font-semibold text-testo-input mb-2">
                                 Iscritti ({currentRegistrations.length} / {location?.capacity ?? 'N/A'})
                             </h4>
                             {registeredChildren.length > 0 ? (
@@ -355,23 +356,23 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                                         if (!child) return null;
                                         const parent = parentMap[child.parentId];
                                         return (
-                                            <li key={child.id} className="flex items-center space-x-3 p-2 bg-slate-100 rounded-md">
-                                                <UserCircleIcon className="h-8 w-8 text-slate-400 flex-shrink-0" />
+                                            <li key={child.id} className="flex items-center space-x-3 p-2 bg-white/40 rounded-md">
+                                                <UserCircleIcon className="h-8 w-8 text-testo-input/70 flex-shrink-0" />
                                                 <div>
-                                                    <p className="font-medium text-slate-800">{child.name}</p>
-                                                    <p className="text-xs text-slate-500">Genitore: {parent?.name} {parent?.surname}</p>
+                                                    <p className="font-medium text-testo-input">{child.name}</p>
+                                                    <p className="text-xs text-testo-input/80">Genitore: {parent?.name} {parent?.surname}</p>
                                                 </div>
                                             </li>
                                         )
                                     })}
                                 </ul>
                             ) : (
-                                <p className="text-slate-500 italic px-2">Nessun iscritto al momento.</p>
+                                <p className="text-testo-input/80 italic px-2">Nessun iscritto al momento.</p>
                             )}
                         </div>
                     </div>
-                    <div className="mt-6 pt-4 border-t border-slate-200 flex justify-end items-center space-x-3">
-                        <button type="button" onClick={() => setModalState({ mode: 'edit', workshop })} className="px-4 py-2 bg-slate-100 text-slate-800 rounded-md hover:bg-slate-200 flex items-center space-x-2"><PencilIcon className="h-4 w-4" /><span>Modifica</span></button>
+                    <div className="mt-6 pt-4 border-t border-black/10 flex justify-end items-center space-x-3">
+                        <button type="button" onClick={() => setModalState({ mode: 'edit', workshop })} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400 flex items-center space-x-2"><PencilIcon className="h-4 w-4" /><span>Modifica</span></button>
                         <button type="button" onClick={() => setDeletingWorkshopId(workshop.id)} className="px-4 py-2 bg-red-100 text-red-800 rounded-md hover:bg-red-200 flex items-center space-x-2"><TrashIcon className="h-4 w-4"/><span>Elimina</span></button>
                     </div>
                  </>
@@ -412,15 +413,15 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
 
                     {type && WORKSHOP_TYPES_WITH_PRESET_PRICE.includes(type) && (
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Prezzo</label>
+                            <label className="block text-sm font-medium text-testo-input mb-2">Prezzo</label>
                             <div className="flex space-x-4">
                                 <label className="flex items-center">
-                                    <input type="radio" name="priceOption" checked={!priceConfig.isManual} onChange={() => setPriceConfig({ isManual: false })} className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500" />
-                                    <span className="ml-2 text-sm text-slate-700">Standard (€{(WORKSHOP_STANDARD_PRICES[type] || 0).toFixed(2)})</span>
+                                    <input type="radio" name="priceOption" checked={!priceConfig.isManual} onChange={() => setPriceConfig({ isManual: false })} className="h-4 w-4 text-bottone-corpo border-gray-500 focus:ring-bottone-corpo" />
+                                    <span className="ml-2 text-sm text-testo-input">Standard (€{(WORKSHOP_STANDARD_PRICES[type] || 0).toFixed(2)})</span>
                                 </label>
                                 <label className="flex items-center">
-                                    <input type="radio" name="priceOption" checked={priceConfig.isManual} onChange={() => setPriceConfig({ isManual: true })} className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500" />
-                                    <span className="ml-2 text-sm text-slate-700">Personalizzato</span>
+                                    <input type="radio" name="priceOption" checked={priceConfig.isManual} onChange={() => setPriceConfig({ isManual: true })} className="h-4 w-4 text-bottone-corpo border-gray-500 focus:ring-bottone-corpo" />
+                                    <span className="ml-2 text-sm text-testo-input">Personalizzato</span>
                                 </label>
                             </div>
                             {priceConfig.isManual && (
@@ -436,8 +437,8 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                     )}
 
                     <div className="flex justify-end space-x-3 pt-4">
-                        <button type="button" onClick={handleCancel} className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Annulla</button>
-                        <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Salva</button>
+                        <button type="button" onClick={handleCancel} className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Annulla</button>
+                        <button type="submit" className="px-4 py-2 bg-bottone-corpo text-white rounded-md hover:opacity-90">Salva</button>
                     </div>
                 </form>
             );
@@ -448,7 +449,7 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
 
     return (
     <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-slate-700">Calendario Workshop</h2>
+        <h2 className="text-xl font-semibold text-testo-input">Calendario Workshop</h2>
         
         <Card>
             <CardContent className="space-y-4">
@@ -459,32 +460,32 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                      <div className="col-span-1 md:col-span-1">
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Prezzo</label>
+                        <label className="block text-sm font-medium text-testo-input mb-1">Prezzo</label>
                         <div className="flex items-center space-x-2">
                            <Input id="minPrice" label="" type="number" value={filters.minPrice} onChange={handleFilterChange} placeholder="Min €"/>
                            <Input id="maxPrice" label="" type="number" value={filters.maxPrice} onChange={handleFilterChange} placeholder="Max €"/>
                         </div>
                     </div>
                     <div className="col-span-1 md:col-span-2 flex items-end space-x-2">
-                        <button onClick={resetFilters} className="w-full md:w-auto px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Resetta Filtri</button>
+                        <button onClick={resetFilters} className="w-full md:w-auto px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400">Resetta Filtri</button>
                     </div>
                 </div>
             </CardContent>
         </Card>
 
         <Card>
-            <div className="p-4 flex items-center justify-between border-b border-slate-200">
-                <button onClick={handlePrevMonth} className="p-2 rounded-full hover:bg-slate-100"><ChevronLeftIcon/></button>
-                <h3 className="text-lg font-semibold text-slate-800 capitalize">
+            <div className="p-4 flex items-center justify-between border-b border-black/10">
+                <button onClick={handlePrevMonth} className="p-2 rounded-full hover:bg-white/30"><ChevronLeftIcon/></button>
+                <h3 className="text-lg font-semibold text-testo-input capitalize">
                     {currentDate.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}
                 </h3>
-                <button onClick={handleNextMonth} className="p-2 rounded-full hover:bg-slate-100"><ChevronRightIcon/></button>
+                <button onClick={handleNextMonth} className="p-2 rounded-full hover:bg-white/30"><ChevronRightIcon/></button>
             </div>
-             <div className="px-4 py-2 border-b border-slate-200 flex items-center space-x-2">
-                <label htmlFor="location-filter" className="text-sm font-medium text-slate-600">Filtra per Luogo:</label>
+             <div className="px-4 py-2 border-b border-black/10 flex items-center space-x-2">
+                <label htmlFor="location-filter" className="text-sm font-medium text-testo-input/90">Filtra per Luogo:</label>
                 <select 
                     id="location-filter"
-                    className="block w-full sm:w-auto rounded-md border-slate-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm"
+                    className="block w-full sm:w-auto rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-corpo focus:ring-bottone-corpo text-sm"
                     value={selectedLocation}
                     onChange={(e) => setSelectedLocation(e.target.value)}
                 >
@@ -494,12 +495,12 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                     ))}
                 </select>
             </div>
-            <div className="grid grid-cols-7 gap-px bg-slate-200 border-t border-slate-200">
+            <div className="grid grid-cols-7 gap-px bg-gray-300 border-t border-gray-300">
                 {weekDays.map((day, i) => (
-                    <div key={i} className="text-center py-2 text-xs font-semibold text-slate-500 bg-slate-50">{day}</div>
+                    <div key={i} className="text-center py-2 text-xs font-semibold text-testo-input/80 bg-white/20">{day}</div>
                 ))}
             </div>
-            <div className="grid grid-cols-7 gap-px bg-slate-200">
+            <div className="grid grid-cols-7 gap-px bg-gray-300">
                 {days.map((day, index) => {
                     const isCurrentMonth = day.getMonth() === currentDate.getMonth();
                     const dateKey = day.toISOString().split('T')[0];
@@ -508,12 +509,12 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                     return (
                         <div 
                             key={index} 
-                            className={`relative min-h-[100px] p-2 group ${isCurrentMonth ? 'bg-white cursor-pointer hover:bg-slate-50' : 'bg-slate-50'}`}
+                            className={`relative min-h-[100px] p-2 group ${isCurrentMonth ? 'bg-cards-giallo/80 cursor-pointer hover:bg-white/30' : 'bg-cards-giallo/40'}`}
                             onClick={() => isCurrentMonth && handleDayClick(dateKey)}
                         >
-                            <span className={`font-medium ${isCurrentMonth ? 'text-slate-700' : 'text-slate-400'}`}>{day.getDate()}</span>
+                            <span className={`font-medium ${isCurrentMonth ? 'text-testo-input' : 'text-testo-input/60'}`}>{day.getDate()}</span>
                             {isCurrentMonth && (
-                                <div className="absolute top-1 right-1 p-1 rounded-full text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true">
+                                <div className="absolute top-1 right-1 p-1 rounded-full text-testo-input/70 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true">
                                     <PlusIcon className="h-4 w-4" />
                                 </div>
                             )}
@@ -523,7 +524,7 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                                     return (
                                         <div 
                                           key={ws.id} 
-                                          className="p-1.5 rounded-md bg-indigo-100 text-indigo-800 text-xs cursor-pointer transition-all duration-200 hover:bg-indigo-200 hover:scale-105 hover:shadow-sm" 
+                                          className="p-1.5 rounded-md bg-bottone-corpo/10 text-bottone-corpo text-xs cursor-pointer transition-all duration-200 hover:bg-bottone-corpo/20 hover:scale-105 hover:shadow-sm" 
                                           onClick={(e) => { e.stopPropagation(); setModalState({ mode: 'view', workshop: ws }); }}
                                         >
                                             <p className="font-bold truncate">{ws.name}</p>
