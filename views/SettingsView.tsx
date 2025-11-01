@@ -242,9 +242,9 @@ const SettingsView = ({
             {/* Reminder Modal */}
             <Modal isOpen={reminderModalOpen} onClose={() => setReminderModalOpen(false)} title={editingReminder ? 'Modifica Regola Reminder' : 'Nuova Regola Reminder'}>
                  <form onSubmit={handleSaveReminder} className="space-y-4">
-                    <Input id="name" label="Nome Regola" value={reminderFormData.name || ''} onChange={e => setReminderFormData({...reminderFormData, name: e.target.value})} required />
-                    <Input id="preWarningDays" label="Giorni di Preavviso" type="number" value={reminderFormData.preWarningDays || ''} onChange={e => setReminderFormData({...reminderFormData, preWarningDays: Number(e.target.value)})} required />
-                    <Input id="cadence" label="Cadenza (ogni quanti giorni)" type="number" value={reminderFormData.cadence || ''} onChange={e => setReminderFormData({...reminderFormData, cadence: Number(e.target.value)})} required />
+                    <Input id="name" label="Nome Regola" value={reminderFormData.name || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReminderFormData({...reminderFormData, name: e.target.value})} required />
+                    <Input id="preWarningDays" label="Giorni di Preavviso" type="number" value={reminderFormData.preWarningDays || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReminderFormData({...reminderFormData, preWarningDays: Number(e.target.value)})} required />
+                    <Input id="cadence" label="Cadenza (ogni quanti giorni)" type="number" value={reminderFormData.cadence || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReminderFormData({...reminderFormData, cadence: Number(e.target.value)})} required />
                     <div className="flex justify-end space-x-3 pt-4"><button type="submit" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md">Salva</button></div>
                 </form>
             </Modal>

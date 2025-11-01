@@ -1,5 +1,3 @@
-// FIX: Created file to define types and resolve "file not a module" errors.
-
 import { DocumentReference } from 'firebase/firestore';
 
 export type View = 'dashboard' | 'workshops' | 'clients' | 'finance' | 'reports' | 'logistics' | 'campagne' | 'impostazioni';
@@ -13,14 +11,27 @@ export interface CompanyProfile {
     taxRegime: string;
 }
 
+// Inscription types define the duration and nature of a child's registration
+export const INSCRIPTION_TYPES = {
+    'Open Day': { durationMonths: 0, price: 15 },
+    '1 Mese': { durationMonths: 1, price: 60 },
+    '3 Mesi': { durationMonths: 3, price: 165 },
+    '6 Mesi': { durationMonths: 6, price: 300 },
+    'Annuale': { durationMonths: 12, price: 540 },
+    'Campus': { durationMonths: 0, price: 150 }, // Duration is fixed, not monthly
+    'Pacchetto Ore': { durationMonths: 0, price: 100 },
+};
+export type InscriptionType = keyof typeof INSCRIPTION_TYPES;
+
+
+// A Workshop is now a reusable "timeslot" at a specific location
 export interface Workshop {
     id: string;
-    name: string;
-    description: string;
-    date: string; // ISO string
     locationId: string;
+    dayOfWeek: 'Lunedì' | 'Martedì' | 'Mercoledì' | 'Giovedì' | 'Venerdì' | 'Sabato' | 'Domenica';
+    time: string; // "HH:mm" format
     maxParticipants: number;
-    price: number;
+    code: string; // Auto-generated e.g., SEDEA-LUN-17:00
 }
 
 export interface Parent {
@@ -54,9 +65,13 @@ export interface Registration {
     id: string;
     childId: string;
     workshopId: string;
-    registrationDate: string; // ISO string
+    registrationDate: string; // ISO string for when the registration was made
+    inscriptionType: InscriptionType;
+    inscriptionEndDate?: string; // ISO string, calculated based on type and date
+    durationInMonths?: number; // Only for specific types like 'X Mesi'
     status: 'confermata' | 'in attesa' | 'annullata';
 }
+
 
 export interface Payment {
     id:string;

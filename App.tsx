@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 // FIX: Updated imports to remove file extensions
 import { useCollection, useDocument } from './hooks/useFirestore';
@@ -135,6 +136,7 @@ const App = () => {
             suppliers={suppliers}
         />;
       case 'reports':
+        // FIX: Pass parents and children to ReportsView to make them available for report generation.
         return <ReportsView 
             payments={payments}
             costs={costs}
@@ -143,6 +145,8 @@ const App = () => {
             locations={locations}
             registrations={registrations}
             quotes={quotes}
+            parents={parents}
+            children={children}
         />;
       case 'logistics':
         return <LogisticsView 
