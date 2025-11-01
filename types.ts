@@ -137,14 +137,15 @@ export interface Supplier {
 
 export interface Location {
     id: string;
+    supplierId: string;
     name: string;
-    address: string;
-    capacity: number;
-    // Fields from previous requests that seem to be missing
     shortName?: string;
+    address: string;
     zipCode?: string;
     city?: string;
     province?: string;
+    capacity: number;
     rentalCost?: number;
-    color?: string; // This is essential for the current request
+    distanceKm?: number;
+    color?: string;
 }

@@ -698,8 +698,8 @@ const ClientsView = ({
 
       <Modal isOpen={!!registrationModalState} onClose={closeRegistrationModal} title="Nuova Iscrizione">
           <form id="registration-form" onSubmit={handleSaveRegistration} className="space-y-4" noValidate>
-              {/* FIX: Add type assertion to `children` to resolve '.map' on 'unknown' error */}
-              <Select id="childId" label="Figlio da Iscrivere" value={registrationFormData.childId || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRegistrationFormData({...registrationFormData, childId: e.target.value})} options={((children as Child[]).filter(c => c.parentId === registrationModalState?.parent.id) || []).map(c => ({value: c.id, label: c.name}))} error={registrationErrors.childId} required placeholder="Seleziona un figlio" />
+              {/* FIX: Added type assertion to resolve incorrect type inference for the 'children' prop. */}
+              <Select id="childId" label="Figlio da Iscrivere" value={registrationFormData.childId || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRegistrationFormData({...registrationFormData, childId: e.target.value})} options={(children as Child[]).filter(c => c.parentId === registrationModalState?.parent.id).map(c => ({value: c.id, label: c.name}))} error={registrationErrors.childId} required placeholder="Seleziona un figlio" />
               <div>
                   <label htmlFor="workshopIds" className="block text-sm font-medium text-testo-input mb-1">
                     Workshop (seleziona uno o più)
@@ -714,7 +714,7 @@ const ClientsView = ({
                     }}
                     className={`block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-azione focus:ring-bottone-azione sm:text-sm h-32 ${registrationErrors.workshopIds ? 'border-red-500 text-red-900 focus:border-red-500 focus:ring-red-500' : ''}`}
                   >
-                     {/* FIX: Add type assertion to `workshops` to resolve '.map' on 'unknown' error */}
+                     {/* FIX: Added type assertion to resolve incorrect type inference for the 'workshops' prop. */}
                      {(workshops as Workshop[]).filter(ws => new Date(ws.startDate) >= new Date(todayStr)).map(ws => (
                         <option key={ws.id} value={ws.id}>
                             {`${ws.name} (${new Date(ws.startDate).toLocaleDateString('it-IT')})`}
@@ -734,8 +734,8 @@ const ClientsView = ({
           <form id="payment-form" onSubmit={handleSavePayment} className="space-y-4" noValidate>
               <Input id="amount" label="Importo" type="number" step="0.01" value={paymentFormData.amount || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentFormData({...paymentFormData, amount: parseFloat(e.target.value)})} error={paymentErrors.amount} required />
               <Input id="paymentDate" label="Data Pagamento" type="date" value={paymentFormData.paymentDate || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentFormData({...paymentFormData, paymentDate: e.target.value})} error={paymentErrors.paymentDate} required />
-              {/* FIX: Explicitly typing the event parameter `e` resolves the TypeScript error where `e.target.value` was not accessible. Add an extra assertion to fix the 'unknown' type issue. */}
-              <Select id="method" label="Metodo" options={[{value: 'cash', label: 'Contanti'}, {value: 'transfer', label: 'Bonifico'}, {value: 'card', label: 'Carta'}]} value={paymentFormData.method || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPaymentFormData({...paymentFormData, method: (e.target as HTMLSelectElement).value as PaymentMethod})} error={paymentErrors.method} required/>
+              {/* FIX: Changed to use e.currentTarget to ensure correct type inference for the event target. */}
+              <Select id="method" label="Metodo" options={[{value: 'cash', label: 'Contanti'}, {value: 'transfer', label: 'Bonifico'}, {value: 'card', label: 'Carta'}]} value={paymentFormData.method || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPaymentFormData({...paymentFormData, method: e.currentTarget.value as PaymentMethod})} error={paymentErrors.method} required/>
                <div className="flex justify-end space-x-3 pt-4">
                   <button type="button" onClick={closePaymentModal} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
                   <button type="submit" form="payment-form" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Registra Pagamento</button>

@@ -12,6 +12,7 @@ import LogisticsView from './views/LogisticsView';
 import ReportsView from './views/ReportsView';
 import type { View, Workshop, Parent, Child, Payment, OperationalCost, Quote, Invoice, Supplier, Location, Registration, CompanyProfile } from './types';
 import { MOCK_COMPANY_PROFILE } from './data';
+import { DocumentReference } from 'firebase/firestore';
 
 const App = () => {
   const [currentView, setCurrentView] = useState<View>('dashboard');
@@ -47,6 +48,17 @@ const App = () => {
     inLoading, inError, suLoading, suError, loLoading, loError
   ]);
 
+    // FIX: Redefined functions to properly handle Promise<DocumentReference>
+    const handleAddParent = (parent: Omit<Parent, 'id'>) => addParent(parent).then(() => Promise.resolve());
+    const handleAddChild = (child: Omit<Child, 'id'>) => addChild(child).then(() => Promise.resolve());
+    const handleAddRegistration = (reg: Omit<Registration, 'id'>) => addRegistration(reg).then(() => Promise.resolve());
+    const handleAddPayment = (payment: Omit<Payment, 'id'>) => addPayment(payment).then(() => Promise.resolve());
+    const handleAddLocation = (loc: Omit<Location, 'id'>) => addLocation(loc).then(() => Promise.resolve());
+    // FIX: Redefined addSupplier to correctly return the DocumentReference which contains the new ID.
+    const handleAddSupplier = (supplier: Omit<Supplier, 'id'>): Promise<DocumentReference> => {
+        return addSupplier(supplier);
+    };
+
 
   const renderView = () => {
     switch (currentView) {
@@ -60,7 +72,7 @@ const App = () => {
           payments={payments} 
           registrations={registrations}
           locations={locations}
-          addParent={addParent}
+          addParent={handleAddParent}
           setCurrentView={setCurrentView}
         />;
       case 'workshops':
@@ -77,19 +89,19 @@ const App = () => {
       case 'clients':
         return <ClientsView 
             parents={parents} 
-            addParent={addParent}
+            addParent={handleAddParent}
             updateParent={updateParent}
             removeParent={removeParent}
             children={children} 
-            addChild={addChild}
+            addChild={handleAddChild}
             updateChild={updateChild}
             removeChild={removeChild}
             workshops={workshops}
             registrations={registrations}
-            addRegistration={addRegistration}
+            addRegistration={handleAddRegistration}
             removeRegistration={removeRegistration}
             payments={payments}
-            addPayment={addPayment}
+            addPayment={handleAddPayment}
             locations={locations}
         />;
       case 'finance':
@@ -116,8 +128,8 @@ const App = () => {
         />;
       case 'logistics':
         return <LogisticsView 
-            suppliers={suppliers} addSupplier={addSupplier} updateSupplier={updateSupplier} removeSupplier={removeSupplier}
-            locations={locations} addLocation={addLocation} updateLocation={updateLocation} removeLocation={removeLocation}
+            suppliers={suppliers} addSupplier={handleAddSupplier} updateSupplier={updateSupplier} removeSupplier={removeSupplier}
+            locations={locations} addLocation={handleAddLocation} updateLocation={updateLocation} removeLocation={removeLocation}
         />;
       default:
         return <DashboardView 
@@ -129,7 +141,7 @@ const App = () => {
           payments={payments} 
           registrations={registrations}
           locations={locations}
-          addParent={addParent}
+          addParent={handleAddParent}
           setCurrentView={setCurrentView}
         />;
     }

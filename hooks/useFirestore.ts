@@ -8,6 +8,7 @@ import {
     setDoc, 
     updateDoc, 
     deleteDoc, 
+    addDoc, // Import addDoc
     DocumentData,
     QuerySnapshot,
     DocumentSnapshot,
@@ -51,9 +52,11 @@ export const useCollection = <T extends FirestoreDocument>(collectionName: strin
         return () => unsubscribe();
     }, [collectionName]);
 
-    const addItem = async (item: T) => {
+    const addItem = async (item: Omit<T, 'id'>): Promise<DocumentReference> => {
         try {
-            await setDoc(doc(db, collectionName, item.id), item);
+            // Use addDoc for auto-generated IDs and return the reference
+            const docRef = await addDoc(collection(db, collectionName), item);
+            return docRef;
         } catch (e) {
             console.error("Error adding document: ", e);
             throw e; // Re-throw to be caught in the component
@@ -85,7 +88,8 @@ export const useCollection = <T extends FirestoreDocument>(collectionName: strin
     const addBatch = async (items: T[]) => {
       for (const item of items) {
         try {
-          await setDoc(doc(db, collectionName, item.id), item);
+            const { id, ...data } = item;
+            await setDoc(doc(db, collectionName, id), data);
         } catch (e) {
           console.error(`Failed to add item ${item.id} to ${collectionName}`, e);
         }
@@ -128,7 +132,7 @@ export const useDocument = <T extends DocumentData>(collectionName: string, docI
         });
 
         return () => unsubscribe();
-    }, [collectionName, docId, initialData]);
+    }, [collectionName, docId]); // initialData removed from deps to avoid re-writing on every render
 
     const updateData = async (newData: Partial<T>) => {
         try {
