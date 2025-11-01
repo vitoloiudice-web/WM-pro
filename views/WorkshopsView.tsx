@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Card, { CardContent, CardHeader } from '../components/Card';
 import Modal from '../components/Modal';
+import { ConfirmModal } from '../components/ConfirmModal';
 import Input from '../components/Input';
 import Select from '../components/Select';
-import { PlusIcon, ChevronLeftIcon, ChevronRightIcon, UsersIcon, ClockIcon } from '../components/icons/HeroIcons';
+import { PlusIcon, ChevronLeftIcon, ChevronRightIcon, UsersIcon, ClockIcon, TrashIcon } from '../components/icons/HeroIcons';
 import type { Workshop, Location, Registration, Child, Parent } from '../types';
 
 interface WorkshopsViewProps {
@@ -23,7 +24,6 @@ type ModalState =
     | null;
 
 const WEEK_DAYS: Workshop['dayOfWeek'][] = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
-const DAY_MAP = { 'Lunedì': 1, 'Martedì': 2, 'Mercoledì': 3, 'Giovedì': 4, 'Venerdì': 5, 'Sabato': 6, 'Domenica': 0 };
 
 const WorkshopsView = ({ 
     workshops, addWorkshop, updateWorkshop, removeWorkshop,
@@ -33,8 +33,18 @@ const WorkshopsView = ({
     const [formData, setFormData] = useState<Partial<Workshop>>({});
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [deletingWorkshop, setDeletingWorkshop] = useState<Workshop | null>(null);
 
     const locationMap = useMemo(() => new Map(locations.map(loc => [loc.id, loc])), [locations]);
+
+    useEffect(() => {
+        if (modalState?.mode === 'edit') {
+            setFormData(modalState.workshop);
+        } else {
+            setFormData({});
+        }
+        setErrors({});
+    }, [modalState]);
 
     const handleMonthChange = (offset: number) => {
         setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + offset, 1));
@@ -71,6 +81,14 @@ const WorkshopsView = ({
             await addWorkshop(dataToSave as any);
         }
         setModalState(null);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (deletingWorkshop) {
+            await removeWorkshop(deletingWorkshop.id);
+            setDeletingWorkshop(null);
+            setModalState(null);
+        }
     };
 
     const { monthName, year, daysInMonth, firstDayOfMonth } = useMemo(() => {
@@ -119,9 +137,23 @@ const WorkshopsView = ({
                     </div>
                     <Input id="maxParticipants" label="Max Iscritti" type="number" value={formData.maxParticipants || ''} onChange={e => setFormData({...formData, maxParticipants: Number(e.target.value)})} error={errors.maxParticipants} required />
                     
-                    <div className="flex justify-end space-x-3 pt-4 border-t border-black/10">
-                        <button type="button" onClick={() => setModalState(null)} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
-                        <button type="submit" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Salva Workshop</button>
+                    <div className="flex justify-between items-center pt-4 border-t border-black/10">
+                        <div>
+                            {modalState.mode === 'edit' && (
+                                <button
+                                    type="button"
+                                    onClick={() => setDeletingWorkshop(modalState.workshop)}
+                                    className="px-4 py-2 bg-bottone-eliminazione text-white rounded-md hover:opacity-90 flex items-center space-x-2 text-sm"
+                                >
+                                    <TrashIcon className="h-4 w-4" />
+                                    <span>Elimina</span>
+                                </button>
+                            )}
+                        </div>
+                        <div className="flex space-x-3">
+                            <button type="button" onClick={() => setModalState(null)} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
+                            <button type="submit" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Salva Workshop</button>
+                        </div>
                     </div>
                 </form>
             </Modal>
@@ -153,7 +185,7 @@ const WorkshopsView = ({
                     </div>
                     <div className="grid grid-cols-7 h-[60vh]">
                         {calendarCells.map(cell => (
-                            <div key={cell.key} className={`border-b border-r border-black/10 p-1.5 overflow-y-auto ${cell.isEmpty ? 'bg-gray-50' : ''}`}>
+                            <div key={cell.key} className={`border-b border-r border-black/10 p-1.5 overflow-y-auto ${cell.isEmpty ? 'bg-gray-50/70' : ''}`}>
                                 {!cell.isEmpty && (
                                     <>
                                         <span className={`text-xs font-semibold ${cell.isToday ? 'bg-bottone-azione text-white rounded-full flex items-center justify-center h-5 w-5' : ''}`}>{cell.day}</span>
@@ -162,7 +194,12 @@ const WorkshopsView = ({
                                                 const location = locationMap.get(w.locationId);
                                                 const inscriptionsCount = registrations.filter(r => r.workshopId === w.id && r.status === 'confermata').length;
                                                 return (
-                                                <div key={w.id} className="p-1.5 rounded-md text-xs bg-white shadow" title={w.code}>
+                                                <div 
+                                                    key={w.id} 
+                                                    className="p-1.5 rounded-md text-xs bg-white shadow cursor-pointer hover:ring-2 hover:ring-bottone-azione/80" 
+                                                    title={`Modifica: ${w.code}`}
+                                                    onClick={() => setModalState({ mode: 'edit', workshop: w })}
+                                                >
                                                     <div className="flex items-center space-x-2">
                                                         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: location?.color || '#ccc' }}></span>
                                                         <span className="font-bold text-testo-input">{location?.shortName}</span>
@@ -187,6 +224,20 @@ const WorkshopsView = ({
             </Card>
 
             {renderModal()}
+
+            <ConfirmModal
+                isOpen={!!deletingWorkshop}
+                onClose={() => setDeletingWorkshop(null)}
+                onConfirm={handleConfirmDelete}
+                title="Conferma Eliminazione Workshop"
+            >
+                <p>
+                    Sei sicuro di voler eliminare il workshop "{deletingWorkshop?.code}"?
+                    <br />
+                    Tutte le iscrizioni associate a questo timeslot verranno mantenute ma dovranno essere riassociate manualmente. L'azione è irreversibile.
+                </p>
+            </ConfirmModal>
+
         </div>
     );
 };

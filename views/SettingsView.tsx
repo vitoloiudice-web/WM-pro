@@ -252,27 +252,27 @@ const SettingsView = ({
             {/* Messaging Modal */}
             <Modal isOpen={messagingModalOpen} onClose={() => setMessagingModalOpen(false)} title="Componi Messaggio">
                  <form onSubmit={handleSendMessage} className="space-y-4">
-                    {/* FIX: Explicitly typed the event parameter 'e' and used e.target to resolve the "Property 'value' does not exist on type 'unknown'" error. */}
-                    <Select id="type" label="Tipo Messaggio" options={[{value: 'email', label: 'Email'}, {value: 'whatsapp', label: 'WhatsApp'}]} value={messageData.type} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setMessageData({...messageData, type: e.target.value})} />
+                    {/* FIX: Explicitly typed the event parameter 'e' and used e.currentTarget to resolve the "Property 'value' does not exist on type 'unknown'" error. */}
+                    <Select id="type" label="Tipo Messaggio" options={[{value: 'email', label: 'Email'}, {value: 'whatsapp', label: 'WhatsApp'}]} value={messageData.type} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setMessageData({...messageData, type: e.currentTarget.value})} />
                     <div>
                         <label className="block text-sm font-medium text-testo-input mb-1">Destinatari</label>
                         {/* FIX: Explicitly typed the event parameter 'e' to resolve potential type errors. */}
-                        <select multiple value={messageData.recipients} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setMessageData({...messageData, recipients: Array.from(e.target.selectedOptions, option => option.value)})} className="h-40 w-full border border-gray-300 rounded-md">
+                        <select multiple value={messageData.recipients} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setMessageData({...messageData, recipients: Array.from(e.currentTarget.selectedOptions, option => option.value)})} className="h-40 w-full border border-gray-300 rounded-md">
                             {parents.map(p => <option key={p.id} value={p.id}>{p.clientType === 'persona giuridica' ? p.companyName : `${p.name} ${p.surname}`}</option>)}
                         </select>
                     </div>
-                    {/* FIX: Explicitly typed the event parameter 'e' to resolve the "Property 'value' does not exist on type 'unknown'" error. */}
-                    <Select id="useTemplate" label="Corpo del Messaggio" options={[{value: 'template', label: 'Usa Modello Campagna'}, {value: 'free', label: 'Testo Libero'}]} value={messageData.useTemplate} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setMessageData({...messageData, useTemplate: e.target.value})} />
+                    {/* FIX: Explicitly typed the event parameter 'e' and used e.currentTarget to resolve the "Property 'value' does not exist on type 'unknown'" error. */}
+                    <Select id="useTemplate" label="Corpo del Messaggio" options={[{value: 'template', label: 'Usa Modello Campagna'}, {value: 'free', label: 'Testo Libero'}]} value={messageData.useTemplate} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setMessageData({...messageData, useTemplate: e.currentTarget.value})} />
                     
                     {messageData.useTemplate === 'template' ? (
                         // FIX: Explicitly typed the event parameter 'e' to resolve the "Property 'value' does not exist on type 'unknown'" error.
-                        <Select id="campaignId" label="Modello" options={campaigns.map(c => ({value: c.id, label: `(${c.type}) ${c.name}`}))} value={messageData.campaignId} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setMessageData({...messageData, campaignId: e.target.value})} />
+                        <Select id="campaignId" label="Modello" options={campaigns.map(c => ({value: c.id, label: `(${c.type}) ${c.name}`}))} value={messageData.campaignId} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setMessageData({...messageData, campaignId: e.currentTarget.value})} />
                     ) : (
                         <>
                             {/* FIX: Explicitly typed the event parameter 'e' to resolve potential type errors. */}
-                            <Input id="subject" label="Oggetto" value={messageData.subject} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMessageData({...messageData, subject: e.target.value})} />
+                            <Input id="subject" label="Oggetto" value={messageData.subject} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMessageData({...messageData, subject: e.currentTarget.value})} />
                             {/* FIX: Explicitly typed the event parameter 'e' to resolve potential type errors. */}
-                            <textarea id="body" rows={6} value={messageData.body} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMessageData({...messageData, body: e.target.value})} className="w-full border border-gray-300 rounded-md p-2"></textarea>
+                            <textarea id="body" rows={6} value={messageData.body} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMessageData({...messageData, body: e.currentTarget.value})} className="w-full border border-gray-300 rounded-md p-2"></textarea>
                         </>
                     )}
                     

@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { ErrorInfo, ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
@@ -9,8 +9,8 @@ interface State {
   hasError: boolean;
 }
 
-// FIX: Changed to extend Component directly to resolve issue with 'this.props' not being found.
-class ErrorBoundary extends Component<Props, State> {
+// FIX: Changed to extend React.Component directly to resolve issue with 'this.props' not being found.
+class ErrorBoundary extends React.Component<Props, State> {
   state: State = {
     hasError: false,
   };
