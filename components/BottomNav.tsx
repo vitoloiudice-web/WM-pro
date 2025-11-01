@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 // FIX: Updated imports to remove file extensions
 import type { View } from '../types';

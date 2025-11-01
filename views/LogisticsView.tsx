@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Card, { CardContent } from '../components/Card';
 import { PlusIcon, PencilIcon, TrashIcon } from '../components/icons/HeroIcons';
@@ -49,6 +50,10 @@ const LogisticsView = ({
     suppliers, addSupplier, updateSupplier, removeSupplier,
     locations, addLocation, updateLocation, removeLocation
 }: LogisticsViewProps) => {
+    // --- DEBUG START: LOGISTICS_RENDER ---
+    console.log('[DEBUG] LogisticsView: Component rendered.');
+    console.log('[DEBUG] LogisticsView: Props received:', { suppliers, locations });
+    // --- DEBUG END: LOGISTICS_RENDER ---
 
     const [supplierModalState, setSupplierModalState] = useState<SupplierModalState>(null);
     const [locationModalState, setLocationModalState] = useState<LocationModalState>(null);

@@ -9,7 +9,8 @@ import WorkshopsView from './views/WorkshopsView';
 import ClientsView from './views/ClientsView';
 import FinanceView from './views/FinanceView';
 import LogisticsView from './views/LogisticsView';
-import ReportsView from './views/ReportsView';
+// FIX: Changed import to be a named import as ReportsView does not have a default export.
+import { ReportsView } from './views/ReportsView';
 import type { View, Workshop, Parent, Child, Payment, OperationalCost, Quote, Invoice, Supplier, Location, Registration, CompanyProfile } from './types';
 import { MOCK_COMPANY_PROFILE } from './data';
 import { DocumentReference } from 'firebase/firestore';

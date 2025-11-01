@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 // FIX: Updated imports to remove file extensions
 import Card, { CardContent } from '../components/Card';
@@ -137,43 +138,57 @@ const ClientsView = ({
   }, [payments]);
 
   const filteredAndSortedParents = useMemo(() => {
-    let filtered = [...parents];
+    // --- DEBUG START: CLIENTS_FILTER_LOGIC ---
+    console.log('[DEBUG] ClientsView: Recalculating filteredAndSortedParents.');
+    console.log('[DEBUG] ClientsView: parents prop (pre-filter):', parents);
+    console.log('[DEBUG] ClientsView: children prop (pre-filter):', children);
+    console.log('[DEBUG] ClientsView: Current filters:', { searchTerm, filterWorkshopId, filterStatus, sortOrder });
 
-    if (searchTerm) {
-        const lowercasedFilter = searchTerm.toLowerCase();
-        filtered = filtered.filter(parent => {
-            const parentChildren = children.filter(c => c.parentId === parent.id);
-            const parentDisplayName = parent.clientType === 'persona giuridica' 
-                ? parent.companyName || '' 
-                : `${parent.name || ''} ${parent.surname || ''}`;
-            const parentMatch = parentDisplayName.toLowerCase().includes(lowercasedFilter) ||
-                                (parent.email && parent.email.toLowerCase().includes(lowercasedFilter));
-            const childMatch = parentChildren.some(c => c.name.toLowerCase().includes(lowercasedFilter));
-            return parentMatch || childMatch;
+    try {
+        let filtered = [...parents];
+
+        if (searchTerm) {
+            const lowercasedFilter = searchTerm.toLowerCase();
+            filtered = filtered.filter(parent => {
+                const parentChildren = children.filter(c => c.parentId === parent.id);
+                const parentDisplayName = parent.clientType === 'persona giuridica' 
+                    ? parent.companyName || '' 
+                    : `${parent.name || ''} ${parent.surname || ''}`;
+                const parentMatch = parentDisplayName.toLowerCase().includes(lowercasedFilter) ||
+                                    (parent.email && parent.email.toLowerCase().includes(lowercasedFilter));
+                const childMatch = parentChildren.some(c => c.name.toLowerCase().includes(lowercasedFilter));
+                return parentMatch || childMatch;
+            });
+        }
+
+        if (filterWorkshopId) {
+            const childrenInWorkshop = new Set(registrations.filter(r => r.workshopId === filterWorkshopId).map(r => r.childId));
+            filtered = filtered.filter(parent => {
+                const parentChildrenIds = children.filter(c => c.parentId === parent.id).map(c => c.id);
+                return parentChildrenIds.some(childId => childrenInWorkshop.has(childId));
+            });
+        }
+        
+        if (filterStatus) {
+            filtered = filtered.filter(parent => parent.status === filterStatus);
+        }
+        
+        filtered.sort((a, b) => {
+            const nameA = getParentDisplayName(a).toLowerCase();
+            const nameB = getParentDisplayName(b).toLowerCase();
+            if (nameA < nameB) return sortOrder === 'asc' ? -1 : 1;
+            if (nameA > nameB) return sortOrder === 'asc' ? 1 : -1;
+            return 0;
         });
+        
+        console.log('[DEBUG] ClientsView: Filtering successful. Result:', filtered);
+        return filtered;
+    } catch(error) {
+        console.error('[DEBUG] ClientsView: CRASH in filteredAndSortedParents useMemo!', error);
+        // Ritornare un array vuoto per evitare il crash completo dell'app
+        return [];
     }
-
-    if (filterWorkshopId) {
-        const childrenInWorkshop = new Set(registrations.filter(r => r.workshopId === filterWorkshopId).map(r => r.childId));
-        filtered = filtered.filter(parent => {
-            const parentChildrenIds = children.filter(c => c.parentId === parent.id).map(c => c.id);
-            return parentChildrenIds.some(childId => childrenInWorkshop.has(childId));
-        });
-    }
-    
-    if (filterStatus) {
-        filtered = filtered.filter(parent => parent.status === filterStatus);
-    }
-    
-    filtered.sort((a, b) => {
-        const nameA = getParentDisplayName(a).toLowerCase();
-        const nameB = getParentDisplayName(b).toLowerCase();
-        if (nameA < nameB) return sortOrder === 'asc' ? -1 : 1;
-        if (nameA > nameB) return sortOrder === 'asc' ? 1 : -1;
-        return 0;
-    });
-
-    return filtered;
+    // --- DEBUG END: CLIENTS_FILTER_LOGIC ---
   }, [parents, children, registrations, searchTerm, filterWorkshopId, sortOrder, filterStatus]);
 
 
@@ -465,18 +480,25 @@ const ClientsView = ({
        <Card>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* --- DEBUG START: CLIENTS_FILTER_CHANGE --- */}
             <Input
               id="search"
               label="Cerca cliente o figlio"
               placeholder="Nome, cognome, ragione sociale..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.currentTarget.value)}
+              onChange={(e) => {
+                  console.log('[DEBUG] ClientsView: Search term changed:', e.currentTarget.value);
+                  setSearchTerm(e.currentTarget.value);
+              }}
             />
             <Select
               id="filterWorkshop"
               label="Filtra per workshop"
               value={filterWorkshopId}
-              onChange={(e) => setFilterWorkshopId(e.currentTarget.value)}
+              onChange={(e) => {
+                  console.log('[DEBUG] ClientsView: Workshop filter changed:', e.currentTarget.value);
+                  setFilterWorkshopId(e.currentTarget.value);
+              }}
               options={workshops.map(ws => ({ value: ws.id, label: ws.name }))}
               placeholder="Tutti i workshop"
             />
@@ -484,10 +506,14 @@ const ClientsView = ({
               id="filterStatus"
               label="Filtra per stato"
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.currentTarget.value)}
+              onChange={(e) => {
+                  console.log('[DEBUG] ClientsView: Status filter changed:', e.currentTarget.value);
+                  setFilterStatus(e.currentTarget.value);
+              }}
               options={parentStatusOptions}
               placeholder="Tutti gli stati"
             />
+            {/* --- DEBUG END: CLIENTS_FILTER_CHANGE --- */}
           </div>
           <div>
             <label className="block text-sm font-medium text-testo-input mb-1">Ordina per</label>
@@ -509,6 +535,7 @@ const ClientsView = ({
         </CardContent>
       </Card>
 
+      {/* --- DEBUG START: CLIENTS_RENDER_LOGIC --- */}
       <div className="space-y-4">
         {filteredAndSortedParents.map(parent => {
           const parentChildren = children.filter(c => c.parentId === parent.id);
@@ -647,6 +674,7 @@ const ClientsView = ({
           )
         })}
       </div>
+       {/* --- DEBUG END: CLIENTS_RENDER_LOGIC --- */}
       
       {/* --- MODALS --- */}
       <Modal isOpen={isParentModalOpen} onClose={closeParentModal} title={editingClient ? 'Modifica Cliente' : 'Nuovo Cliente'}>
@@ -698,8 +726,8 @@ const ClientsView = ({
 
       <Modal isOpen={!!registrationModalState} onClose={closeRegistrationModal} title="Nuova Iscrizione">
           <form id="registration-form" onSubmit={handleSaveRegistration} className="space-y-4" noValidate>
-              {/* FIX: Casting to `any` to bypass a TypeScript inference issue where `children` is incorrectly typed as `unknown`. */}
-              <Select id="childId" label="Figlio da Iscrivere" value={registrationFormData.childId || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRegistrationFormData({...registrationFormData, childId: e.target.value})} options={(children as any).filter(c => c.parentId === registrationModalState?.parent.id).map(c => ({value: c.id, label: c.name}))} error={registrationErrors.childId} required placeholder="Seleziona un figlio" />
+              {/* FIX: Removed failing 'as any' cast. Type inference should handle this correctly. */}
+              <Select id="childId" label="Figlio da Iscrivere" value={registrationFormData.childId || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRegistrationFormData({...registrationFormData, childId: e.target.value})} options={children.filter(c => c.parentId === registrationModalState?.parent.id).map(c => ({value: c.id, label: c.name}))} error={registrationErrors.childId} required placeholder="Seleziona un figlio" />
               <div>
                   <label htmlFor="workshopIds" className="block text-sm font-medium text-testo-input mb-1">
                     Workshop (seleziona uno o più)
@@ -714,8 +742,8 @@ const ClientsView = ({
                     }}
                     className={`block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-azione focus:ring-bottone-azione sm:text-sm h-32 ${registrationErrors.workshopIds ? 'border-red-500 text-red-900 focus:border-red-500 focus:ring-red-500' : ''}`}
                   >
-                     {/* FIX: Casting to `any` to bypass a TypeScript inference issue where `workshops` is incorrectly typed as `unknown`. */}
-                     {(workshops as any).filter(ws => new Date(ws.startDate) >= new Date(todayStr)).map(ws => (
+                     {/* FIX: Removed failing 'as any' cast. Type inference should handle this correctly. */}
+                     {workshops.filter(ws => new Date(ws.startDate) >= new Date(todayStr)).map(ws => (
                         <option key={ws.id} value={ws.id}>
                             {`${ws.name} (${new Date(ws.startDate).toLocaleDateString('it-IT')})`}
                         </option>
@@ -734,8 +762,8 @@ const ClientsView = ({
           <form id="payment-form" onSubmit={handleSavePayment} className="space-y-4" noValidate>
               <Input id="amount" label="Importo" type="number" step="0.01" value={paymentFormData.amount || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentFormData({...paymentFormData, amount: parseFloat(e.target.value)})} error={paymentErrors.amount} required />
               <Input id="paymentDate" label="Data Pagamento" type="date" value={paymentFormData.paymentDate || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentFormData({...paymentFormData, paymentDate: e.target.value})} error={paymentErrors.paymentDate} required />
-              {/* FIX: Casting to `any` to bypass a TypeScript inference issue where `e.currentTarget` is incorrectly typed as `unknown`. */}
-              <Select id="method" label="Metodo" options={[{value: 'cash', label: 'Contanti'}, {value: 'transfer', label: 'Bonifico'}, {value: 'card', label: 'Carta'}]} value={paymentFormData.method || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPaymentFormData({...paymentFormData, method: (e.currentTarget as any).value as PaymentMethod})} error={paymentErrors.method} required/>
+              {/* FIX: Replaced `e.currentTarget` with `e.target` and removed the failing `as any` cast. */}
+              <Select id="method" label="Metodo" options={[{value: 'cash', label: 'Contanti'}, {value: 'transfer', label: 'Bonifico'}, {value: 'card', label: 'Carta'}]} value={paymentFormData.method || ''} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPaymentFormData({...paymentFormData, method: e.target.value as PaymentMethod})} error={paymentErrors.method} required/>
                <div className="flex justify-end space-x-3 pt-4">
                   <button type="button" onClick={closePaymentModal} className="px-4 py-2 bg-bottone-annullamento text-testo-input rounded-md hover:opacity-90">Annulla</button>
                   <button type="submit" form="payment-form" className="px-4 py-2 bg-bottone-salvataggio text-white rounded-md hover:opacity-90">Registra Pagamento</button>

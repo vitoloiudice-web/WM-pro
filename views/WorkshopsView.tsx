@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 // FIX: Updated imports to remove file extensions
 import Card, { CardContent } from '../components/Card';
@@ -187,7 +188,11 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
     }, [formData.type, priceConfig.isManual]);
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        // --- DEBUG START: WORKSHOPS_FILTER_CHANGE ---
+        console.log('[DEBUG] WorkshopsView: handleFilterChange triggered.');
+        console.log(`[DEBUG] WorkshopsView: Field ID: ${e.currentTarget.id}, New Value: ${e.currentTarget.value}`);
         setFilters(prev => ({ ...prev, [e.currentTarget.id]: e.currentTarget.value }));
+        // --- DEBUG END: WORKSHOPS_FILTER_CHANGE ---
     };
     
     const resetFilters = () => {
@@ -195,15 +200,30 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
     };
 
     const filteredWorkshops = useMemo(() => {
-        return workshops.filter(w => {
-            if (selectedLocation !== 'all' && w.locationId !== selectedLocation) return false;
-            if (filters.name && !w.name.toLowerCase().includes(filters.name.toLowerCase())) return false;
-            if (filters.dayOfWeek && w.dayOfWeek !== filters.dayOfWeek) return false;
-            if (filters.startTime && w.startTime < filters.startTime) return false;
-            if (filters.minPrice && w.pricePerChild < parseFloat(filters.minPrice)) return false;
-            if (filters.maxPrice && w.pricePerChild > parseFloat(filters.maxPrice)) return false;
-            return true;
-        });
+        // --- DEBUG START: WORKSHOPS_FILTER_LOGIC ---
+        console.log('[DEBUG] WorkshopsView: Recalculating filteredWorkshops.');
+        console.log('[DEBUG] WorkshopsView: workshops prop (pre-filter):', workshops);
+        console.log('[DEBUG] WorkshopsView: Current filters:', filters);
+        console.log('[DEBUG] WorkshopsView: Current selectedLocation:', selectedLocation);
+        
+        try {
+            const result = workshops.filter(w => {
+                if (selectedLocation !== 'all' && w.locationId !== selectedLocation) return false;
+                if (filters.name && !w.name.toLowerCase().includes(filters.name.toLowerCase())) return false;
+                if (filters.dayOfWeek && w.dayOfWeek !== filters.dayOfWeek) return false;
+                if (filters.startTime && w.startTime < filters.startTime) return false;
+                if (filters.minPrice && w.pricePerChild < parseFloat(filters.minPrice)) return false;
+                if (filters.maxPrice && w.pricePerChild > parseFloat(filters.maxPrice)) return false;
+                return true;
+            });
+            console.log('[DEBUG] WorkshopsView: Filtering successful. Result:', result);
+            return result;
+        } catch (error) {
+            console.error('[DEBUG] WorkshopsView: CRASH in filteredWorkshops useMemo!', error);
+            // Return an empty array to prevent the app from crashing completely
+            return [];
+        }
+        // --- DEBUG END: WORKSHOPS_FILTER_LOGIC ---
     }, [selectedLocation, workshops, filters]);
     
     const workshopsByDate = useMemo(() => {
@@ -501,6 +521,7 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                     <div key={i} className="text-center py-2 text-xs font-semibold text-testo-input/80 bg-white/20">{day}</div>
                 ))}
             </div>
+            {/* --- DEBUG START: WORKSHOPS_RENDER_LOGIC --- */}
             <div className="grid grid-cols-7 gap-px bg-gray-300">
                 {days.map((day, index) => {
                     const isCurrentMonth = day.getMonth() === currentDate.getMonth();
@@ -545,6 +566,7 @@ const WorkshopsView = ({ workshops, addWorkshop, updateWorkshop, removeWorkshop,
                     )
                 })}
             </div>
+             {/* --- DEBUG END: WORKSHOPS_RENDER_LOGIC --- */}
         </Card>
         
         <Modal isOpen={!!modalState} onClose={closeModal} title={getModalTitle()}>

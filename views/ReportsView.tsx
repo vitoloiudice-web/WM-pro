@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 // FIX: Updated imports to remove file extensions
 import Card, { CardContent, CardHeader } from '../components/Card';
@@ -87,7 +88,7 @@ const ChartCard = ({ title, chartRef, chartHeight = 'h-64' }: { title: string; c
     </Card>
 );
 
-const ReportsView = ({ payments, costs, workshops, suppliers, locations, registrations, quotes }: ReportsViewProps) => {
+export const ReportsView = ({ payments, costs, workshops, suppliers, locations, registrations, quotes }: ReportsViewProps) => {
     const [reportType, setReportType] = useState<ReportType>('');
     const [reportData, setReportData] = useState<ReportData | null>(null);
     
@@ -678,137 +679,132 @@ const ReportsView = ({ payments, costs, workshops, suppliers, locations, registr
                         ]
                     };
                 } else {
-                    data = { headers: ['Statistica', 'Valore'], rows: [] };
+                     data = {
+                        headers: ['Statistica', 'Valore'],
+                        rows: [ { 'Statistica': 'Dati non sufficienti', 'Valore': 'N/A' } ]
+                    };
                 }
                 break;
             }
         }
         setReportData(data);
     };
-    
-    const exportToCsv = () => {
-        if (!reportData || !reportData.rows.length) return;
-        
-        const { headers, rows } = reportData;
-        const csvContent = [
-            headers.join(';'),
-            ...rows.map(row => headers.map(header => `"${(row[header] ?? '').toString().replace(/"/g, '""')}"`).join(';'))
-        ].join('\n');
 
-        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', `${reportType}.csv`);
-        link.style.visibility = 'hidden';
+    const exportToCsv = () => {
+        if (!reportData) return;
+        const { headers, rows } = reportData;
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += headers.join(",") + "\r\n";
+        rows.forEach(row => {
+            const rowArray = headers.map(header => {
+                let cell = row[header] === null || row[header] === undefined ? '' : String(row[header]);
+                cell = cell.replace(/"/g, '""'); // escape double quotes
+                if (cell.search(/("|,|\n)/g) >= 0) {
+                    cell = `"${cell}"`;
+                }
+                return cell;
+            });
+            csvContent += rowArray.join(",") + "\r\n";
+        });
+    
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `report_${reportType}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     };
     
-    const { kpis } = overviewData;
-
     return (
         <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-testo-input">Reportistica Avanzata</h2>
+            <h2 className="text-xl font-semibold text-testo-input">Report e Analisi</h2>
+    
+            {reportType === '' ? (
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <KPICard title="Ricavi Totali" value={`€${overviewData.kpis.totalRevenue.toFixed(2)}`} icon={<CurrencyDollarIcon />} />
+                        <KPICard title="Utile Netto (EBITDA)" value={`€${overviewData.kpis.netProfit.toFixed(2)}`} icon={<CurrencyDollarIcon />} />
+                        <KPICard title="Partecipanti Unici" value={`${overviewData.kpis.totalParticipants}`} icon={<UsersIcon />} />
+                        <KPICard title="Tasso Conversione Preventivi" value={`${overviewData.kpis.conversionRate.toFixed(2)}%`} icon={<ChartPieIcon />} />
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <ChartCard title="Ricavi per Metodo di Pagamento" chartRef={revenueMethodChartRef} />
+                        <ChartCard title="Costi per Metodo di Pagamento" chartRef={costMethodChartRef} />
+                        <ChartCard title="Top 5 Workshop per Ricavi" chartRef={topWsRevenueChartRef} chartHeight="h-80" />
+                        <ChartCard title="Top 5 Workshop per Iscritti" chartRef={topWsParticipantsChartRef} chartHeight="h-80" />
+                        <ChartCard title="Top 5 Sedi per Iscritti" chartRef={topLocParticipantsChartRef} chartHeight="h-80" />
+                        <ChartCard title="Top 5 Fornitori per Costi" chartRef={topSupCostsChartRef} chartHeight="h-80" />
+                    </div>
+                </>
+            ) : null}
+    
             <Card>
                 <CardHeader>Genera Report Dettagliato</CardHeader>
-                <CardContent className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-4 sm:space-y-0">
-                    <div className="flex-grow">
-                        <label htmlFor="report-type" className="block text-sm font-medium text-testo-input mb-1">Tipo di Report</label>
-                        <select
-                            id="report-type"
-                            value={reportType}
-                            onChange={e => {
-                                setReportType(e.target.value as ReportType);
-                                setReportData(null); // Reset report data on new selection
-                            }}
-                            className="block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-azione focus:ring-bottone-azione"
+                <CardContent>
+                    <div className="flex flex-col sm:flex-row sm:items-end sm:space-x-4 space-y-4 sm:space-y-0">
+                        <div className="flex-grow">
+                            <label htmlFor="report-select" className="block text-sm font-medium text-testo-input mb-1">Tipo di Report</label>
+                            <select
+                                id="report-select"
+                                className="block w-full rounded-md border-black/20 bg-white text-testo-input shadow-sm focus:border-bottone-azione focus:ring-bottone-azione sm:text-sm"
+                                value={reportType}
+                                onChange={(e) => setReportType(e.target.value as ReportType)}
+                            >
+                                {reportOptions.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <button
+                            onClick={generateReport}
+                            disabled={!reportType}
+                            className="w-full sm:w-auto px-4 py-2 bg-bottone-azione text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {reportOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                        </select>
+                            Genera
+                        </button>
                     </div>
-                    <button 
-                        onClick={generateReport}
-                        disabled={!reportType}
-                        className="w-full sm:w-auto px-4 py-2 bg-bottone-azione text-white font-semibold rounded-md shadow-sm hover:opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed self-end"
-                    >
-                        Genera
-                    </button>
                 </CardContent>
             </Card>
-            
-            {reportType === '' ? (
-                 <div className="space-y-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <KPICard title="Ricavi Totali" value={`€${kpis.totalRevenue.toFixed(2)}`} icon={<CurrencyDollarIcon />} />
-                        <KPICard title="Costi Totali" value={`€${kpis.totalCosts.toFixed(2)}`} icon={<CurrencyDollarIcon />} />
-                        <KPICard title="Utile Netto" value={`€${kpis.netProfit.toFixed(2)}`} icon={<CurrencyDollarIcon />} />
-                        <KPICard title="Partecipanti Unici" value={String(kpis.totalParticipants)} icon={<UsersIcon />} />
-                        <KPICard title="Conversione Preventivi" value={`${kpis.conversionRate.toFixed(1)}%`} icon={<ChartPieIcon />} />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                         <ChartCard title="Ripartizione Ricavi per Metodo" chartRef={revenueMethodChartRef} chartHeight="h-56"/>
-                         <ChartCard title="Ripartizione Costi per Metodo" chartRef={costMethodChartRef} chartHeight="h-56"/>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                         <ChartCard title="Top 5 Workshop per Ricavi" chartRef={topWsRevenueChartRef} />
-                         <ChartCard title="Top 5 Workshop per Iscritti" chartRef={topWsParticipantsChartRef} />
-                         <ChartCard title="Top 5 Luoghi per Iscritti" chartRef={topLocParticipantsChartRef} />
-                         <ChartCard title="Top 5 Fornitori per Costi" chartRef={topSupCostsChartRef} />
-                    </div>
-                </div>
-            ) : (
-                <>
-                    {reportData && reportData.rows.length > 0 && (
-                        <Card>
-                            <CardHeader>Visualizzazione Grafica</CardHeader>
-                            <CardContent>
-                                <div className="relative h-96 bg-white p-2 rounded-lg">
-                                    <canvas ref={detailedChartRef}></canvas>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {reportData && (
-                         <Card>
-                            <CardHeader actions={
-                                <button onClick={exportToCsv} className="flex items-center space-x-2 text-sm text-bottone-azione hover:opacity-80 font-medium">
-                                    <DocumentDownloadIcon />
-                                    <span>Esporta CSV</span>
-                                </button>
-                            }>
-                                Risultati Report
-                            </CardHeader>
-                            <CardContent>
-                                {reportData.rows.length > 0 ? (
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-black/10">
-                                            <thead className="bg-white/30">
-                                                <tr>
-                                                    {reportData.headers.map(h => <th key={h} className="px-6 py-3 text-left text-xs font-medium text-testo-input/80 uppercase tracking-wider">{h}</th>)}
-                                                </tr>
-                                            </thead>
-                                            <tbody className="bg-cards-giallo divide-y divide-black/10">
-                                                {reportData.rows.map((row, idx) => (
-                                                    <tr key={idx} className={row['Descrizione'] === 'Utile Netto (EBITDA)' || row[reportData.headers[0]].toString().toLowerCase().includes('totale') ? 'bg-white/30 font-bold' : ''}>
-                                                        {reportData.headers.map(h => <td key={h} className="px-6 py-4 whitespace-nowrap text-sm text-testo-input">{row[h]}</td>)}
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                ) : (
-                                    <p className="text-center text-testo-input/80 py-4">Nessun dato da visualizzare per questo report.</p>
-                                )}
-                            </CardContent>
-                        </Card>
-                    )}
-                </>
+    
+            {reportData && (
+                <Card>
+                    <CardHeader actions={
+                        <button onClick={exportToCsv} className="text-sm text-bottone-azione hover:opacity-80 font-medium flex items-center space-x-1">
+                            <DocumentDownloadIcon /><span>Esporta CSV</span>
+                        </button>
+                    }>
+                        Risultati Report
+                    </CardHeader>
+                    <CardContent>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-black/10">
+                                <thead className="bg-white/30">
+                                    <tr>
+                                        {reportData.headers.map(header => (
+                                            <th key={header} scope="col" className="px-6 py-3 text-left text-xs font-bold text-testo-input uppercase tracking-wider">{header}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-black/10">
+                                    {reportData.rows.map((row, rowIndex) => (
+                                        <tr key={rowIndex} className="hover:bg-gray-50">
+                                            {reportData.headers.map(header => (
+                                                <td key={`${rowIndex}-${header}`} className="px-6 py-4 whitespace-nowrap text-sm text-testo-input">{row[header]}</td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        {detailedChartRef && (
+                             <div className="mt-6 relative h-96 bg-gray-50 p-2 rounded-lg">
+                                <canvas ref={detailedChartRef}></canvas>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
             )}
         </div>
     );
 };
-
-export default ReportsView;

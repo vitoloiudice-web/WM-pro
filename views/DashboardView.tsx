@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 // FIX: Updated imports to remove file extensions
 import Card, { CardContent, CardHeader } from '../components/Card';
